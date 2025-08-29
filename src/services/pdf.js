@@ -178,16 +178,26 @@ const estilos = {
 // ===== FUNCIONES AUXILIARES =====
 
 /**
- * Obtener servicio relacionado por título de trabajo
+ * Obtener servicio relacionado por título de trabajo (con fallback normalizado)
  * @param {string} tituloTrabajo - Título del trabajo a buscar
  * @returns {Object|null} Datos del servicio o null si no se encuentra
  */
 const obtenerServicioPorTitulo = async (tituloTrabajo) => {
+  if (!tituloTrabajo) return null;
+
   try {
-    const q = query(collection(db, 'servicios'), where('titulo', '==', tituloTrabajo));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data();
+    // 1) Intento directo (exacto)
+    let q = query(collection(db, 'servicios'), where('titulo', '==', tituloTrabajo));
+    let snapshot = await getDocs(q);
+    if (!snapshot.empty) return snapshot.docs[0].data();
+
+    // 2) Fallback: buscar client-side por normalización (mayúsc/minúsc y espacios)
+    const allSnap = await getDocs(collection(db, 'servicios'));
+    const buscado = tituloTrabajo.replace(/\s+/g, ' ').trim().toLowerCase();
+    for (const doc of allSnap.docs) {
+      const data = doc.data();
+      const titulo = (data.titulo || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (titulo === buscado) return data;
     }
     return null;
   } catch (error) {
@@ -482,67 +492,31 @@ const crearHeaderFijo = (logoDataUrl = null, informe = null) => {
 };
 
 /**
- * Crear sección de información del informe
+ * Crear sección de información del informe (SOLO sección 1)
  * @param {Object} informe - Datos del informe
  * @param {Object} currentEmployee - Información del empleado logueado
  * @returns {Array} Contenido de la sección
  */
 const crearSeccionInforme = (informe, currentEmployee = null) => {
   const fechaElaboracion = new Date().toLocaleDateString('es-CO', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
   });
 
   const elaboradoPor = currentEmployee?.nombre_completo || currentEmployee?.nombre || 'Usuario no especificado';
-  
-  // CORRECCIÓN CRÍTICA: Campo fecha_remision desde la colección remisiones
-  // El FormularioInforme.jsx procesa el campo 'remision' (string) → fecha_remision (DD/MM/YYYY)
-  // Buscar en múltiples ubicaciones para asegurar compatibilidad
-  let fechaRemisionCorrecta = null;
-  
-  // 1. Prioridad: fecha_remision procesada (DD/MM/YYYY)
-  if (informe.datosRemision?.fecha_remision) {
-    fechaRemisionCorrecta = informe.datosRemision.fecha_remision;
-  }
-  // 2. Fallback: campo directo fecha_remision
-  else if (informe.fecha_remision) {
-    fechaRemisionCorrecta = informe.fecha_remision;
-  }
-  // 3. Último recurso: campo remision original (string)
-  else if (informe.datosRemision?.remision) {
-    fechaRemisionCorrecta = informe.datosRemision.remision;
-  }
-  else if (informe.remision) {
-    fechaRemisionCorrecta = informe.remision;
-  }
-  
-  console.log('🗓️ Campo fecha_remision detectado:', fechaRemisionCorrecta);
 
   return [
-    // 1. Título de sección con numeración ISO
     { text: '1. INFORMACIÓN DEL INFORME', style: 'sectionTitleISO' },
-    // Línea separadora
     {
-      canvas: [
-        {
-          type: 'line',
-          x1: 0,
-          y1: 0,
-          x2: 515,
-          y2: 0,
-          lineWidth: 1,
-          lineColor: '#0056A6'
-        }
-      ],
+      canvas: [{
+        type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
+        lineWidth: 1, lineColor: '#0056A6'
+      }],
       margin: [0, -5, 0, 10]
     },
-    // INFORMACIÓN PRINCIPAL (sin duplicar información que ya está en DATOS DE LA REMISIÓN)
     {
       columns: [
         {
-          width: '50%',
+          width: '100%',
           stack: [
             { text: 'ID Informe:', style: 'fieldLabelISO' },
             { text: informe.idInforme || 'No especificado', style: 'fieldValueISO' },
@@ -551,64 +525,6 @@ const crearSeccionInforme = (informe, currentEmployee = null) => {
             { text: 'Elaborado por:', style: 'fieldLabelISO' },
             { text: elaboradoPor, style: 'fieldValueISO' }
           ]
-        },
-        {
-          width: '50%',
-          stack: [
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }, // Espaciado  
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }  // Espaciado
-          ]
-        }
-      ]
-    },
-    // NUEVA SECCIÓN: DATOS DE LA REMISIÓN (toda la info de la remisión junta)
-    { text: '', margin: [0, 15, 0, 0] }, // Espaciado
-    { text: '2. DATOS DE LA REMISIÓN', style: 'sectionTitleISO' },
-    {
-      canvas: [
-        {
-          type: 'line',
-          x1: 0,
-          y1: 0,
-          x2: 515,
-          y2: 0,
-          lineWidth: 1,
-          lineColor: '#0056A6'
-        }
-      ],
-      margin: [0, -5, 0, 10]
-    },
-    {
-      columns: [
-        {
-          width: '45%',
-          stack: [
-            { text: 'Número de Remisión:', style: 'fieldLabelISO' },
-            { text: informe.remision || 'No especificada', style: 'fieldValueISO' },
-            { text: 'Número del Móvil:', style: 'fieldLabelISO' },
-            { text: informe.movil || 'No especificado', style: 'fieldValueISO' },
-            { text: 'Título del trabajo:', style: 'fieldLabelISO' },
-            { text: informe.tituloTrabajo || 'No especificado', style: 'fieldValueISO' },
-            { text: 'Técnico Asignado:', style: 'fieldLabelISO' },
-            { text: informe.tecnico || 'No especificado', style: 'fieldValueISO' }
-          ]
-        },
-        {
-          width: '55%',
-          stack: [
-            { text: 'Fecha de Remisión:', style: 'fieldLabelISO' },
-            { text: formatearFechaRemision(fechaRemisionCorrecta), style: 'fieldValueISO' },
-            { text: 'Autorizado por:', style: 'fieldLabelISO' },
-            { text: informe.autorizo || 'No especificado', style: 'fieldValueISO' },
-            { text: 'UNE:', style: 'fieldLabelISO' },
-            { text: informe.une || 'No especificado', style: 'fieldValueISO' },
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }  // Espaciado
-          ]
         }
       ]
     }
@@ -616,52 +532,26 @@ const crearSeccionInforme = (informe, currentEmployee = null) => {
 };
 
 /**
- * Crear sección de datos de la remisión (separada)
+ * Crear sección de datos de la remisión (SOLO sección 2)
  * @param {Object} informe - Datos del informe
  * @returns {Array} Contenido de la sección
  */
 const crearSeccionRemision = (informe) => {
-  // CORRECCIÓN CRÍTICA: Campo fecha_remision desde la colección remisiones
-  // El FormularioInforme.jsx procesa el campo 'remision' (string) → fecha_remision (DD/MM/YYYY)
-  // Buscar en múltiples ubicaciones para asegurar compatibilidad
+  // Detectar fecha_remision con la misma lógica previa
   let fechaRemisionCorrecta = null;
-  
-  // 1. Prioridad: fecha_remision procesada (DD/MM/YYYY)
-  if (informe.datosRemision?.fecha_remision) {
-    fechaRemisionCorrecta = informe.datosRemision.fecha_remision;
-  }
-  // 2. Fallback: campo directo fecha_remision
-  else if (informe.fecha_remision) {
-    fechaRemisionCorrecta = informe.fecha_remision;
-  }
-  // 3. Último recurso: campo remision original (string)
-  else if (informe.datosRemision?.remision) {
-    fechaRemisionCorrecta = informe.datosRemision.remision;
-  }
-  else if (informe.remision) {
-    fechaRemisionCorrecta = informe.remision;
-  }
-  
-  console.log('🗓️ Campo fecha_remision detectado:', fechaRemisionCorrecta);
+  if (informe.datosRemision?.fecha_remision) fechaRemisionCorrecta = informe.datosRemision.fecha_remision;
+  else if (informe.fecha_remision) fechaRemisionCorrecta = informe.fecha_remision;
+  else if (informe.datosRemision?.remision) fechaRemisionCorrecta = informe.datosRemision.remision;
+  else if (informe.remision) fechaRemisionCorrecta = informe.remision;
 
   return [
-    // 2. Título de sección con numeración ISO
     { text: '2. DATOS DE LA REMISIÓN', style: 'sectionTitleISO' },
     {
-      canvas: [
-        {
-          type: 'line',
-          x1: 0,
-          y1: 0,
-          x2: 515,
-          y2: 0,
-          lineWidth: 1,
-          lineColor: '#0056A6'
-        }
-      ],
+      canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }],
       margin: [0, -5, 0, 10]
     },
     {
+      // Ajuste para mejorar separación entre columnas
       columns: [
         {
           width: '48%',
@@ -684,9 +574,7 @@ const crearSeccionRemision = (informe) => {
             { text: 'Autorizado por:', style: 'fieldLabelISO' },
             { text: informe.autorizo || 'No especificado', style: 'fieldValueISO' },
             { text: 'UNE:', style: 'fieldLabelISO' },
-            { text: informe.une || 'No especificado', style: 'fieldValueISO' },
-            { text: '', style: 'fieldValueISO' }, // Espaciado
-            { text: '', style: 'fieldValueISO' }  // Espaciado
+            { text: informe.une || 'No especificado', style: 'fieldValueISO' }
           ]
         }
       ],
@@ -696,12 +584,14 @@ const crearSeccionRemision = (informe) => {
 };
 
 /**
- * Crear sección de servicios prestados
+ * Crear sección de servicios prestados (SOLO valores económicos)
  * @param {Object} informe - Datos del informe
  * @returns {Array} Contenido de la sección
  */
 const crearSeccionServicios = (informe) => {
   if (!informe) return [];
+
+  const formatoMoneda = (n) => n ? `$ ${Number(n).toLocaleString('es-CO')}` : '$ 0';
 
   return [
     { text: '4. VALORACIÓN ECONÓMICA DE SERVICIOS', style: 'sectionTitleISO' },
@@ -715,7 +605,7 @@ const crearSeccionServicios = (informe) => {
         { text: formatoMoneda(informe.subtotal), style: 'fieldValueISO' },
         { text: 'Total (incluye IVA):', style: 'fieldLabelISO' },
         { text: formatoMoneda(informe.total), style: 'fieldValueISO' },
-        { text: '* Total incluye IVA', style: 'notaISO' }
+        { text: '* Total incluye IVA', style: { fontSize: 9, italics: true, color: '#666', font: FUENTE_ISO } }
       ]
     }
   ];
@@ -726,17 +616,19 @@ const crearSeccionServicios = (informe) => {
  * Se alimenta automáticamente desde la colección "servicios".
  */
 const crearSeccionActividades = (servicio) => {
-  if (!servicio) return [];
+  if (!servicio) return []; // Omitir si no hay servicio relacionado
 
-  // separar actividades en párrafos
-  const actividades = servicio.descripcion_actividad
-    ? servicio.descripcion_actividad.split('. ').map(a => a.trim()).filter(Boolean)
-    : [];
+  // Preferir saltos de línea; fallback a separar por ". "
+  let actividades = [];
+  if (typeof servicio.descripcion_actividad === 'string') {
+    if (servicio.descripcion_actividad.includes('\n')) {
+      actividades = servicio.descripcion_actividad.split('\n').map(s => s.trim()).filter(Boolean);
+    } else {
+      actividades = servicio.descripcion_actividad.split('. ').map(s => s.trim()).filter(Boolean);
+    }
+  }
 
-  const contenido = actividades.map(act => ({
-    text: act.endsWith('.') ? act : act + '.',
-    style: 'observacionesISO'
-  }));
+  const contenido = actividades.map(a => ({ text: a.endsWith('.') ? a : a + '.', style: 'observacionesISO' }));
 
   return [
     { text: '3. ACTIVIDADES REALIZADAS', style: 'sectionTitleISO' },
@@ -840,8 +732,8 @@ const crearSeccionEvidencias = (informe, imagenesDataUrl) => {
     return [];
   }
   
-  // 6. Título de sección con numeración ISO
-  contenido.push({ text: '6. EVIDENCIA FOTOGRÁFICA', style: 'sectionTitleISO' });
+  // 5. Título de sección con numeración ISO
+  contenido.push({ text: '5. EVIDENCIA FOTOGRÁFICA', style: 'sectionTitleISO' });
   // Línea separadora
   contenido.push({
     canvas: [
@@ -860,7 +752,7 @@ const crearSeccionEvidencias = (informe, imagenesDataUrl) => {
   
   // Imágenes ANTES
   if (tieneImagenesAntes) {
-    contenido.push({ text: '6.1 ANTES', style: 'evidenceTitleISO' });
+    contenido.push({ text: '5.1 ANTES', style: 'evidenceTitleISO' });
     
     // Organizar imágenes en filas de 2
     const imagenesAntes = informe.imagenesAntes;
@@ -894,7 +786,7 @@ const crearSeccionEvidencias = (informe, imagenesDataUrl) => {
   
   // Imágenes DESPUÉS
   if (tieneImagenesDespues) {
-    contenido.push({ text: '6.2 DESPUÉS', style: 'evidenceTitleISO' });
+    contenido.push({ text: '5.2 DESPUÉS', style: 'evidenceTitleISO' });
     
     // Organizar imágenes en filas de 2
     const imagenesDespues = informe.imagenesDespues;
@@ -1076,6 +968,17 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
 
     console.log('Iniciando generación de PDF para informe:', informe.idInforme);
 
+    // obtener servicio relacionado
+    const servicioRelacionado = await obtenerServicioPorTitulo(informe.tituloTrabajo);
+
+    // log de depuración (obligatorio)
+    console.log('SERVICIO RELACIONADO ENCONTRADO:', !!servicioRelacionado, servicioRelacionado?.id_servicio || servicioRelacionado?.titulo || 'sin id');
+
+    // logs estratégicos para verificar
+    console.log('>> Preparando PDF para informe:', informe.idInforme || informe.remision);
+    console.log('>> servicioRelacionado:', servicioRelacionado ? servicioRelacionado.titulo : 'NO ENCONTRADO');
+    console.log('>> longitud contenido actividades:', servicioRelacionado ? (servicioRelacionado.descripcion_actividad || '').length : 0);
+
     // Opciones por defecto
     const configuracion = {
       abrirEnNuevaVentana: true,
@@ -1140,8 +1043,7 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
       }
     }
 
-    // 🔍 OBTENER SERVICIO RELACIONADO
-    const servicioRelacionado = await obtenerServicioPorTitulo(informe.tituloTrabajo);
+    // 🔍 OBTENER SERVICIO RELACIONADO YA OBTENIDO ARRIBA
     if (servicioRelacionado) {
       console.log('✅ Servicio relacionado encontrado:', servicioRelacionado.titulo);
     } else {
@@ -1180,19 +1082,19 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
           
           // 🎯 CONTENIDO SIN ENCABEZADO (va separado en header)
           content: [
-            // 1. INFORMACIÓN DEL INFORME
+            // 1. Informacion del informe (solo sección 1)
             ...crearSeccionInforme(informe, opciones.currentEmployee),
-            
-            // 2. DATOS DE LA REMISIÓN (más espacio entre columnas)
+
+            // 2. Datos de la remisión (separada)
             ...crearSeccionRemision(informe),
-            
-            // 3. ACTIVIDADES REALIZADAS (nueva función)
+
+            // 3. Actividades realizadas (si existe servicio)
             ...crearSeccionActividades(servicioRelacionado),
-            
-            // 4. VALORACIÓN ECONÓMICA (sin descripción de servicio)
+
+            // 4. Valoracion economica
             ...crearSeccionServicios(informe),
-            
-            // 5. EVIDENCIA FOTOGRÁFICA
+
+            // 5. Evidencia fotográfica
             ...crearSeccionEvidencias(informe, imagenesDataUrl)
           ],
           
