@@ -5,7 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 const SubirHistorial = () => {
   const subirHistorial = async () => {
     try {
-      const response = await fetch('/informes_convertidos.json');
+      const response = await fetch('/remisiones_convertidos.json');
       const datos = await response.json();
 
       for (const item of datos) {
@@ -13,7 +13,7 @@ const SubirHistorial = () => {
         if (!ordenId) continue;
 
         // Creamos la referencia directamente con la ruta completa
-        const ref = doc(db, 'informes', ordenId.toString());
+        const ref = doc(db, 'remisiones', ordenId.toString());
         await setDoc(ref, item);
       }
 

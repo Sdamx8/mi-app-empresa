@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Reglas de Firebase Storage ULTRA SIMPLIFICADAS para desarrollo
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Permitir acceso total a cualquier archivo para usuarios autenticados
+    match /{allPaths=**} {
+      allow read, write, delete: if request.auth != null;
+    }
+  }
+}

@@ -3,35 +3,35 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 const HistorialTrabajosPage = () => {
-  const [informes, setInformes] = useState([]);
+  const [remisiones, setRemisiones] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredInformes, setFilteredInformes] = useState([]);
+  const [filteredRemisiones, setFilteredRemisiones] = useState([]);
 
   useEffect(() => {
-    const cargarInformes = async () => {
+    const cargarRemisiones = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'informes'));
+        const querySnapshot = await getDocs(collection(db, 'remisiones'));
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setInformes(data);
+        setRemisiones(data);
       } catch (error) {
-        console.error('Error al cargar los informes:', error);
+        console.error('Error al cargar las remisiones:', error);
       }
     };
 
-    cargarInformes();
+    cargarRemisiones();
   }, []);
 
   useEffect(() => {
     if (searchTerm === '') {
-      setFilteredInformes([]);
+      setFilteredRemisiones([]);
     } else {
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      const filtered = informes.filter(informe =>
-        informe.movil.toLowerCase().includes(lowerCaseSearchTerm)
+      const filtered = remisiones.filter(remision =>
+        remision.movil.toLowerCase().includes(lowerCaseSearchTerm)
       );
-      setFilteredInformes(filtered);
+      setFilteredRemisiones(filtered);
     }
-  }, [searchTerm, informes]);
+  }, [searchTerm, remisiones]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -56,40 +56,40 @@ const HistorialTrabajosPage = () => {
         <h3 className="text-lg font-medium text-gray-700 mb-4">Resultados de la Búsqueda</h3>
         {searchTerm === '' ? (
           <p className="text-gray-500">Ingresa un número de móvil para buscar.</p>
-        ) : filteredInformes.length === 0 ? (
+        ) : filteredRemisiones.length === 0 ? (
           <p className="text-gray-500">No se encontraron trabajos para el móvil "{searchTerm}".</p>
         ) : (
           <ul className="space-y-4">
-            {filteredInformes.map((informe) => (
-              <li key={informe.id} className="p-4 border rounded-lg shadow-sm bg-gray-50">
-                <p className="font-semibold text-gray-800">Móvil: {informe.movil} - Remisión #{informe.remision}</p>
-                <p className="text-sm text-gray-600">Fecha: {informe.fecha} - UNE: {informe.une}</p>
-                <p className="text-sm text-gray-600">Elaborado Por: {informe.elaboradoPor} - Aprobado Por: {informe.aprobadoPor}</p>
-                <p className="text-sm text-gray-600">Estado: <span className={`font-medium ${informe.estado === 'Pendiente' ? 'text-yellow-600' : 'text-green-600'}`}>{informe.estado}</span></p>
+            {filteredRemisiones.map((remision) => (
+              <li key={remision.id} className="p-4 border rounded-lg shadow-sm bg-gray-50">
+                <p className="font-semibold text-gray-800">Móvil: {remision.movil} - Remisión #{remision.remision}</p>
+                <p className="text-sm text-gray-600">Fecha: {remision.fecha} - UNE: {remision.une}</p>
+                <p className="text-sm text-gray-600">Elaborado Por: {remision.elaboradoPor} - Aprobado Por: {remision.aprobadoPor}</p>
+                <p className="text-sm text-gray-600">Estado: <span className={`font-medium ${remision.estado === 'Pendiente' ? 'text-yellow-600' : 'text-green-600'}`}>{remision.estado}</span></p>
 
                 <div className="mt-2">
                   <p className="text-sm font-medium text-gray-700">Trabajo Realizado:</p>
-                  <p className="text-sm text-gray-600 italic">{informe.trabajoRealizado}</p>
+                  <p className="text-sm text-gray-600 italic">{remision.trabajoRealizado}</p>
                 </div>
 
                 <div className="mt-2">
                   <p className="text-sm font-medium text-gray-700">Servicios:</p>
                   <ul className="list-disc list-inside text-sm text-gray-600">
-                    {informe.serviciosSeleccionados.map((servicio, index) => (
+                    {remision.serviciosSeleccionados.map((servicio, index) => (
                       <li key={index}>{servicio}</li>
                     ))}
                   </ul>
                 </div>
 
-                <p className="text-sm text-gray-600 mt-2">Valor Servicio Unitario: ${informe.valorServicioUnitario} - Monto Total: ${informe.montoTotal}</p>
+                <p className="text-sm text-gray-600 mt-2">Valor Servicio Unitario: ${remision.valorServicioUnitario} - Monto Total: ${remision.montoTotal}</p>
 
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700">Evidencia Fotográfica:</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {informe.evidencias.length === 0 ? (
+                    {remision.evidencias.length === 0 ? (
                       <p className="text-sm text-gray-500 italic">No hay evidencia fotográfica.</p>
                     ) : (
-                      informe.evidencias.map((url, index) => (
+                      remision.evidencias.map((url, index) => (
                         <img key={index} src={url} alt={`Evidencia ${index + 1}`} className="w-20 h-20 object-cover rounded-lg shadow-sm" />
                       ))
                     )}

@@ -1,0 +1,597 @@
+// pdfService.js - Servicio para generar PDFs de informes técnicos
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+class PDFService {
+  // Configuración de la empresa
+  static EMPRESA_CONFIG = {
+    nombre: 'Global Mobility Solutions',
+    direccion: 'Calle 65 Sur no 79C - 27 Bosa Centro',
+    telefono: '(+57) 311-486-1431',
+    celular: '311-486-1431',
+    nit: 'NIT: 901.876.981-8',
+    email: 'globalmobilitysolutions8@gmail.com',
+    website: 'www.globalmobility.com'
+  };
+
+  // Función auxiliar para asegurar que los textos sean strings
+  static safeText(value) {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
+    return String(value);
+  }
+
+  // Formatear valores monetarios sin decimales
+  static formatearMoneda(valor) {
+    if (!valor || isNaN(valor)) return '$0';
+    
+    const numero = Math.round(Number(valor)); // Sin decimales
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numero);
+  }
+
+  // Cargar logo desde public/images
+  static async cargarLogo() {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 80;
+        canvas.height = 60;
+        ctx.drawImage(img, 0, 0, 80, 60);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => {
+        console.warn('No se pudo cargar el logo desde /images/logo-gms.png');
+        // Si no se puede cargar el logo, usar null para mostrar placeholder
+        resolve(null);
+      };
+      img.src = '/images/logo-gms.png'; // Ruta específica del logo
+    });
+  }
+
+  // Generar PDF desde un informe técnico
+  static async generarPDFInforme(informeData, imagenes = {}) {
+    try {
+      console.log('🔄 Iniciando generación de PDF...');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      let currentY = margin;
+
+      // 1. ENCABEZADO CON LOGO
+      currentY = await this.agregarEncabezado(pdf, pageWidth, currentY, margin);
+
+      // 2. INFORMACIÓN DEL INFORME
+      currentY = this.agregarInfoInforme(pdf, informeData, pageWidth, currentY, margin);
+
+      // 3. DATOS DE LA REMISIÓN
+      currentY = this.agregarDatosRemision(pdf, informeData, pageWidth, currentY, margin);
+
+      // 4. DATOS FINANCIEROS
+      currentY = this.agregarDatosFinancieros(pdf, informeData, pageWidth, currentY, margin);
+
+      // 5. OBSERVACIONES TÉCNICAS
+      currentY = this.agregarObservaciones(pdf, informeData, pageWidth, currentY, margin);
+
+      // 6. IMÁGENES (si existen)
+      if (imagenes.antes || imagenes.despues) {
+        currentY = await this.agregarImagenes(pdf, imagenes, pageWidth, currentY, margin, pageHeight);
+      }
+
+      // 7. PIE DE PÁGINA
+      this.agregarPiePagina(pdf, pageWidth, pageHeight, informeData);
+
+      console.log('✅ PDF generado exitosamente');
+      return pdf;
+
+    } catch (error) {
+      console.error('❌ Error generando PDF:', error);
+      throw new Error(`Error al generar PDF: ${error.message}`);
+    }
+  }
+
+  // Agregar encabezado con logo de la empresa
+  static async agregarEncabezado(pdf, pageWidth, currentY, margin) {
+    // Fondo del encabezado
+    pdf.setFillColor(40, 116, 166); // Color azul corporativo
+    pdf.rect(0, 0, pageWidth, 50, 'F');
+
+    // Cargar logo
+    const logoBase64 = await this.cargarLogo();
+    
+    if (logoBase64) {
+      try {
+        pdf.addImage(logoBase64, 'PNG', pageWidth - 60, 10, 40, 30);
+      } catch (error) {
+        console.warn('No se pudo cargar el logo:', error);
+      }
+    } else {
+      // Logo placeholder
+      pdf.setDrawColor(255, 255, 255);
+      pdf.setLineWidth(1);
+      pdf.rect(pageWidth - 60, 10, 40, 30);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.text('LOGO', pageWidth - 43, 28);
+    }
+
+    // Título principal
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(this.EMPRESA_CONFIG.nombre, margin, 18);
+
+    // Subtítulo
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('INFORME TÉCNICO DE SERVICIOS', margin, 28);
+
+    // Información de contacto
+    pdf.setFontSize(8);
+    pdf.text(this.EMPRESA_CONFIG.direccion, margin, 38);
+    pdf.text(`${this.EMPRESA_CONFIG.nit} | Tel: ${this.EMPRESA_CONFIG.telefono}`, margin, 42);
+    pdf.text(`Email: ${this.EMPRESA_CONFIG.email}`, margin, 46);
+
+    return 60; // Retornar nueva posición Y
+  }
+
+  // Agregar información del informe
+  static agregarInfoInforme(pdf, informeData, pageWidth, currentY, margin) {
+    pdf.setTextColor(0, 0, 0);
+    
+    // Título de sección
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('INFORMACIÓN DEL INFORME', margin, currentY);
+    currentY += 10;
+
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    // Datos del informe
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    
+    const infoData = [
+      ['ID Informe:', this.safeText(informeData.idInforme || informeData.id)],
+      ['Fecha de Elaboración:', new Date().toLocaleDateString('es-ES')],
+      ['Elaborado por:', this.safeText(informeData.elaboradoPor)]
+    ];
+
+    infoData.forEach(([label, value], index) => {
+      const yPos = currentY + (index * 6);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(this.safeText(label), margin, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(this.safeText(value), margin + 40, yPos);
+    });
+
+    return currentY + (infoData.length * 6) + 10;
+  }
+
+  // Agregar datos de la remisión
+  static agregarDatosRemision(pdf, informeData, pageWidth, currentY, margin) {
+    // Título de sección
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('DATOS DE LA REMISIÓN', margin, currentY);
+    currentY += 10;
+
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    // Datos de la remisión
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    
+    const remisionData = [
+      ['Número de Remisión:', this.safeText(informeData.numeroRemision)],
+      ['Número de Móvil:', this.safeText(informeData.movil)],
+      ['Título del Trabajo:', this.safeText(informeData.tituloTrabajo || 'No especificado')],
+      ['Ubicación UNE:', this.safeText(informeData.ubicacionUNE || 'No especificada')],
+      ['Técnico Asignado:', this.safeText(informeData.tecnico)],
+      ['Fecha de Remisión:', this.safeText(informeData.fechaRemision)],
+      ['Autorizado por:', this.safeText(informeData.autorizadoPor)]
+    ];
+
+    remisionData.forEach(([label, value], index) => {
+      const yPos = currentY + (index * 6);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(this.safeText(label), margin, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(this.safeText(value), margin + 50, yPos);
+    });
+
+    return currentY + (remisionData.length * 6) + 15;
+  }
+
+  // Agregar datos financieros
+  static agregarDatosFinancieros(pdf, informeData, pageWidth, currentY, margin) {
+    // Solo mostrar si hay datos financieros
+    const subtotal = informeData.subtotal || 0;
+    const total = informeData.total || 0;
+    
+    if (subtotal === 0 && total === 0) {
+      return currentY; // No mostrar sección si no hay datos
+    }
+
+    // Título de sección
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('DATOS FINANCIEROS', margin, currentY);
+    currentY += 10;
+
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    // Datos financieros
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    
+    const financieroData = [
+      ['Subtotal:', this.formatearMoneda(subtotal)],
+      ['Total:', this.formatearMoneda(total)]
+    ];
+
+    financieroData.forEach(([label, value], index) => {
+      const yPos = currentY + (index * 6);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(this.safeText(label), margin, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(this.safeText(value), margin + 30, yPos);
+    });
+
+    return currentY + (financieroData.length * 6) + 15;
+  }
+
+  // Agregar observaciones técnicas
+  static agregarObservaciones(pdf, informeData, pageWidth, currentY, margin) {
+    // Título de sección
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('OBSERVACIONES TÉCNICAS', margin, currentY);
+    currentY += 10;
+
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    // Observaciones
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    
+    const observaciones = this.safeText(informeData.observaciones || 'Sin observaciones registradas');
+    const maxWidth = pageWidth - (margin * 2);
+    const lines = pdf.splitTextToSize(observaciones, maxWidth);
+    
+    lines.forEach((line, index) => {
+      pdf.text(line, margin, currentY + (index * 5));
+    });
+
+    return currentY + (lines.length * 5) + 15;
+  }
+
+  // Agregar imágenes al PDF - MEJORADO
+  static async agregarImagenes(pdf, imagenes, pageWidth, currentY, margin, pageHeight) {
+    console.log('🖼️ Iniciando procesamiento de imágenes para PDF:');
+    console.log('📋 Imágenes recibidas:', imagenes);
+    console.log('📋 Tipos de imagen:', typeof imagenes.antes, typeof imagenes.despues);
+    
+    // Título de sección
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('EVIDENCIAS FOTOGRÁFICAS', margin, currentY);
+    currentY += 10;
+
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    const imageWidth = 70;
+    const imageHeight = 50;
+    const imageSpacing = 10;
+
+    // Contador de imágenes procesadas exitosamente
+    let imagenesExitosas = 0;
+
+    try {
+      // Imagen "Antes"
+      if (imagenes.antes) {
+        console.log('📸 Procesando imagen "Antes":', imagenes.antes);
+        
+        try {
+          // Verificar si necesitamos una nueva página
+          if (currentY + imageHeight + 20 > pageHeight - 30) {
+            pdf.addPage();
+            currentY = margin;
+          }
+
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('ANTES:', margin, currentY);
+          currentY += 8;
+
+          // Convertir imagen a base64
+          const imgAntes = await this.processImageForPDF(imagenes.antes);
+          if (imgAntes) {
+            pdf.addImage(imgAntes, 'JPEG', margin, currentY, imageWidth, imageHeight);
+            currentY += imageHeight + imageSpacing;
+            imagenesExitosas++;
+            console.log('✅ Imagen "Antes" procesada exitosamente');
+          } else {
+            throw new Error('No se pudo procesar la imagen');
+          }
+          
+        } catch (errorAntes) {
+          console.error('❌ Error procesando imagen "Antes":', errorAntes);
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'italic');
+          pdf.setTextColor(255, 0, 0);
+          pdf.text('Error al cargar imagen "Antes"', margin, currentY);
+          pdf.setTextColor(0, 0, 0);
+          currentY += 15;
+        }
+      } else {
+        console.log('⚠️ No hay imagen "Antes" disponible');
+      }
+
+      // Imagen "Después"
+      if (imagenes.despues) {
+        console.log('📸 Procesando imagen "Después":', imagenes.despues);
+        
+        try {
+          // Verificar si necesitamos una nueva página
+          if (currentY + imageHeight + 20 > pageHeight - 30) {
+            pdf.addPage();
+            currentY = margin;
+          }
+
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('DESPUÉS:', margin, currentY);
+          currentY += 8;
+
+          const imgDespues = await this.processImageForPDF(imagenes.despues);
+          if (imgDespues) {
+            pdf.addImage(imgDespues, 'JPEG', margin, currentY, imageWidth, imageHeight);
+            currentY += imageHeight + imageSpacing;
+            imagenesExitosas++;
+            console.log('✅ Imagen "Después" procesada exitosamente');
+          } else {
+            throw new Error('No se pudo procesar la imagen');
+          }
+          
+        } catch (errorDespues) {
+          console.error('❌ Error procesando imagen "Después":', errorDespues);
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'italic');
+          pdf.setTextColor(255, 0, 0);
+          pdf.text('Error al cargar imagen "Después"', margin, currentY);
+          pdf.setTextColor(0, 0, 0);
+          currentY += 15;
+        }
+      } else {
+        console.log('⚠️ No hay imagen "Después" disponible');
+      }
+
+      // Resumen del procesamiento
+      console.log(`✅ Procesamiento completado: ${imagenesExitosas} de ${Object.keys(imagenes).length} imágenes`);
+      
+      // Si no se procesó ninguna imagen exitosamente y había imágenes disponibles
+      if (imagenesExitosas === 0 && (imagenes.antes || imagenes.despues)) {
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(128, 128, 128);
+        pdf.text('No se pudieron cargar las evidencias fotográficas', margin, currentY);
+        pdf.setTextColor(0, 0, 0);
+        currentY += 10;
+      } else if (imagenesExitosas === 0) {
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(128, 128, 128);
+        pdf.text('No hay evidencias fotográficas disponibles', margin, currentY);
+        pdf.setTextColor(0, 0, 0);
+        currentY += 10;
+      }
+
+    } catch (error) {
+      console.error('❌ Error general procesando imágenes:', error);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(255, 0, 0);
+      pdf.text('Error general al procesar las evidencias fotográficas', margin, currentY);
+      pdf.setTextColor(0, 0, 0);
+      currentY += 10;
+    }
+
+    return currentY;
+  }
+
+  // Procesar imagen para PDF - MEJORADO para Firebase Storage
+  static async processImageForPDF(imageUrl) {
+    console.log('🖼️ Procesando imagen para PDF:', imageUrl);
+    
+    return new Promise((resolve, reject) => {
+      // Validar que la URL no esté vacía
+      if (!imageUrl || typeof imageUrl !== 'string') {
+        console.error('❌ URL de imagen inválida:', imageUrl);
+        reject(new Error('URL de imagen inválida'));
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      // Timeout para evitar esperas infinitas
+      const timeout = setTimeout(() => {
+        console.error('❌ Timeout al cargar imagen:', imageUrl);
+        reject(new Error('Timeout al cargar imagen'));
+      }, 15000); // Aumentamos el timeout a 15 segundos
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        console.log('✅ Imagen cargada exitosamente, dimensiones:', img.width, 'x', img.height);
+        
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Redimensionar imagen manteniendo aspecto
+          const maxWidth = 800;
+          const maxHeight = 600;
+          let { width, height } = img;
+          
+          // Calcular nuevas dimensiones
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          const newWidth = width * ratio;
+          const newHeight = height * ratio;
+          
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          
+          // Fondo blanco para evitar transparencias
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, newWidth, newHeight);
+          
+          // Dibujar imagen redimensionada
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+          
+          // Convertir a base64 con alta calidad
+          const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+          console.log('✅ Imagen convertida a base64, tamaño:', Math.round(dataURL.length / 1024), 'KB');
+          resolve(dataURL);
+          
+        } catch (error) {
+          clearTimeout(timeout);
+          console.error('❌ Error procesando imagen en canvas:', error);
+          reject(error);
+        }
+      };
+      
+      img.onerror = (error) => {
+        clearTimeout(timeout);
+        console.error('❌ Error cargando imagen desde URL:', imageUrl, error);
+        reject(new Error(`Error cargando imagen desde: ${imageUrl}`));
+      };
+      
+      // Intentar cargar la imagen con diferentes métodos
+      try {
+        // Para URLs de Firebase Storage, asegurar que tenemos el token correcto
+        if (imageUrl.includes('firebasestorage.googleapis.com')) {
+          console.log('📦 Detectada imagen de Firebase Storage');
+          
+          // Si la URL no tiene token, intentar agregar parámetros de acceso público
+          if (!imageUrl.includes('token=') && !imageUrl.includes('alt=media')) {
+            const separator = imageUrl.includes('?') ? '&' : '?';
+            img.src = `${imageUrl}${separator}alt=media`;
+            console.log('🔗 URL modificada para acceso público:', img.src);
+          } else {
+            img.src = imageUrl;
+          }
+        } else {
+          img.src = imageUrl;
+        }
+        
+        console.log('📡 Iniciando carga de imagen desde:', img.src);
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error('❌ Error al asignar src a la imagen:', error);
+        reject(error);
+      }
+    });
+  }
+          console.log('✅ Imagen convertida a base64');
+          resolve(dataURL);
+          
+        } catch (error) {
+          clearTimeout(timeout);
+          console.error('❌ Error procesando imagen:', error);
+          reject(error);
+        }
+      };
+      
+      img.onerror = (error) => {
+        clearTimeout(timeout);
+        console.error('❌ Error cargando imagen:', imageUrl, error);
+        reject(new Error(`Error cargando imagen: ${imageUrl}`));
+      };
+      
+      // Intentar cargar la imagen
+      try {
+        img.src = imageUrl;
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error('❌ Error al asignar src:', error);
+        reject(error);
+      }
+    });
+  }
+
+  // Agregar pie de página
+  static agregarPiePagina(pdf, pageWidth, pageHeight, informeData) {
+    const footerY = pageHeight - 20;
+    
+    // Línea divisoria
+    pdf.setDrawColor(40, 116, 166);
+    pdf.setLineWidth(0.5);
+    pdf.line(20, footerY - 5, pageWidth - 20, footerY - 5);
+
+    // Información del pie
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    
+    pdf.text('Documento generado automáticamente por el sistema de gestión', 20, footerY);
+    pdf.text(`Fecha de generación: ${new Date().toLocaleString('es-ES')}`, 20, footerY + 4);
+    pdf.text(`ID del informe: ${this.safeText(informeData.idInforme || informeData.id)}`, 20, footerY + 8);
+    
+    // Página
+    const pageNumber = pdf.getCurrentPageInfo().pageNumber;
+    pdf.text(`Página ${pageNumber}`, pageWidth - 40, footerY);
+  }
+
+  // Descargar PDF
+  static descargarPDF(pdf, nombreArchivo = null) {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const fileName = nombreArchivo || `informe_tecnico_${timestamp}.pdf`;
+    pdf.save(fileName);
+  }
+
+  // Método principal para generar y descargar informe
+  static async generarYDescargarInforme(informeData, imagenes = {}) {
+    try {
+      const pdf = await this.generarPDFInforme(informeData, imagenes);
+      const movilSinPrefijo = (informeData.movil || '').replace(/^(Z70-|BO-)/, '');
+      const nombreArchivo = `informe_tecnico_${informeData.numeroRemision}_${movilSinPrefijo}.pdf`;
+      this.descargarPDF(pdf, nombreArchivo);
+      return true;
+    } catch (error) {
+      console.error('Error en generarYDescargarInforme:', error);
+      throw error;
+    }
+  }
+}
+
+export default PDFService;
