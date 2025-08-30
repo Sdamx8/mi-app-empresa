@@ -1,13 +1,26 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useDropzone } from 'react-dropzone';
+import { 
+  Save, 
+  FileText, 
+  Search,
+  Upload,
+  X,
+  Eye,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  Camera
+} from 'lucide-react';
 import { 
   collection, 
   query, 
   where, 
   getDocs, 
   addDoc,
-  serverTimestamp 
+  serverTimestamp,
+  updateDoc,
+  doc
 } from 'firebase/firestore';
 import { 
   ref, 
@@ -18,809 +31,709 @@ import {
 import { db, storage } from '../../firebaseConfig';
 import { useAuth } from '../../AuthContext';
 import { generarPDFInforme, previsualizarPDF } from '../../services/pdf';
-import { obtenerParametrosURL, limpiarParametrosURL } from '../../services/integracionModulos';
+import ActividadesRealizadas from './ActividadesRealizadas';
+
+// CORREGIDO: Componentes externos para evitar re-renders
+const FileUploader = React.memo(({ onFilesSelected, label, tipo }) => {
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      onFilesSelected(files);
+    }
+  };
+
+  return (
+    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        id={`upload-${tipo}`}
+      />
+      <label htmlFor={`upload-${tipo}`} className="cursor-pointer">
+        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        <p className="text-xs text-gray-500 mt-1">PNG, JPG hasta 10MB</p>
+      </label>
+    </div>
+  );
+});
+
+const ImageGallery = React.memo(({ imagenes, tipo, onEliminar }) => (
+  <div className="grid grid-cols-2 gap-4 mt-4">
+    {imagenes.map((imagen, index) => (
+      <div key={index} className="relative">
+        <img
+          src={imagen.url}
+          alt={`${tipo} ${index + 1}`}
+          className="w-full h-32 object-cover rounded-lg border"
+        />
+        <button
+          onClick={() => onEliminar(imagen, tipo)}
+          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    ))}
+  </div>
+));
+
+// Asignar displayNames para debugging
+FileUploader.displayName = 'FileUploader';
+ImageGallery.displayName = 'ImageGallery';
 
 /**
  * 📋 FORMULARIO DE INFORMES TÉCNICOS - VERSIÓN INTEGRADA
  * =====================================================
  * 
- * ✅ CARACTERÍSTICAS IMPLEMENTADAS:
- * - Integración completa con servicio PDF corregido
- * - Separación de evidencias ANTES y DESPUÉS
- * - Auto-carga de remisiones desde URL params
- * - Generación directa de PDF sin componentes intermedios
- * - Validación completa de formulario
- * - Estructura de datos compatible con el servicio PDF refactorizado
- * 
- * ✅ FLUJO COMPLETO:
- * 1. Buscar remisión por número
- * 2. Completar observaciones técnicas
- * 3. Subir evidencias fotográficas (ANTES/DESPUÉS)
- * 4. Generar PDF con todas las secciones corregidas
- * 5. Guardar informe en Firestore
+ * ✅ TODO EN UN SOLO ARCHIVO CON PROPS:
+ * - Búsqueda de remisiones
+ * - Formulario completo
+ * - Subida de imágenes
+ * - Generación de PDF
+ * - Guardado en Firestore
+ * - Validaciones
+ * - Integración con otros módulos via props
  */
 
-const FormularioInforme = () => {
-  // Estados principales
-  const [numeroRemision, setNumeroRemision] = useState('');
-  const [remisionData, setRemisionData] = useState(null);
-  const [observaciones, setObservaciones] = useState('');
-  const [imagenesAntes, setImagenesAntes] = useState([]);
-  const [imagenesDespues, setImagenesDespues] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [generandoPDF, setGenerandoPDF] = useState(false);
-  const [tipoImagen, setTipoImagen] = useState('antes'); // 'antes' o 'despues'
-
+const FormularioInforme = ({
+  remisionPrecargada = null,
+  autoGenerarPDF = false,
+  informe = null,
+  onGuardadoExitoso,
+  onError
+}) => {
   const { user } = useAuth();
 
-  // ✅ NUEVA FUNCIONALIDAD: Detectar parámetros URL al cargar
-  useEffect(() => {
-    const params = obtenerParametrosURL();
-    console.log('📍 Parámetros URL detectados:', params);
-    
-    if (params.remision) {
-      console.log('🔄 Auto-cargando remisión desde URL:', params.remision);
-      setNumeroRemision(params.remision);
-      
-      // Buscar automáticamente la remisión
-      const buscarAutomatico = async () => {
-        if (!numeroRemision) { // Solo si no hay ya una remisión cargada
-          await buscarRemisionPorNumero(params.remision);
-          
-          // Limpiar parámetros URL después de procesar
-          limpiarParametrosURL();
-        }
-      };
-      
-      buscarAutomatico();
-    }
-  }, []);
+  // Estados principales del formulario - CORREGIDO: inicialización segura con strings vacíos
+  const [formData, setFormData] = useState({
+    numeroRemision: '',
+    remisionEncontrada: null,
+    movil: '',
+    tituloTrabajo: '',
+    tecnico: '',
+    fechaRemision: '',
+    autorizo: '',
+    une: '',
+    subtotal: '',
+    total: '',
+    observacionesTecnicas: ''
+  });
 
-  // Función separada para buscar remisión por número (reutilizable)
-  const buscarRemisionPorNumero = async (numeroParam) => {
-    const numero = numeroParam || numeroRemision;
-    if (!numero.trim()) {
-      setErrors({ numeroRemision: 'Ingrese un número de remisión' });
-      return;
-    }
+  // Estados para imágenes - CORREGIDO: inicializados como arrays vacíos
+  const [imagenesAntes, setImagenesAntes] = useState([]);
+  const [imagenesDespues, setImagenesDespues] = useState([]);
 
-    setLoading(true);
-    setErrors({});
+  // Estado para materiales adicionales de actividades
+  const [materialesActividades, setMaterialesActividades] = useState([]);
+  
+  // NUEVO: Estado para datos consolidados de actividades (para PDF)
+  const [datosConsolidadosActividades, setDatosConsolidadosActividades] = useState(null);
 
+  // Estados de control - CORREGIDO: inicializados con valores seguros
+  const [loading, setLoading] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [generandoPDF, setGenerandoPDF] = useState(false);
+  const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
+  const [validaciones, setValidaciones] = useState({});
+  
+  // CRÍTICO: Estado calculado para validación del formulario (evita re-renders)
+  const [formularioCompleto, setFormularioCompleto] = useState(false);
+
+  // CORREGIDO: Función auxiliar para buscar remisión estabilizada con useCallback
+  const buscarRemisionPorNumero = useCallback(async (numeroRemision) => {
     try {
       const q = query(
         collection(db, 'remisiones'),
-        where('remision', '==', numero.trim())
+        where('remision', '==', String(numeroRemision).trim())
       );
       
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        const data = doc.data();
+        const remisionDoc = querySnapshot.docs[0];
+        const remisionData = remisionDoc.data();
         
-        // Procesar número de móvil
-        let movil = data.movil || '';
-        if (movil.startsWith('BO-')) {
-          movil = movil.replace('BO-', '');
-        }
-        if (!movil.startsWith('Z70-')) {
-          movil = `Z70-${movil}`;
-        }
-
-        // Generar ID del informe
-        const fecha = new Date();
-        const fechaFormat = fecha.toLocaleDateString('es-CO').replace(/\//g, '');
-        const idInforme = `IT-${numero}-${fechaFormat}`;
-
-        // CORRECCIÓN: Usar el campo 'remision' (string) de la colección como fecha y convertir a DD/MM/YYYY
-        const fechaRemisionFormateada = parseAndFormatRemisionDate(String(data.remision || ''));
-
-        const datosFormateados = {
-          ...data,
-          movil,
-          idInforme,
-          docId: doc.id,
-          remision: numero.trim(), // Número de remisión
-          tituloTrabajo: data.descripcion || 'No especificado', // Mapear descripcion a tituloTrabajo
-          tecnico: data.tecnico || data.autorizo || 'No especificado', // Usar tecnico o autorizo
-          autorizo: data.autorizo || 'No especificado',
-          une: data.une || 'No especificado',
-          subtotal: data.subtotal || '0',
-          total: data.total || data.subtotal || '0',
-          // Exponer el campo fecha_remision normalizado en formato DD/MM/YYYY
-          fecha_remision: fechaRemisionFormateada,
-          // Mantener el valor original del campo remision para referencia
-          remision_original: data.remision
-        };
-
-        setRemisionData(datosFormateados);
-        setNumeroRemision(numero.trim());
+        setFormData(prev => ({
+          ...prev,
+          remisionEncontrada: remisionData,
+          movil: String(remisionData.movil || ''),
+          tituloTrabajo: String(remisionData.descripcion || prev.tituloTrabajo || ''),
+          tecnico: String(remisionData.tecnico || ''),
+      fechaRemision: String(remisionData.fecha_remision || ''), // usar campo DD/MM/YYYY guardado en Firestore
+          autorizo: String(remisionData.autorizo || ''),
+          une: String(remisionData.une || ''),
+          subtotal: String(remisionData.subtotal || ''),
+          total: String(remisionData.total || '')
+        }));
         
-        console.log('✅ Remisión encontrada y procesada:', datosFormateados);
-      } else {
-        console.log('❌ No se encontró la remisión:', numero);
-        setErrors({ numeroRemision: 'No se encontró una remisión con este número' });
-        setRemisionData(null);
+        return true;
       }
+      return false;
     } catch (error) {
-      console.error('Error al buscar remisión:', error);
-      setErrors({ numeroRemision: 'Error al buscar la remisión' });
-    } finally {
-      setLoading(false);
+      console.error('Error buscando remisión:', error);
+      return false;
     }
-  };
+  }, []); // Sin dependencias porque no usa variables externas
 
-  // Helper: parse remision string and return DD/MM/YYYY or original string as fallback
-  const parseAndFormatRemisionDate = (remisionStr) => {
-    if (!remisionStr) return 'No especificada';
+  // CORREGIDO: Función para mostrar mensajes estabilizada
+  const mostrarMensaje = useCallback((tipo, texto) => {
+    setMensaje({ tipo, texto });
+    setTimeout(() => setMensaje({ tipo: '', texto: '' }), 5000);
+    
+    // Callback para el componente padre
+    if (tipo === 'error' && onError) {
+      onError(texto);
+    }
+  }, [onError]);
 
-    // Try direct Date parse (ISO or common formats)
-    const tryDate = (s) => {
-      const d = new Date(s);
-      return isNaN(d) ? null : d;
-    };
+  // --- CORREGIDO: Precargar datos si vienen de otro módulo (remisión) ---
+  useEffect(() => {
+    if (remisionPrecargada) {
+      console.log('🔄 Precargando remisión:', remisionPrecargada);
+      const remisionStr = String(remisionPrecargada || '');
+      
+      setFormData(prev => ({
+        ...prev,
+        numeroRemision: remisionStr,
+        tituloTrabajo: `Informe técnico - Remisión ${remisionStr}`
+      }));
+      
+      // Buscar automáticamente la remisión
+      buscarRemisionPorNumero(remisionStr);
+    }
+  }, [remisionPrecargada, buscarRemisionPorNumero]); // CORREGIDO: dependencias explícitas
 
-    let date = tryDate(remisionStr);
-
-    // If direct parse failed, try patterns
-    if (!date) {
-      // Patterns: YYYYMMDD, DDMMYYYY, YYYY-MM-DD, DD/MM/YYYY
-      const digitsOnly = remisionStr.replace(/[^0-9]/g, '');
-      if (/^\d{8}$/.test(digitsOnly)) {
-        // Could be YYYYMMDD or DDMMYYYY; try both
-        const ymd = `${digitsOnly.slice(0,4)}-${digitsOnly.slice(4,6)}-${digitsOnly.slice(6,8)}`;
-        date = tryDate(ymd) || null;
-        if (!date) {
-          const dmy = `${digitsOnly.slice(0,2)}-${digitsOnly.slice(2,4)}-${digitsOnly.slice(4,8)}`;
-          date = tryDate(dmy) || null;
-        }
+  // --- CORREGIDO: Precargar datos si estamos editando ---
+  useEffect(() => {
+    if (informe) {
+      console.log('📝 Cargando informe para editar:', informe);
+      setFormData({
+        numeroRemision: String(informe.numeroRemision || ''),
+        remisionEncontrada: informe.remisionEncontrada || null,
+        movil: String(informe.movil || ''),
+        tituloTrabajo: String(informe.tituloTrabajo || ''),
+        tecnico: String(informe.tecnico || ''),
+        fechaRemision: String(informe.fechaRemision || ''),
+        autorizo: String(informe.autorizo || ''),
+        une: String(informe.une || ''),
+        subtotal: String(informe.subtotal || ''),
+        total: String(informe.total || ''),
+        observacionesTecnicas: String(informe.observacionesTecnicas || '')
+      });
+      
+      if (informe.imagenesAntes && Array.isArray(informe.imagenesAntes)) {
+        setImagenesAntes(informe.imagenesAntes);
       }
-
-      // Try common separators (/, -, .)
-      if (!date && /[\/\-.]/.test(remisionStr)) {
-        const parts = remisionStr.split(/[\/\-.]/).map(p => p.trim());
-        if (parts.length === 3) {
-          // Heuristics: if first part length === 4 assume YYYY-MM-DD
-          let candidate;
-          if (parts[0].length === 4) candidate = `${parts[0]}-${parts[1]}-${parts[2]}`;
-          else candidate = `${parts[2]}-${parts[1]}-${parts[0]}`; // assume DD/MM/YYYY -> YYYY-MM-DD
-          date = tryDate(candidate) || null;
-        }
+      if (informe.imagenesDespues && Array.isArray(informe.imagenesDespues)) {
+        setImagenesDespues(informe.imagenesDespues);
       }
     }
+  }, [informe]); // CORREGIDO: solo depende de 'informe'
 
-    if (!date || isNaN(date)) return remisionStr; // return original if cannot parse
-
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yyyy = date.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
-
-  // Función para buscar remisión optimizada con useCallback (wrapper)
+  // CORREGIDO: Función para buscar remisión manual estabilizada
   const buscarRemision = useCallback(async () => {
-    await buscarRemisionPorNumero(numeroRemision);
-  }, [numeroRemision]);
+    const numeroRemision = String(formData.numeroRemision || '').trim();
+    
+    if (!numeroRemision) {
+      mostrarMensaje('error', 'Ingrese un número de remisión');
+      return;
+    }
 
-  // Configuración de dropzone para evidencias (ANTES y DESPUÉS separadas)
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
-    },
-    maxFiles: 10,
-    onDrop: async (acceptedFiles) => {
-      setUploading(true);
-      
-      try {
-        const uploadPromises = acceptedFiles.map(async (file) => {
-          const fileName = `${Date.now()}-${file.name}`;
-          const storageRef = ref(storage, `informes/${numeroRemision}/${tipoImagen}/${fileName}`);
-          
-          await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(storageRef);
-          
-          return {
-            id: Date.now() + Math.random(),
-            name: file.name,
-            url: downloadURL,
-            storagePath: `informes/${numeroRemision}/${tipoImagen}/${fileName}`,
-            tipo: tipoImagen
-          };
-        });
-
-        const uploadedFiles = await Promise.all(uploadPromises);
-        
-        // Agregar a la lista correspondiente según el tipo
-        if (tipoImagen === 'antes') {
-          setImagenesAntes(prev => [...prev, ...uploadedFiles]);
-        } else {
-          setImagenesDespues(prev => [...prev, ...uploadedFiles]);
-        }
-        
-        console.log(`✅ ${uploadedFiles.length} imágenes ${tipoImagen.toUpperCase()} subidas exitosamente`);
-      } catch (error) {
-        console.error('Error al subir evidencias:', error);
-        setErrors({ evidencias: 'Error al subir las imágenes' });
-      } finally {
-        setUploading(false);
-      }
-    }
-  });
-
-  // Eliminar evidencia optimizada with useCallback (actualizada para ANTES/DESPUÉS)
-  const eliminarEvidencia = useCallback(async (evidencia) => {
-    try {
-      // Eliminar de Firebase Storage
-      if (evidencia.storagePath) {
-        const storageRef = ref(storage, evidencia.storagePath);
-        await deleteObject(storageRef);
-      }
-      
-      // Eliminar del estado local correspondiente
-      if (evidencia.tipo === 'antes') {
-        setImagenesAntes(prev => prev.filter(e => e.id !== evidencia.id));
-      } else {
-        setImagenesDespues(prev => prev.filter(e => e.id !== evidencia.id));
-      }
-      
-      console.log(`🗑️ Evidencia ${evidencia.tipo.toUpperCase()} eliminada:`, evidencia.name);
-    } catch (error) {
-      console.error('Error al eliminar evidencia:', error);
-    }
-  }, []);
-
-  // Validar formulario optimizada con useCallback (actualizada)
-  const validarFormulario = useCallback(() => {
-    const newErrors = {};
-    
-    if (!numeroRemision.trim()) {
-      newErrors.numeroRemision = 'El número de remisión es obligatorio';
-    }
-    
-    if (!remisionData) {
-      newErrors.numeroRemision = 'Debe buscar una remisión válida';
-    }
-    
-    if (!observaciones.trim()) {
-      newErrors.observaciones = 'Las observaciones técnicas son obligatorias';
-    }
-    
-    // Validar que haya al menos una evidencia (ANTES o DESPUÉS)
-    const totalEvidencias = imagenesAntes.length + imagenesDespues.length;
-    if (totalEvidencias === 0) {
-      newErrors.evidencias = 'Debe subir al menos una evidencia fotográfica (ANTES o DESPUÉS)';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [numeroRemision, remisionData, observaciones, imagenesAntes, imagenesDespues]);
-
-  // Guardar informe optimizada con useCallback (actualizada)
-  const guardarInforme = useCallback(async () => {
-    if (!validarFormulario()) return;
-    
     setLoading(true);
-    
     try {
-      const informeData = {
-        idInforme: remisionData.idInforme,
-        numeroRemision: numeroRemision,
-        remisionData: remisionData,
-        observacionesTecnicas: observaciones, // Cambio de nombre para consistencia
-        imagenesAntes: imagenesAntes, // Evidencias ANTES separadas
-        imagenesDespues: imagenesDespues, // Evidencias DESPUÉS separadas
-        totalEvidencias: imagenesAntes.length + imagenesDespues.length,
-        estado: 'Generado con éxito',
-        creadoPor: user?.email || 'Usuario desconocido',
-        fechaCreacion: serverTimestamp(),
-        fechaModificacion: serverTimestamp()
-      };
+      const encontrada = await buscarRemisionPorNumero(numeroRemision);
       
-      const docRef = await addDoc(collection(db, 'informesTecnicos'), informeData);
-      
-      console.log('✅ Informe guardado con ID:', docRef.id);
-      
-      // Limpiar formulario
-      setNumeroRemision('');
-      setRemisionData(null);
-      setObservaciones('');
-      setImagenesAntes([]);
-      setImagenesDespues([]);
-      setErrors({});
-      
-      alert('✅ Informe guardado exitosamente');
+      if (encontrada) {
+        mostrarMensaje('success', '✅ Remisión encontrada y datos cargados');
+      } else {
+        mostrarMensaje('error', '❌ No se encontró la remisión');
+        setFormData(prev => ({ ...prev, remisionEncontrada: null }));
+      }
     } catch (error) {
-      console.error('Error al guardar informe:', error);
-      setErrors({ general: 'Error al guardar el informe' });
+      console.error('Error buscando remisión:', error);
+      mostrarMensaje('error', 'Error al buscar la remisión');
     } finally {
       setLoading(false);
     }
-  }, [numeroRemision, remisionData, observaciones, imagenesAntes, imagenesDespues, user?.email, validarFormulario]);
+  }, [formData.numeroRemision, buscarRemisionPorNumero, mostrarMensaje]); // CORREGIDO: dependencias explícitas
 
-  // ✅ NUEVA FUNCIÓN: Generar PDF usando el servicio corregido
-  const generarPDF = useCallback(async (solo_preview = false) => {
+  // CORREGIDO: Función para subir imagen estabilizada
+  const subirImagen = useCallback(async (file, tipo) => {
+    const numeroRemision = String(formData.numeroRemision || '').trim();
+    
+    if (!numeroRemision) {
+      mostrarMensaje('error', 'Primero busque una remisión');
+      return null;
+    }
+
+    try {
+      const timestamp = Date.now();
+      const fileName = `${numeroRemision}_${tipo}_${timestamp}_${file.name}`;
+      const storageRef = ref(storage, `informes/${fileName}`);
+      
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      
+      return {
+        url,
+        name: file.name,
+        storageRef: fileName,
+        uploadedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error subiendo imagen:', error);
+      mostrarMensaje('error', 'Error al subir la imagen');
+      return null;
+    }
+  }, [formData.numeroRemision, mostrarMensaje]); // CORREGIDO: dependencias explícitas
+
+  // CORREGIDO: Manejar subida de archivos ANTES estabilizada
+  const handleImagenesAntes = useCallback(async (files) => {
+    const nuevasImagenes = [];
+    for (const file of files) {
+      const imagen = await subirImagen(file, 'antes');
+      if (imagen) nuevasImagenes.push(imagen);
+    }
+    setImagenesAntes(prev => [...prev, ...nuevasImagenes]);
+  }, [subirImagen]); // CORREGIDO: dependencia de subirImagen
+
+  // CORREGIDO: Manejar subida de archivos DESPUÉS estabilizada
+  const handleImagenesDespues = useCallback(async (files) => {
+    const nuevasImagenes = [];
+    for (const file of files) {
+      const imagen = await subirImagen(file, 'despues');
+      if (imagen) nuevasImagenes.push(imagen);
+    }
+    setImagenesDespues(prev => [...prev, ...nuevasImagenes]);
+  }, [subirImagen]); // CORREGIDO: dependencia de subirImagen
+
+  // CORREGIDO: Eliminar imagen estabilizada
+  const eliminarImagen = useCallback(async (imagen, tipo) => {
+    try {
+      const storageRef = ref(storage, `informes/${imagen.storageRef}`);
+      await deleteObject(storageRef);
+      
+      if (tipo === 'antes') {
+        setImagenesAntes(prev => prev.filter(img => img.storageRef !== imagen.storageRef));
+      } else {
+        setImagenesDespues(prev => prev.filter(img => img.storageRef !== imagen.storageRef));
+      }
+      
+      mostrarMensaje('success', 'Imagen eliminada');
+    } catch (error) {
+      console.error('Error eliminando imagen:', error);
+      mostrarMensaje('error', 'Error al eliminar la imagen');
+    }
+  }, [mostrarMensaje]); // CORREGIDO: dependencia de mostrarMensaje
+
+  // CORREGIDO: Validar formulario estabilizada para evitar re-renders
+  const validarFormulario = useCallback(() => {
+    const errores = {};
+    
+    // CORREGIDO: Validación segura con String() para evitar errores de .trim()
+    const numeroRemision = String(formData.numeroRemision || '').trim();
+    const tituloTrabajo = String(formData.tituloTrabajo || '').trim();
+    const tecnico = String(formData.tecnico || '').trim();
+    const total = String(formData.total || '');
+    
+    if (!numeroRemision) errores.numeroRemision = 'Requerido';
+    if (!tituloTrabajo) errores.tituloTrabajo = 'Requerido';
+    if (!tecnico) errores.tecnico = 'Requerido';
+    if (!total || parseFloat(total) <= 0) errores.total = 'Debe ser mayor a 0';
+    
+    const esValido = Object.keys(errores).length === 0;
+    
+    setValidaciones(errores);
+    setFormularioCompleto(esValido); // CRÍTICO: Actualizar estado calculado
+    
+    return esValido;
+  }, [formData.numeroRemision, formData.tituloTrabajo, formData.tecnico, formData.total]); // CORREGIDO: dependencias específicas
+
+  // CRÍTICO: useEffect para validar automáticamente cuando cambien los datos
+  useEffect(() => {
+    validarFormulario();
+  }, [validarFormulario]);
+
+  // CORREGIDO: Generar PDF estabilizada
+  const generarPDF = useCallback(async (soloPreview = false) => {
     if (!validarFormulario()) {
-      alert('⚠️ Complete todos los campos requeridos antes de generar el PDF');
+      mostrarMensaje('error', 'Complete todos los campos requeridos');
       return;
     }
 
     setGenerandoPDF(true);
-    
     try {
-      // Estructurar datos exactamente como espera el servicio PDF
-      const datosInforme = {
-        // IDs y referencias
-        idInforme: remisionData.idInforme,
-        remision: numeroRemision,
-        
-        // Datos básicos de la remisión (ya procesados)
-        movil: remisionData.movil,
-        tituloTrabajo: remisionData.tituloTrabajo,
-        tecnico: remisionData.tecnico,
-        autorizo: remisionData.autorizo,
-        une: remisionData.une,
-        
-        // Fecha de remisión ya formateada
-        fecha_remision: remisionData.fecha_remision,
-        datosRemision: {
-          fecha_remision: remisionData.fecha_remision,
-          remision: remisionData.remision_original
-        },
-        
-        // Valores monetarios
-        subtotal: remisionData.subtotal,
-        total: remisionData.total,
-        
-        // Observaciones técnicas
-        observacionesTecnicas: observaciones,
-        
-        // Imágenes en el formato esperado por el servicio PDF
-        imagenesAntes: imagenesAntes,
-        imagenesDespues: imagenesDespues
-      };
+      console.log('📄 FormularioInforme: Preparando datos para PDF');
+      console.log('   >> datosConsolidadosActividades:', datosConsolidadosActividades);
+      console.log('   >> materialesActividades:', materialesActividades);
       
-      // Configuración del PDF
-      const opciones = {
-        abrirEnNuevaVentana: !solo_preview,
-        nombreArchivo: `Informe_Tecnico_${numeroRemision}.pdf`,
-        incluirLogo: true,
-        currentEmployee: {
-          nombre_completo: user?.displayName || user?.email || 'Usuario',
-          nombre: user?.displayName || user?.email || 'Usuario'
+      const datosInforme = {
+        idInforme: informe?.idInforme || `INF-${formData.numeroRemision}-${Date.now()}`,
+        remision: String(formData.numeroRemision || ''),
+        movil: String(formData.movil || ''),
+        tituloTrabajo: String(formData.tituloTrabajo || ''),
+        tecnico: String(formData.tecnico || ''),
+        autorizo: String(formData.autorizo || ''),
+        une: String(formData.une || ''),
+        fecha_remision: String(formData.fechaRemision || ''),
+        subtotal: String(formData.subtotal || ''),
+        total: String(formData.total || ''),
+        observacionesTecnicas: String(formData.observacionesTecnicas || ''),
+        materialesActividades, // NUEVO: Incluir materiales de actividades en PDF
+        datosConsolidadosActividades, // NUEVO: Incluir datos consolidados para sección 3 del PDF
+        imagenesAntes: imagenesAntes,
+        imagenesDespues: imagenesDespues,
+        datosRemision: {
+          fecha_remision: String(formData.fechaRemision || ''),
+          remision: String(formData.numeroRemision || '')
         }
       };
 
-      console.log('📄 Generando PDF con datos:', datosInforme);
-      console.log('⚙️ Opciones PDF:', opciones);
+      console.log('📄 FormularioInforme: Objeto datosInforme completo:', datosInforme);
 
-      // Llamar al servicio PDF corregido
-      if (solo_preview) {
-        await previsualizarPDF(datosInforme, opciones.currentEmployee);
+      const empleado = {
+        nombre_completo: user?.displayName || user?.email || 'Usuario',
+        nombre: user?.displayName || user?.email || 'Usuario'
+      };
+
+      if (soloPreview) {
+        await previsualizarPDF(datosInforme, empleado);
+        mostrarMensaje('success', '👁️ Vista previa generada');
       } else {
-        await generarPDFInforme(datosInforme, opciones);
+        await generarPDFInforme(datosInforme, {
+          abrirEnNuevaVentana: true,
+          nombreArchivo: `Informe_Tecnico_${String(formData.numeroRemision || 'sin_numero')}.pdf`,
+          currentEmployee: empleado
+        });
+        mostrarMensaje('success', '📄 PDF generado exitosamente');
       }
-      
-      console.log('✅ PDF generado exitosamente');
-      
     } catch (error) {
-      console.error('❌ Error generando PDF:', error);
-      alert(`Error al generar PDF: ${error.message}`);
+      console.error('Error generando PDF:', error);
+      mostrarMensaje('error', 'Error al generar PDF: ' + error.message);
     } finally {
       setGenerandoPDF(false);
     }
-  }, [validarFormulario, remisionData, numeroRemision, observaciones, imagenesAntes, imagenesDespues, user]);
+  }, [validarFormulario, mostrarMensaje, informe, formData, imagenesAntes, imagenesDespues, user, materialesActividades, datosConsolidadosActividades]); // ACTUALIZADO: incluir nuevos estados
 
-  // Objeto de datos del informe memorizado (actualizado)
-  // Objeto de datos del informe memorizado (actualizado)
-  const informeData = useMemo(() => {
-    if (!remisionData) return null;
-    
-    return {
-      idInforme: remisionData.idInforme,
-      numeroRemision: numeroRemision,
-      remisionData: remisionData,
-      observacionesTecnicas: observaciones,
-      imagenesAntes: imagenesAntes,
-      imagenesDespues: imagenesDespues,
-      totalEvidencias: imagenesAntes.length + imagenesDespues.length
-    };
-  }, [remisionData, numeroRemision, observaciones, imagenesAntes, imagenesDespues]);
+  // CORREGIDO: Guardar informe estabilizada
+  const guardarInforme = useCallback(async () => {
+    if (!validarFormulario()) {
+      mostrarMensaje('error', 'Complete todos los campos requeridos');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const informeData = {
+        ...formData,
+        imagenesAntes,
+        imagenesDespues,
+        materialesActividades, // NUEVO: Incluir materiales de actividades
+        datosConsolidadosActividades, // NUEVO: Incluir datos consolidados para recuperación
+        idInforme: informe?.idInforme || `INF-${formData.numeroRemision}-${Date.now()}`,
+        fechaCreacion: informe?.fechaCreacion || serverTimestamp(),
+        fechaActualizacion: serverTimestamp(),
+        creadoPor: user?.email || 'usuario',
+        estado: 'completado'
+      };
+
+      if (informe?.id) {
+        // Actualizar informe existente
+        await updateDoc(doc(db, 'informesTecnicos', informe.id), informeData);
+        mostrarMensaje('success', '✅ Informe actualizado exitosamente');
+      } else {
+        // Crear nuevo informe
+        const docRef = await addDoc(collection(db, 'informesTecnicos'), informeData);
+        informeData.id = docRef.id;
+        mostrarMensaje('success', '✅ Informe guardado exitosamente');
+      }
+      
+      // Callback para el componente padre
+      if (onGuardadoExitoso) {
+        onGuardadoExitoso(informeData);
+      }
+      
+      // Solo limpiar si es un nuevo informe
+      if (!informe) {
+        setFormData({
+          numeroRemision: '',
+          remisionEncontrada: null,
+          movil: '', tituloTrabajo: '', tecnico: '', fechaRemision: '',
+          autorizo: '', une: '', subtotal: '', total: '', observacionesTecnicas: ''
+        });
+        setImagenesAntes([]);
+        setImagenesDespues([]);
+        setValidaciones({});
+      }
+      
+    } catch (error) {
+      console.error('Error guardando informe:', error);
+      mostrarMensaje('error', 'Error al guardar el informe');
+    } finally {
+      setGuardando(false);
+    }
+  }, [validarFormulario, mostrarMensaje, formData, imagenesAntes, imagenesDespues, informe, user, onGuardadoExitoso, materialesActividades, datosConsolidadosActividades]); // ACTUALIZADO: incluir nuevos estados
+
+  // CORREGIDO: Handlers de onChange seguros para prevenir re-renders
+  const handleInputChange = useCallback((field) => (e) => {
+    const value = String(e.target.value || ''); // CORREGIDO: siempre string
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []); // Sin dependencias, es un handler puro
+
+  // Handler para recibir cambios de materiales desde ActividadesRealizadas
+  const handleMaterialesChange = useCallback((materiales) => {
+    setMaterialesActividades(materiales);
+  }, []);
+
+  // NUEVO: Handler para recibir datos consolidados de actividades (para PDF)
+  const handleDatosConsolidadosChange = useCallback((datosConsolidados) => {
+    console.log('📋 FormularioInforme: Recibiendo datos consolidados de ActividadesRealizadas:', datosConsolidados);
+    setDatosConsolidadosActividades(datosConsolidados);
+  }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      {/* Sección de búsqueda de remisión */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          🔍 Buscar Remisión
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      {/* Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+          <FileText className="w-8 h-8 text-blue-600 mr-3" />
+          {informe ? 'Editar Informe Técnico' : 'Nuevo Informe Técnico'}
         </h2>
-        
+        <p className="text-gray-600 mt-2">
+          {informe ? 'Modifique los campos necesarios' : 'Complete todos los campos para generar el informe'}
+        </p>
+      </div>
+
+      {/* Mensajes */}
+      {mensaje.texto && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mb-6 p-4 rounded-lg border ${
+            mensaje.tipo === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}
+        >
+          <div className="flex items-center">
+            {mensaje.tipo === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 mr-2" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 mr-2" />
+            )}
+            {mensaje.texto}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Sección 1: Búsqueda de Remisión */}
+      <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Search className="w-5 h-5 mr-2 text-blue-600" />
+          1. Datos de Remisión
+        </h3>
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Número de Remisión
-            </label>
             <input
               type="text"
-              value={numeroRemision}
-              onChange={(e) => setNumeroRemision(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ej: 1529"
+              value={String(formData.numeroRemision || '')}
+              onChange={handleInputChange('numeroRemision')}
+              placeholder="Número de remisión (ej: 20240101)"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                validaciones.numeroRemision ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
-            {errors.numeroRemision && (
-              <p className="mt-1 text-sm text-red-600">{errors.numeroRemision}</p>
+            {validaciones.numeroRemision && (
+              <p className="text-red-500 text-sm mt-1">{validaciones.numeroRemision}</p>
             )}
           </div>
+          <button
+            onClick={buscarRemision}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Buscando...' : 'Buscar'}
+          </button>
+        </div>
+        
+        {formData.remisionEncontrada && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 font-medium">✅ Remisión encontrada - Datos cargados automáticamente</p>
+          </div>
+        )}
+      </div>
+
+      {/* Sección 2: Datos del Trabajo */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-4">2. Datos del Trabajo</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Móvil</label>
+            <input
+              type="text"
+              value={String(formData.movil || '')}
+              onChange={handleInputChange('movil')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           
-          <div className="flex items-end">
-            <button
-              onClick={buscarRemision}
-              disabled={loading || !numeroRemision.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? '🔄 Buscando...' : '🔍 Buscar'}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+            <input
+              type="text"
+              value={String(formData.fechaRemision || '')}
+              onChange={handleInputChange('fechaRemision')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título del Trabajo *</label>
+            <input
+              type="text"
+              value={String(formData.tituloTrabajo || '')}
+              onChange={handleInputChange('tituloTrabajo')}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                validaciones.tituloTrabajo ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Ej: Reparación de carrocería"
+            />
+            {validaciones.tituloTrabajo && (
+              <p className="text-red-500 text-sm mt-1">{validaciones.tituloTrabajo}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Técnico *</label>
+            <input
+              type="text"
+              value={String(formData.tecnico || '')}
+              onChange={handleInputChange('tecnico')}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                validaciones.tecnico ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {validaciones.tecnico && (
+              <p className="text-red-500 text-sm mt-1">{validaciones.tecnico}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total *</label>
+            <input
+              type="number"
+              value={String(formData.total || '')}
+              onChange={handleInputChange('total')}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                validaciones.total ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {validaciones.total && (
+              <p className="text-red-500 text-sm mt-1">{validaciones.total}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Datos de la remisión */}
-      {remisionData && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            📋 Datos de la Remisión
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ID Informe
-              </label>
-              <input
-                type="text"
-                value={remisionData.idInforme}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número del Móvil
-              </label>
-              <input
-                type="text"
-                value={remisionData.movil}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título del Trabajo
-              </label>
-              <input
-                type="text"
-                value={remisionData.descripcion || 'N/A'}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Técnico Asignado
-              </label>
-              <input
-                type="text"
-                value={remisionData.tecnico || 'N/A'}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fecha de Remisión
-              </label>
-              <input
-                type="text"
-                value={remisionData.fecha_remision || 'N/A'}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Autorizado por
-              </label>
-              <input
-                type="text"
-                value={remisionData.autorizo || 'N/A'}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                UNE
-              </label>
-              <input
-                type="text"
-                value={remisionData.une || 'N/A'}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Subtotal
-              </label>
-              <input
-                type="text"
-                value={`$${remisionData.subtotal || '0'}`}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total (incluye IVA si aplica)
-              </label>
-              <input
-                type="text"
-                value={`$${remisionData.total || '0'}`}
-                readOnly
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-        </motion.div>
-      )}
+      {/* Sección 3: Actividades Realizadas */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-4">3. Actividades Realizadas</h3>
+        <ActividadesRealizadas
+          tituloTrabajo={formData.tituloTrabajo}
+          onMaterialesChange={handleMaterialesChange}
+          onDatosConsolidadosChange={handleDatosConsolidadosChange}
+        />
+      </div>
 
-      {/* Observaciones técnicas */}
-      {remisionData && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            📝 Observaciones Técnicas
-          </h2>
-          
-          <textarea
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-            rows={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describa las observaciones técnicas del servicio realizado..."
-          />
-          {errors.observaciones && (
-            <p className="mt-1 text-sm text-red-600">{errors.observaciones}</p>
-          )}
-        </motion.div>
-      )}
+      {/* Sección 4: Evidencias Fotográficas */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Camera className="w-5 h-5 mr-2 text-blue-600" />
+          4. Evidencias Fotográficas
+        </h3>
 
-      {/* Evidencias fotográficas */}
-      {remisionData && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            📸 Evidencias Fotográficas
-          </h2>
-          
-          {/* Selector de tipo de imagen */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de evidencia a subir:
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="antes"
-                  checked={tipoImagen === 'antes'}
-                  onChange={(e) => setTipoImagen(e.target.value)}
-                  className="mr-2"
-                />
-                📷 Imágenes ANTES
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="despues"
-                  checked={tipoImagen === 'despues'}
-                  onChange={(e) => setTipoImagen(e.target.value)}
-                  className="mr-2"
-                />
-                📷 Imágenes DESPUÉS
-              </label>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Imágenes ANTES */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">📸 ANTES ({imagenesAntes.length})</h4>
+            <FileUploader
+              onFilesSelected={handleImagenesAntes}
+              label="Subir fotos ANTES"
+              tipo="antes"
+            />
+            <ImageGallery
+              imagenes={imagenesAntes}
+              tipo="antes"
+              onEliminar={eliminarImagen}
+            />
           </div>
-          
-          {/* Dropzone para subir imágenes */}
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-              isDragActive
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <input {...getInputProps()} />
-            {uploading ? (
-              <div className="py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-600">Subiendo imágenes {tipoImagen.toUpperCase()}...</p>
-              </div>
-            ) : (
-              <div className="py-4">
-                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p className="mt-2 text-sm text-gray-600">
-                  {isDragActive 
-                    ? `Suelta las imágenes ${tipoImagen.toUpperCase()} aquí` 
-                    : `Arrastra imágenes ${tipoImagen.toUpperCase()} o haz clic para seleccionar`
-                  }
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
-              </div>
-            )}
-          </div>
-          
-          {errors.evidencias && (
-            <p className="mt-2 text-sm text-red-600">{errors.evidencias}</p>
-          )}
-          
-          {/* Lista de evidencias ANTES */}
-          {imagenesAntes.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3 text-green-700">
-                📷 Imágenes ANTES ({imagenesAntes.length})
-              </h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {imagenesAntes.map((evidencia) => (
-                  <div key={evidencia.id} className="relative group">
-                    <img
-                      src={evidencia.url}
-                      alt={evidencia.name}
-                      className="w-full h-32 object-cover rounded-lg border border-green-200"
-                    />
-                    <div className="absolute top-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                      ANTES
-                    </div>
-                    <button
-                      onClick={() => eliminarEvidencia(evidencia)}
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Lista de evidencias DESPUÉS */}
-          {imagenesDespues.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3 text-blue-700">
-                📷 Imágenes DESPUÉS ({imagenesDespues.length})
-              </h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {imagenesDespues.map((evidencia) => (
-                  <div key={evidencia.id} className="relative group">
-                    <img
-                      src={evidencia.url}
-                      alt={evidencia.name}
-                      className="w-full h-32 object-cover rounded-lg border border-blue-200"
-                    />
-                    <div className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      DESPUÉS
-                    </div>
-                    <button
-                      onClick={() => eliminarEvidencia(evidencia)}
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Resumen de evidencias */}
-          {(imagenesAntes.length > 0 || imagenesDespues.length > 0) && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
-                📊 Total evidencias: {imagenesAntes.length + imagenesDespues.length} 
-                ({imagenesAntes.length} ANTES, {imagenesDespues.length} DESPUÉS)
-              </p>
-            </div>
-          )}
-        </motion.div>
-      )}
 
-      {/* Botones de acción */}
-      {remisionData && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          {/* Imágenes DESPUÉS */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">📸 DESPUÉS ({imagenesDespues.length})</h4>
+            <FileUploader
+              onFilesSelected={handleImagenesDespues}
+              label="Subir fotos DESPUÉS"
+              tipo="despues"
+            />
+            <ImageGallery
+              imagenes={imagenesDespues}
+              tipo="despues"
+              onEliminar={eliminarImagen}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Botones de Acción */}
+      <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-200">
+        <button
+          onClick={() => generarPDF(true)}
+          disabled={generandoPDF || loading}
+          className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
         >
-          <div className="flex flex-col sm:flex-row gap-4 justify-end">
-            <button
-              onClick={() => generarPDF(true)}
-              disabled={generandoPDF || !validarFormulario()}
-              className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generandoPDF ? '🔄 Generando...' : '👁️ Vista Previa PDF'}
-            </button>
-            
-            <button
-              onClick={() => generarPDF(false)}
-              disabled={generandoPDF || !validarFormulario()}
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generandoPDF ? '🔄 Generando...' : '📄 Generar PDF'}
-            </button>
-            
-            <button
-              onClick={guardarInforme}
-              disabled={loading || !validarFormulario()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? '💾 Guardando...' : '💾 Guardar Informe'}
-            </button>
+          <Eye className="w-4 h-4" />
+          {generandoPDF ? 'Generando...' : 'Vista Previa PDF'}
+        </button>
+
+        <button
+          onClick={() => generarPDF(false)}
+          disabled={generandoPDF || loading}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" />
+          {generandoPDF ? 'Generando...' : 'Generar PDF'}
+        </button>
+
+        <button
+          onClick={guardarInforme}
+          disabled={guardando || loading}
+          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {guardando ? 'Guardando...' : (informe ? 'Actualizar' : 'Guardar')}
+        </button>
+      </div>
+
+      {/* Resumen del Estado */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium">Estado del formulario:</span>
+          <div className="flex items-center gap-4">
+            <span>Evidencias: {imagenesAntes.length + imagenesDespues.length}</span>
+            <span className={`font-medium ${
+              formularioCompleto ? 'text-green-600' : 'text-amber-600'
+            }`}>
+              {formularioCompleto ? '✅ Completo' : '⚠️ Incompleto'}
+            </span>
           </div>
-          
-          {errors.general && (
-            <p className="mt-2 text-sm text-red-600">{errors.general}</p>
-          )}
-          
-          {/* Información de estado del formulario */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              ✅ Estado del formulario: 
-              {validarFormulario() ? ' Listo para generar PDF' : ' Complete los campos requeridos'}
-            </p>
-            {informeData && (
-              <p className="text-xs text-blue-600 mt-1">
-                📊 Evidencias: {informeData.totalEvidencias} | 
-                📝 Observaciones: {observaciones.length} caracteres
-              </p>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
+        </div>
+      </div>
+    </div>
   );
 };
 

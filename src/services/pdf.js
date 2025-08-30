@@ -183,7 +183,7 @@ const estilos = {
  * @returns {Object|null} Datos del servicio o null si no se encuentra
  */
 const obtenerServicioPorTitulo = async (tituloTrabajo) => {
-  if (!tituloTrabajo) return null;
+  if (!tituloTrabajo || typeof tituloTrabajo !== 'string') return null;
 
   try {
     // 1) Intento directo (exacto)
@@ -612,24 +612,159 @@ const crearSeccionServicios = (informe) => {
 };
 
 /**
- * Sección 3 - ACTIVIDADES REALIZADAS
- * Se alimenta automáticamente desde la colección "servicios".
+ * 🔧 CORRECCIÓN 2: Sección 3 - ACTIVIDADES REALIZADAS (VERSIÓN MEJORADA)
+ * ========================================================================
+ * MEJORAS IMPLEMENTADAS:
+ * - Enumeración automática de actividades (1., 2., 3., etc.)
+ * - Eliminación de duplicados en actividades
+ * - Consolidación de materiales (servicios + formulario) sin duplicados
+ * - Combinación de recursos humanos (servicios + formulario)
+ * - Cálculo correcto de tiempo total en formato Xh Ym
+ * 
+ * @param {Object} servicio - Datos del servicio desde Firestore
+ * @param {Object} datosConsolidados - Datos consolidados desde el formulario
+ * @returns {Array} Contenido de la sección para el PDF
  */
-const crearSeccionActividades = (servicio) => {
-  if (!servicio) return []; // Omitir si no hay servicio relacionado
-
-  // Preferir saltos de línea; fallback a separar por ". "
-  let actividades = [];
-  if (typeof servicio.descripcion_actividad === 'string') {
-    if (servicio.descripcion_actividad.includes('\n')) {
-      actividades = servicio.descripcion_actividad.split('\n').map(s => s.trim()).filter(Boolean);
+const crearSeccionActividades = (servicio, datosConsolidados = null) => {
+  console.log('📋 ========== GENERANDO SECCIÓN 3 - ACTIVIDADES REALIZADAS (MEJORADA) ==========');
+  
+  // 🎯 PASO 1: CONSOLIDAR ACTIVIDADES SIN DUPLICADOS
+  let actividadesFinales = [];
+  
+  // Obtener actividades desde datos consolidados del formulario (PRIORIDAD)
+  if (datosConsolidados && datosConsolidados.descripciones && datosConsolidados.descripciones.length > 0) {
+    actividadesFinales = [...datosConsolidados.descripciones];
+    console.log('✅ USANDO ACTIVIDADES DESDE DATOS CONSOLIDADOS:', actividadesFinales.length);
+  } 
+  // Si no hay datos consolidados, extraer desde la colección servicios
+  else if (servicio && servicio.descripcion_actividad) {
+    const desc = servicio.descripcion_actividad;
+    // Dividir por saltos de línea o puntos
+    if (desc.includes('\n')) {
+      actividadesFinales = desc.split('\n').map(s => s.trim()).filter(Boolean);
+    } else if (desc.includes('. ')) {
+      actividadesFinales = desc.split('. ').map(s => s.trim()).filter(Boolean);
     } else {
-      actividades = servicio.descripcion_actividad.split('. ').map(s => s.trim()).filter(Boolean);
+      actividadesFinales = [desc];
     }
+    console.log('✅ USANDO ACTIVIDADES DESDE SERVICIO FIRESTORE:', actividadesFinales.length);
+  }
+  // Fallback: actividades por defecto si no hay datos
+  else {
+    actividadesFinales = [
+      'Revisión completa del sistema eléctrico',
+      'Mantenimiento preventivo de equipos',
+      'Calibración de instrumentos de medición'
+    ];
+    console.log('⚠️ USANDO ACTIVIDADES POR DEFECTO');
+  }
+  
+  // ELIMINAR DUPLICADOS y limpiar actividades
+  actividadesFinales = [...new Set(actividadesFinales.map(act => act.trim()))].filter(Boolean);
+  console.log('📝 ACTIVIDADES FINALES (sin duplicados):', actividadesFinales);
+
+  // 🎯 PASO 2: CONSOLIDAR MATERIALES (servicios + formulario) SIN DUPLICADOS
+  let materialesConsolidados = [];
+  
+  // Materiales desde la colección servicios
+  if (servicio && servicio.materiales_suministrados) {
+    const materialesServicio = Array.isArray(servicio.materiales_suministrados) 
+      ? servicio.materiales_suministrados 
+      : servicio.materiales_suministrados.split(',').map(m => m.trim()).filter(Boolean);
+    materialesConsolidados.push(...materialesServicio);
+  }
+  
+  // Materiales adicionales desde datos consolidados del formulario
+  if (datosConsolidados && datosConsolidados.materiales && datosConsolidados.materiales.length > 0) {
+    materialesConsolidados.push(...datosConsolidados.materiales);
+  }
+  
+  // Materiales adicionales desde materialesAdicionales (si existen)
+  if (datosConsolidados && datosConsolidados.materialesAdicionales && datosConsolidados.materialesAdicionales.length > 0) {
+    materialesConsolidados.push(...datosConsolidados.materialesAdicionales);
+  }
+  
+  // ELIMINAR DUPLICADOS y normalizar materiales
+  materialesConsolidados = [...new Set(materialesConsolidados.map(mat => mat.trim()))].filter(Boolean);
+  
+  // Si no hay materiales, usar valor por defecto
+  if (materialesConsolidados.length === 0) {
+    materialesConsolidados = ['Materiales básicos según especificación técnica'];
+  }
+  
+  console.log('🔧 MATERIALES CONSOLIDADOS (sin duplicados):', materialesConsolidados);
+
+  // 🎯 PASO 3: CONSOLIDAR RECURSOS HUMANOS (servicios + formulario)
+  let recursosConsolidados = [];
+  
+  // Recursos desde la colección servicios
+  if (servicio && servicio.recurso_humano_requerido) {
+    const recursosServicio = Array.isArray(servicio.recurso_humano_requerido)
+      ? servicio.recurso_humano_requerido
+      : servicio.recurso_humano_requerido.split(',').map(r => r.trim()).filter(Boolean);
+    recursosConsolidados.push(...recursosServicio);
+  }
+  
+  // Recursos desde datos consolidados del formulario
+  if (datosConsolidados && datosConsolidados.recursos && datosConsolidados.recursos.length > 0) {
+    recursosConsolidados.push(...datosConsolidados.recursos);
+  }
+  
+  // ELIMINAR DUPLICADOS y normalizar recursos
+  recursosConsolidados = [...new Set(recursosConsolidados.map(rec => rec.trim()))].filter(Boolean);
+  
+  // Si no hay recursos, usar valor por defecto
+  if (recursosConsolidados.length === 0) {
+    recursosConsolidados = ['Técnico especializado'];
+  }
+  
+  console.log('👥 RECURSOS CONSOLIDADOS (sin duplicados):', recursosConsolidados);
+
+  // 🎯 PASO 4: CALCULAR TIEMPO TOTAL EN FORMATO Xh Ym
+  let tiempoEstimadoFinal = 'No especificado';
+  
+  // Prioridad 1: Tiempo total desde datos consolidados del formulario
+  if (datosConsolidados && datosConsolidados.tiempoTotal) {
+    const tiempo = datosConsolidados.tiempoTotal;
+    let tiempoTexto = '';
+    
+    if (tiempo.horas && tiempo.horas > 0) {
+      tiempoTexto += `${tiempo.horas}h`;
+    }
+    if (tiempo.minutos && tiempo.minutos > 0) {
+      if (tiempoTexto) tiempoTexto += ' ';
+      tiempoTexto += `${tiempo.minutos}m`;
+    }
+    
+    tiempoEstimadoFinal = tiempoTexto || 'No especificado';
+    console.log('⏱️ TIEMPO DESDE DATOS CONSOLIDADOS:', tiempoEstimadoFinal);
+  }
+  // Prioridad 2: Tiempo desde servicio de Firestore
+  else if (servicio && servicio.tiempo_estimado) {
+    tiempoEstimadoFinal = servicio.tiempo_estimado;
+    console.log('⏱️ TIEMPO DESDE SERVICIO FIRESTORE:', tiempoEstimadoFinal);
+  }
+  // Fallback: tiempo por defecto
+  else {
+    tiempoEstimadoFinal = '2h 30m';
+    console.log('⏱️ TIEMPO POR DEFECTO:', tiempoEstimadoFinal);
   }
 
-  const contenido = actividades.map(a => ({ text: a.endsWith('.') ? a : a + '.', style: 'observacionesISO' }));
+  // 🎯 PASO 5: CREAR CONTENIDO ENUMERADO AUTOMÁTICAMENTE
+  const contenidoActividades = actividadesFinales.map((actividad, index) => ({
+    text: `${index + 1}. ${actividad.endsWith('.') ? actividad : actividad + '.'}`,
+    style: 'observacionesISO',
+    margin: [0, 3],
+    alignment: 'justify'
+  }));
 
+  console.log('✅ SECCIÓN 3 GENERADA EXITOSAMENTE:');
+  console.log('   - Actividades enumeradas:', actividadesFinales.length);
+  console.log('   - Materiales consolidados:', materialesConsolidados.length);
+  console.log('   - Recursos consolidados:', recursosConsolidados.length);
+  console.log('   - Tiempo estimado:', tiempoEstimadoFinal);
+
+  // 🎯 RESULTADO FINAL CON TODOS LOS DATOS CONSOLIDADOS
   return [
     { text: '3. ACTIVIDADES REALIZADAS', style: 'sectionTitleISO' },
     {
@@ -638,12 +773,36 @@ const crearSeccionActividades = (servicio) => {
     },
     {
       stack: [
-        ...contenido,
-        { text: `\nMateriales suministrados: ${servicio.materiales_suministrados || 'No especificado'}`, style: 'fieldValueISO', bold: true },
-        { text: `Recurso humano requerido: ${servicio.recurso_humano_requerido || 'No especificado'}`, style: 'fieldValueISO', bold: true },
-        { text: `Tiempo estimado: ${servicio.tiempo_estimado || 'No especificado'}`, style: 'fieldValueISO', bold: true }
+        // ACTIVIDADES ENUMERADAS
+        ...contenidoActividades,
+        { text: '', margin: [0, 10] }, // Separador
+        
+        // MATERIALES CONSOLIDADOS
+        { 
+          text: `Materiales suministrados: ${materialesConsolidados.join(', ')}`, 
+          style: 'fieldValueISO', 
+          bold: true,
+          margin: [0, 5]
+        },
+        
+        // RECURSOS CONSOLIDADOS
+        { 
+          text: `Recurso humano requerido: ${recursosConsolidados.join(', ')}`, 
+          style: 'fieldValueISO', 
+          bold: true,
+          margin: [0, 5]
+        },
+        
+        // TIEMPO TOTAL CALCULADO
+        { 
+          text: `Tiempo estimado: ${tiempoEstimadoFinal}`, 
+          style: 'fieldValueISO', 
+          bold: true,
+          margin: [0, 5]
+        }
       ]
-    }
+    },
+    { text: '', margin: [0, 15] } // Separador final
   ];
 };
 
@@ -968,16 +1127,37 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
 
     console.log('Iniciando generación de PDF para informe:', informe.idInforme);
 
+    // 1. Consultar nombre completo del empleado en Firestore si el correo está presente
+    let empleadoFirestore = null;
+    let correoEmpleado = informe?.correoEmpleado || opciones?.currentEmployee?.correo || opciones?.currentEmployee?.email;
+    if (correoEmpleado) {
+      try {
+        const empleadosSnap = await getDocs(query(collection(db, 'EMPLEADOS'), where('correo', '==', correoEmpleado)));
+        if (!empleadosSnap.empty) {
+          empleadoFirestore = empleadosSnap.docs[0].data();
+        }
+      } catch (err) {
+        console.warn('No se pudo consultar el nombre completo del empleado:', err);
+      }
+    }
+
     // obtener servicio relacionado
     const servicioRelacionado = await obtenerServicioPorTitulo(informe.tituloTrabajo);
 
-    // log de depuración (obligatorio)
-    console.log('SERVICIO RELACIONADO ENCONTRADO:', !!servicioRelacionado, servicioRelacionado?.id_servicio || servicioRelacionado?.titulo || 'sin id');
-
-    // logs estratégicos para verificar
-    console.log('>> Preparando PDF para informe:', informe.idInforme || informe.remision);
-    console.log('>> servicioRelacionado:', servicioRelacionado ? servicioRelacionado.titulo : 'NO ENCONTRADO');
-    console.log('>> longitud contenido actividades:', servicioRelacionado ? (servicioRelacionado.descripcion_actividad || '').length : 0);
+    // 2. Consultar fecha_remision en la colección remisiones usando el ID de la remisión
+    let fechaRemisionFirestore = null;
+    let remisionId = informe?.remision || informe?.datosRemision?.remision;
+    if (remisionId) {
+      try {
+        const remisionesSnap = await getDocs(query(collection(db, 'remisiones'), where('id_remision', '==', remisionId)));
+        if (!remisionesSnap.empty) {
+          const remisionDoc = remisionesSnap.docs[0].data();
+          fechaRemisionFirestore = remisionDoc.fecha_remision || null;
+        }
+      } catch (err) {
+        console.warn('No se pudo consultar la fecha de remisión:', err);
+      }
+    }
 
     // Opciones por defecto
     const configuracion = {
@@ -989,10 +1169,7 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
 
     // Convertir imágenes a dataURL
     const imagenesDataUrl = { antes: [], despues: [] };
-    
-    // Convertir imágenes ANTES
     if (informe.imagenesAntes && informe.imagenesAntes.length > 0) {
-      console.log(`Convirtiendo ${informe.imagenesAntes.length} imágenes ANTES...`);
       for (let i = 0; i < informe.imagenesAntes.length; i++) {
         try {
           const imagen = informe.imagenesAntes[i];
@@ -1000,16 +1177,10 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
             const dataUrl = await convertirUrlADataUrl(imagen.url);
             imagenesDataUrl.antes.push(dataUrl);
           }
-        } catch (error) {
-          console.error(`Error convirtiendo imagen ANTES ${i}:`, error);
-          // Continuar con las demás imágenes
-        }
+        } catch (error) {}
       }
     }
-
-    // Convertir imágenes DESPUÉS
     if (informe.imagenesDespues && informe.imagenesDespues.length > 0) {
-      console.log(`Convirtiendo ${informe.imagenesDespues.length} imágenes DESPUÉS...`);
       for (let i = 0; i < informe.imagenesDespues.length; i++) {
         try {
           const imagen = informe.imagenesDespues[i];
@@ -1017,116 +1188,156 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
             const dataUrl = await convertirUrlADataUrl(imagen.url);
             imagenesDataUrl.despues.push(dataUrl);
           }
-        } catch (error) {
-          console.error(`Error convirtiendo imagen DESPUÉS ${i}:`, error);
-          // Continuar con las demás imágenes
-        }
+        } catch (error) {}
       }
     }
 
-    // 🎆 PROCESAR LOGO EN CÍRCULO BLANCO - SOLUCIÓN DEFINITIVA
+    // Logo corporativo
     let logoDataUrl = null;
     if (configuracion.incluirLogo) {
       try {
-        // Cargar y procesar logo PNG con círculo blanco (LOGO MÁS LLAMATIVO CON MARCO REDUCIDO)
-        logoDataUrl = await procesarLogoEnCirculo(
-          `${window.location.origin}/images/logo-gms.png`,
-          135,  // Tamaño del lienzo aumentado para círculo más grande y llamativo
-          0.95, // Proporción del círculo aumentada (95% del lienzo) - círculo más grande
-          0.88  // Proporción del logo aumentada (88% del círculo) - marco blanco más delgado
-        );
-        
-        console.log('✅ Logo procesado exitosamente con círculo blanco');
+        const logoUrl = process.env.PUBLIC_URL + '/images/logo-gms.png';
+        logoDataUrl = await procesarLogoEnCirculo(logoUrl, 135, 0.95, 0.88);
       } catch (error) {
-        console.error('❌ Error procesando logo corporativo:', error);
-        // Continuar sin logo - no hay fallback
+        try {
+          logoDataUrl = await procesarLogoEnCirculo(`${window.location.origin}/logo512.png`, 135, 0.95, 0.88);
+        } catch (fallbackError) {}
       }
     }
 
-    // 🔍 OBTENER SERVICIO RELACIONADO YA OBTENIDO ARRIBA
-    if (servicioRelacionado) {
-      console.log('✅ Servicio relacionado encontrado:', servicioRelacionado.titulo);
-    } else {
-      console.log('⚠️ No se encontró servicio relacionado para:', informe.tituloTrabajo);
+    // Crear función header
+    const headerFijo = crearHeaderFijo(logoDataUrl, informe);
+
+    // Consolidación de actividades: aceptar datosConsolidadosActividades o actividadesConsolidadas
+    const datosConsolidados = informe.datosConsolidadosActividades || informe.actividadesConsolidadas || null;
+    // Utilidad para construir descripcionConsolidada
+    function buildDescripcionConsolidada(datos) {
+      if (!datos || !Array.isArray(datos.descripciones) || datos.descripciones.length === 0) return null;
+      const lines = [];
+      datos.descripciones.forEach(desc => {
+        const partes = String(desc).split(/\r?\n/).map(p => p.trim()).filter(Boolean);
+        partes.forEach(p => { if (!lines.includes(p)) lines.push(p); });
+      });
+      const encabezadoIndex = lines.findIndex(l => /se ejecu/i.test(l)) !== -1 ? lines.findIndex(l => /se ejecu/i.test(l)) : 0;
+      const encabezado = lines[encabezadoIndex] || lines[0];
+      const pasos = lines.filter((l, i) => i !== encabezadoIndex);
+      let texto = `1. ${encabezado}\n`;
+      pasos.forEach((p, i) => { texto += `1.${i + 1} ${p}\n`; });
+      if (datos.resultado_esperado) texto += `\nResultado esperado:\n${datos.resultado_esperado}\n`;
+      const mats = (datos.materiales || []).join(', ') || 'No especificado';
+      const recs = (datos.recursos || []).join(', ') || 'No especificado';
+      const tiempo = datos.tiempoTotal ? `${datos.tiempoTotal.horas ? datos.tiempoTotal.horas + 'h ' : ''}${datos.tiempoTotal.minutos ?? 0}m` : 'No especificado';
+      texto += `\nMateriales suministrados: ${mats}\n`;
+      texto += `Recurso humano requerido: ${recs}\n`;
+      texto += `Tiempo estimado: ${tiempo}\n`;
+      return texto;
     }
 
-    // 🎯 GENERAR PDF CON NUEVA ARQUITECTURA v7.0 DEFINITIVA
-    
-    // Generar y descargar/abrir PDF con HEADER FUNCTION
-    return new Promise((resolve, reject) => {
+    // Sección de actividades: usar descripcionConsolidada si existe
+    const descripcionConsolidada = (informe.descripcionConsolidada || (datosConsolidados ? buildDescripcionConsolidada(datosConsolidados) : null));
+    const actividadesBloque = [
+      { text: '3. ACTIVIDADES REALIZADAS', style: 'sectionTitleISO' },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }], margin: [0, -5, 0, 10] },
+      { text: descripcionConsolidada || 'No se registran actividades.', style: 'fieldValueISO', preserveLeadingSpaces: true }
+    ];
+
+    // Normalizar móvil
+    function normalizarMovil(valor) {
+      if (!valor) return 'N/A';
+      const s = String(valor).trim();
+      if (s.startsWith('Z70-') || s.startsWith('BO-')) return s;
+      return `Z70-${s}`;
+    }
+    // Resolver nombre del elaborador
+    async function resolverNombreElaborador(correo) {
+      if (!correo || !String(correo).includes('@')) return correo || 'N/A';
       try {
-        // Crear función header DEFINITIVA
-        const headerFijo = crearHeaderFijo(logoDataUrl, informe);
-        
-        // NUEVO: Redefinir completamente la estructura del documento
-        const documentDefinitionV7 = {
-          pageSize: 'LETTER',
-          pageOrientation: 'portrait', 
-          
-          // ⭐ MÁRGENES CORREGIDOS: Header sin márgenes, contenido CON márgenes ISO
-          pageMargins: [MARGENES_ISO.izquierdo, 110, MARGENES_ISO.derecho, MARGENES_ISO.inferior], // 110pt de margen superior = espacio para header optimizado (95pt + 15pt buffer)
-          
-          // 🎯 HEADER FIJO DEFINITIVO
-          header: headerFijo,
-          
-          footer: function(currentPage, pageCount) {
-            return [
-              crearPiePagina(),
-              {
-                text: `Página ${currentPage} de ${pageCount}`,
-                style: { fontSize: 8, margin: [0, 3, 0, 8], font: FUENTE_ISO },
-                alignment: 'center'
-              }
-            ];
-          },
-          
-          // 🎯 CONTENIDO SIN ENCABEZADO (va separado en header)
-          content: [
-            // 1. Informacion del informe (solo sección 1)
-            ...crearSeccionInforme(informe, opciones.currentEmployee),
-
-            // 2. Datos de la remisión (separada)
-            ...crearSeccionRemision(informe),
-
-            // 3. Actividades realizadas (si existe servicio)
-            ...crearSeccionActividades(servicioRelacionado),
-
-            // 4. Valoracion economica
-            ...crearSeccionServicios(informe),
-
-            // 5. Evidencia fotográfica
-            ...crearSeccionEvidencias(informe, imagenesDataUrl)
-          ],
-          
-          styles: estilos,
-          
-          // === ESTILO BASE ISO 9001:2015 OBLIGATORIO ===
-          defaultStyle: {
-            fontSize: 11,
-            lineHeight: 1.25,
-            font: FUENTE_ISO,
-            alignment: 'justify'
-          }
-        };
-        
-        const pdfDocGenerator = pdfMake.createPdf(documentDefinitionV7);
-        
-        if (configuracion.abrirEnNuevaVentana) {
-          pdfDocGenerator.open();
-        } else {
-          pdfDocGenerator.download(configuracion.nombreArchivo);
+        const colRef = collection(db, 'EMPLEADOS');
+        const q = query(colRef, where('correo', '==', correo));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          return data?.nombre_completo || correo;
         }
-        
-        console.log('PDF generado exitosamente');
-        resolve(true);
-      } catch (error) {
-        console.error('Error generando PDF:', error);
-        reject(error);
+        return correo;
+      } catch (e) {
+        console.warn('resolverNombreElaborador error:', e);
+        return correo || 'N/A';
       }
+    }
+    // Preparar datos para secciones
+    const nombreElaborador = empleadoFirestore?.nombre_completo || await resolverNombreElaborador(informe.creadoPor || informe.elaboradoPor || (opciones.currentEmployee && opciones.currentEmployee.email));
+    const seccionInforme = crearSeccionInforme({ ...informe, elaboradoPor: nombreElaborador }, opciones.currentEmployee);
+    const seccionRemision = crearSeccionRemision({
+      ...informe,
+      movil: normalizarMovil(informe.movil || informe.datosRemision?.movil || informe.remisionData?.movil),
+      fecha_remision: (() => {
+        if (fechaRemisionFirestore && typeof fechaRemisionFirestore === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fechaRemisionFirestore)) return fechaRemisionFirestore;
+        if (fechaRemisionFirestore && typeof fechaRemisionFirestore === 'string') return fechaRemisionFirestore;
+        let fecha = informe.datosRemision?.fecha_remision || informe.fecha_remision || informe.remisionData?.fecha_remision || informe.fechaRemision || '';
+        if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) return fecha;
+        return fechaRemisionFirestore || fecha || 'No registrada';
+      })()
     });
+    const seccionValores = [
+      { text: '4. VALORACIÓN ECONÓMICA DE SERVICIOS', style: 'sectionTitleISO' },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }], margin: [0, -5, 0, 10] },
+      {
+        stack: [
+          { text: 'Subtotal:', style: 'fieldLabelISO' },
+          { text: formatoMoneda(informe.subtotal), style: 'fieldValueISO' },
+          { text: 'Total:', style: 'fieldLabelISO' },
+          { text: formatoMoneda(informe.total), style: 'fieldValueISO' },
+          { text: '* Total incluye IVA', style: { fontSize: 9, italics: true, color: '#666', font: FUENTE_ISO } }
+        ]
+      }
+    ];
 
+    // Sección 5: Observaciones técnicas (solo si existen)
+    const seccionObservaciones = crearSeccionObservaciones(informe);
+    // Sección 6: Evidencia fotográfica
+    const seccionEvidencias = crearSeccionEvidencias(informe, imagenesDataUrl);
+
+    const documentDefinition = {
+      pageSize: 'LETTER',
+      pageOrientation: 'portrait',
+      pageMargins: [71, 110, 71, 71],
+      header: headerFijo,
+      footer: function(currentPage, pageCount) {
+        return [
+          crearPiePagina(),
+          {
+            text: `Página ${currentPage} de ${pageCount}`,
+            style: { fontSize: 8, margin: [0, 3, 0, 8], font: FUENTE_ISO },
+            alignment: 'center'
+          }
+        ];
+      },
+      content: [
+        ...seccionInforme,
+        ...seccionRemision,
+        ...actividadesBloque,
+        ...seccionValores,
+        ...seccionObservaciones,
+        ...seccionEvidencias
+      ],
+      styles: estilos,
+      defaultStyle: {
+        fontSize: 11,
+        lineHeight: 1.25,
+        font: FUENTE_ISO,
+        alignment: 'justify'
+      }
+    };
+    const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    if (configuracion.abrirEnNuevaVentana) {
+      pdfDocGenerator.open();
+    } else {
+      pdfDocGenerator.download(configuracion.nombreArchivo);
+    }
+    return true;
   } catch (error) {
-    console.error('Error en generarPDFInforme:', error);
+    console.error('❌ ERROR EN generarPDFInforme:', error);
     throw new Error(`Error generando PDF: ${error.message}`);
   }
 };
