@@ -104,10 +104,13 @@ const BuscarHistorialOptimizado = ({ canEdit = false, canDelete = false, userRol
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: !requireAuth || userRole === 'publico' 
+            ? '1fr' 
+            : 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '15px',
           marginBottom: '20px'
         }}>
+          {/* Campo de móvil - siempre visible */}
           <div>
             <label style={{ 
               display: 'block', 
@@ -115,37 +118,13 @@ const BuscarHistorialOptimizado = ({ canEdit = false, canDelete = false, userRol
               fontWeight: 'bold',
               color: '#495057'
             }}>
-              Número de Remisión:
-            </label>
-            <input
-              type="text"
-              value={busqueda.remision}
-              onChange={(e) => handleInputChange('remision', e.target.value)}
-              placeholder="Ej: 12345"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px', 
-              fontWeight: 'bold',
-              color: '#495057'
-            }}>
-              Móvil:
+              {!requireAuth || userRole === 'publico' ? 'Buscar por Número de Móvil:' : 'Móvil:'}
             </label>
             <input
               type="text"
               value={busqueda.movil}
               onChange={(e) => handleInputChange('movil', e.target.value)}
-              placeholder="Ej: MOV001"
+              placeholder={!requireAuth || userRole === 'publico' ? 'Ingresa el número de móvil...' : 'Ej: MOV001'}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -156,29 +135,58 @@ const BuscarHistorialOptimizado = ({ canEdit = false, canDelete = false, userRol
             />
           </div>
 
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px', 
-              fontWeight: 'bold',
-              color: '#495057'
-            }}>
-              Estado:
-            </label>
-            <input
-              type="text"
-              value={busqueda.estado}
-              onChange={(e) => handleInputChange('estado', e.target.value)}
-              placeholder="Ej: activo, pendiente"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
+          {/* Campos adicionales - solo para usuarios autenticados */}
+          {requireAuth && userRole !== 'publico' && (
+            <>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold',
+                  color: '#495057'
+                }}>
+                  Número de Remisión:
+                </label>
+                <input
+                  type="text"
+                  value={busqueda.remision}
+                  onChange={(e) => handleInputChange('remision', e.target.value)}
+                  placeholder="Ej: 12345"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold',
+                  color: '#495057'
+                }}>
+                  Estado:
+                </label>
+                <input
+                  type="text"
+                  value={busqueda.estado}
+                  onChange={(e) => handleInputChange('estado', e.target.value)}
+                  placeholder="Ej: activo, pendiente"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div style={{ 

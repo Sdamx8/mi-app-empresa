@@ -50,9 +50,12 @@ export const DB_FIELDS = {
   MOVIL: 'movil',
   ESTADO: 'estado',
   FECHA_REMISION: 'fecha_remision',
-  FECHA_ID_BIT: 'fecha_id-bit',
+  NO_ID_BIT: 'no_id_bit',
   DESCRIPCION: 'descripcion',
   SUBTOTAL: 'subtotal',
+  TOTAL: 'total',
+  TECNICO: 'tecnico',
+  UNE: 'une',
   AUTORIZO: 'autorizo',
   CARROCERIA: 'carroceria',
   NO_ORDEN: 'no_orden',
@@ -65,11 +68,37 @@ export const DB_FIELDS = {
 
 // Estados disponibles para remisiones
 export const ESTADOS_REMISION = [
-  { value: 'pendiente', label: 'Pendiente', color: '#ffc107' },
-  { value: 'en_proceso', label: 'En Proceso', color: '#17a2b8' },
-  { value: 'completado', label: 'Completado', color: '#28a745' },
-  { value: 'cancelado', label: 'Cancelado', color: '#dc3545' },
-  { value: 'activo', label: 'Activo', color: '#007bff' }
+  { value: 'CANCELADO', label: 'Cancelado', color: '#dc3545' },
+  { value: 'CORTECIA', label: 'Cortesía', color: '#17a2b8' },
+  { value: 'GARANTIA', label: 'Garantía', color: '#28a745' },
+  { value: 'GENERADO', label: 'Generado', color: '#007bff' },
+  { value: 'PENDIENTE', label: 'Pendiente', color: '#ffc107' },
+  { value: 'PROFORMA', label: 'Proforma', color: '#6f42c1' },
+  { value: 'RADICADO', label: 'Radicado', color: '#17a2b8' },
+  { value: 'SIN VINCULAR', label: 'Sin Vincular', color: '#6c757d' }
+];
+
+// Opciones de UNE disponibles
+export const OPCIONES_UNE = [
+  { value: 'ALIMENTADORES', label: 'Alimentadores' },
+  { value: 'AUTOSUR', label: 'Autosur' },
+  { value: 'GALICIA', label: 'Galicia' },
+  { value: 'SANBERNARDINO', label: 'San Bernardino' },
+  { value: 'SANJOSE1', label: 'San José 1' },
+  { value: 'SANJOSE2', label: 'San José 2' },
+  { value: 'SEVILLANA', label: 'Sevillana' }
+];
+
+// Opciones de carrocería disponibles
+export const OPCIONES_CARROCERIA = [
+  { value: 'AGRALE-MA8.7', label: 'Agrale MA8.7' },
+  { value: 'CHEVROLET-NPR', label: 'Chevrolet NPR' },
+  { value: 'MERCEDES-ATEGO-1016', label: 'Mercedes Atego 1016' },
+  { value: 'MERCEDES-LO-915', label: 'Mercedes LO 915' },
+  { value: 'MERCEDES-OF 1724', label: 'Mercedes OF 1724' },
+  { value: 'SCANIA - K250 B4X2', label: 'Scania K250 B4X2' },
+  { value: 'THOMAS-EF1723', label: 'Thomas EF1723' },
+  { value: 'VOLVO-B215RH', label: 'Volvo B215RH' }
 ];
 
 // Estados disponibles para herramientas eléctricas
@@ -120,6 +149,8 @@ const APP_CONSTANTS = {
   MESSAGES,
   DB_FIELDS,
   ESTADOS_REMISION,
+  OPCIONES_UNE,
+  OPCIONES_CARROCERIA,
   ESTADOS_HERRAMIENTA,
   ESTADOS_HERRAMIENTA_MANUAL,
   TIPOS_EMPLEADO,

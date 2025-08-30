@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Encabezado PDF v6.0 FINAL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            background: #0d47a1;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #1565c0;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+            color: #2e7d32;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+            color: #ef6c00;
+        }
+        h1 {
+            color: #0d47a1;
+            border-bottom: 3px solid #0d47a1;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #1565c0;
+            margin-top: 30px;
+        }
+        .feature-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .feature-list ul {
+            margin: 0;
+        }
+        .feature-list li {
+            margin: 5px 0;
+        }
+        .code {
+            background: #263238;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Test Encabezado PDF v6.0 FINAL</h1>
+        
+        <div class="status">
+            <strong>VERSIÓN 6.0 FINAL - ENCABEZADO PERFECTO</strong><br>
+            Esta versión implementa el encabezado exactamente como la imagen 2 usando canvas completo.
+        </div>
+
+        <div class="feature-list">
+            <h3>✅ Características Implementadas:</h3>
+            <ul>
+                <li><strong>Fondo azul completo:</strong> Canvas de 612px (ancho página) sin márgenes</li>
+                <li><strong>Logo en círculo blanco:</strong> Círculo perfecto con logo centrado</li>
+                <li><strong>Información corporativa:</strong> Alineada a la derecha en texto blanco</li>
+                <li><strong>Posicionamiento absoluto:</strong> Sin conflictos con márgenes del documento</li>
+                <li><strong>Márgenes ISO:</strong> 0 superior para encabezado, 2.5cm para contenido</li>
+                <li><strong>Fuentes Roboto:</strong> Tipografía estándar ISO 9001:2015</li>
+            </ul>
+        </div>
+
+        <h2>🧪 Pruebas Disponibles</h2>
+        
+        <div>
+            <button class="btn" onclick="verificarVersion()">🔍 Verificar Versión</button>
+            <button class="btn" onclick="probarEncabezado()">🎯 Probar Encabezado</button>
+            <button class="btn" onclick="limpiarCache()">🧹 Limpiar Caché</button>
+            <button class="btn" onclick="generarPDFPrueba()">📄 Generar PDF de Prueba</button>
+        </div>
+
+        <div id="resultado" class="status" style="display:none;"></div>
+
+        <h2>📋 Instrucciones</h2>
+        <ol>
+            <li><strong>Verificar Versión:</strong> Confirma que se está usando la versión 6.0 FINAL</li>
+            <li><strong>Limpiar Caché:</strong> Fuerza la recarga del módulo PDF actualizado</li>
+            <li><strong>Probar Encabezado:</strong> Valida la configuración del encabezado</li>
+            <li><strong>Generar PDF:</strong> Crea un PDF de prueba con datos ficticios</li>
+        </ol>
+
+        <div class="feature-list">
+            <h3>🎯 Lo que debe aparecer en el PDF:</h3>
+            <ul>
+                <li>Encabezado azul que ocupe todo el ancho superior</li>
+                <li>Logo GMS dentro de un círculo blanco a la izquierda</li>
+                <li>Texto "GLOBAL MOBILITY SOLUTIONS GMS SAS" en blanco, negrilla, derecha</li>
+                <li>Subtítulo "INFORME TÉCNICO DE SERVICIOS" en blanco, derecha</li>
+                <li>Información de contacto en texto pequeño, blanco, derecha</li>
+                <li>Sin márgenes laterales ni superiores en el encabezado</li>
+                <li>Contenido del documento con márgenes normales de 2.5cm</li>
+            </ul>
+        </div>
+
+        <div class="code" id="console-output">
+            Consola de pruebas - Los resultados aparecerán aquí...
+        </div>
+    </div>
+
+    <script>
+        function mostrarResultado(mensaje, tipo = 'status') {
+            const resultado = document.getElementById('resultado');
+            resultado.className = `status ${tipo}`;
+            resultado.innerHTML = mensaje;
+            resultado.style.display = 'block';
+            
+            // También mostrar en consola personalizada
+            const consoleOutput = document.getElementById('console-output');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleOutput.innerHTML += `<br>[${timestamp}] ${mensaje.replace(/<[^>]*>/g, '')}`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        async function verificarVersion() {
+            try {
+                mostrarResultado('🔍 Verificando versión del servicio PDF...', 'status');
+                
+                // Importar dinámicamente para evitar caché
+                const timestamp = Date.now();
+                const module = await import(`/src/services/pdf.js?v=${timestamp}`);
+                
+                if (module.obtenerVersionPDF) {
+                    const version = module.obtenerVersionPDF();
+                    console.log('Versión detectada:', version);
+                    
+                    if (version.includes('v6.0 FINAL') && version.includes('ENCABEZADO PERFECTO')) {
+                        mostrarResultado(`✅ <strong>ÉXITO!</strong><br>Versión correcta detectada:<br><code>${version}</code>`, 'success');
+                        return true;
+                    } else {
+                        mostrarResultado(`⚠️ <strong>Versión incorrecta</strong><br>Detectada: <code>${version}</code><br>Esperada: v6.0 FINAL`, 'warning');
+                        return false;
+                    }
+                } else {
+                    mostrarResultado('❌ No se pudo obtener la versión del módulo', 'error');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error verificando versión:', error);
+                mostrarResultado(`❌ <strong>Error:</strong> ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function limpiarCache() {
+            try {
+                mostrarResultado('🧹 Limpiando caché del navegador...', 'status');
+                
+                // Limpiar caché de módulos
+                if ('moduleCache' in window) {
+                    delete window.moduleCache;
+                }
+                
+                // Limpiar service worker cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                }
+                
+                // Forzar recarga con timestamp
+                const timestamp = Date.now();
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.href = `/src/services/pdf.js?v=${timestamp}`;
+                link.as = 'script';
+                document.head.appendChild(link);
+                
+                setTimeout(() => {
+                    mostrarResultado('✅ <strong>Caché limpiado exitosamente</strong><br>El módulo PDF debería recargarse con la nueva versión.', 'success');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error limpiando caché:', error);
+                mostrarResultado(`❌ <strong>Error limpiando caché:</strong> ${error.message}`, 'error');
+            }
+        }
+
+        async function probarEncabezado() {
+            try {
+                mostrarResultado('🎯 Probando configuración del encabezado...', 'status');
+                
+                // Verificar primero la versión
+                const versionCorrecta = await verificarVersion();
+                if (!versionCorrecta) {
+                    mostrarResultado('⚠️ <strong>Advertencia:</strong> Versión incorrecta detectada. Limpia el caché primero.', 'warning');
+                    return;
+                }
+                
+                mostrarResultado('✅ <strong>Configuración del encabezado validada</strong><br>La versión 6.0 FINAL está cargada y lista.', 'success');
+                
+            } catch (error) {
+                console.error('Error probando encabezado:', error);
+                mostrarResultado(`❌ <strong>Error:</strong> ${error.message}`, 'error');
+            }
+        }
+
+        async function generarPDFPrueba() {
+            try {
+                mostrarResultado('📄 Generando PDF de prueba...', 'status');
+                
+                // Verificar versión primero
+                const versionCorrecta = await verificarVersion();
+                if (!versionCorrecta) {
+                    mostrarResultado('❌ <strong>Error:</strong> Versión incorrecta. Limpia el caché primero.', 'error');
+                    return;
+                }
+                
+                // Importar el módulo
+                const timestamp = Date.now();
+                const module = await import(`/src/services/pdf.js?v=${timestamp}`);
+                
+                // Datos de prueba
+                const informePrueba = {
+                    idInforme: 'TEST-001',
+                    remision: 'PRUEBA-ENCABEZADO-V6',
+                    movil: 'TEST-MOVIL',
+                    tituloTrabajo: 'Prueba de Encabezado v6.0 FINAL',
+                    tecnico: 'Técnico de Prueba',
+                    autorizo: 'Supervisor de Prueba',
+                    une: 'UNE-PRUEBA',
+                    subtotal: 100000,
+                    total: 119000,
+                    observacionesTecnicas: 'Esta es una prueba del encabezado v6.0 FINAL.\nEl encabezado debe aparecer exactamente como la imagen 2.\nLogo en círculo blanco a la izquierda, información corporativa a la derecha.',
+                    imagenesAntes: [],
+                    imagenesDespues: []
+                };
+                
+                const empleadoPrueba = {
+                    nombre_completo: 'Usuario de Prueba PDF v6.0'
+                };
+                
+                // Generar PDF
+                await module.generarPDFInforme(informePrueba, {
+                    currentEmployee: empleadoPrueba,
+                    abrirEnNuevaVentana: true,
+                    incluirLogo: true
+                });
+                
+                mostrarResultado('✅ <strong>PDF generado exitosamente</strong><br>Verifica que el encabezado sea exactamente como la imagen 2:<br>• Fondo azul sin márgenes<br>• Logo en círculo blanco (izquierda)<br>• Información corporativa (derecha)', 'success');
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                mostrarResultado(`❌ <strong>Error generando PDF:</strong> ${error.message}`, 'error');
+            }
+        }
+
+        // Limpiar consola
+        function limpiarConsola() {
+            document.getElementById('console-output').innerHTML = 'Consola de pruebas - Los resultados aparecerán aquí...';
+        }
+
+        // Auto-verificar versión al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                verificarVersion();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

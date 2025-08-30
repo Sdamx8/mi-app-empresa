@@ -15,7 +15,7 @@ export const useRole = () => {
 // Definición de permisos por tipo de empleado
 const ROLE_PERMISSIONS = {
   directivo: {
-    modules: ['perfil', 'crm', 'historial_trabajos', 'reporte_historial', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos'],
+    modules: ['perfil', 'crm', 'historial_trabajos', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -41,17 +41,13 @@ const ROLE_PERMISSIONS = {
       // Perfil
       canViewProfile: true,
       canEditProfile: true,
-      // Informes Técnicos
-      canViewInformesTecnicos: true,
-      canCreateInformesTecnicos: true,
-      canEditInformesTecnicos: true,
-      canDeleteInformesTecnicos: true,
+      // Informes Técnicos - removed
       // Admin
       hasAdminAccess: true
     }
   },
   administrativo: {
-    modules: ['perfil', 'crm', 'historial_trabajos', 'reporte_historial', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos'],
+    modules: ['perfil', 'crm', 'historial_trabajos', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -77,17 +73,13 @@ const ROLE_PERMISSIONS = {
       // Perfil
       canViewProfile: true,
       canEditProfile: true,
-      // Informes Técnicos
-      canViewInformesTecnicos: true,
-      canCreateInformesTecnicos: true,
-      canEditInformesTecnicos: true,
-      canDeleteInformesTecnicos: false, // Solo directivos pueden eliminar
+      // Informes Técnicos - removed
       // Admin
       hasAdminAccess: false
     }
   },
   tecnico: {
-    modules: ['perfil', 'historial_trabajos', 'reporte_historial'],
+    modules: ['perfil', 'historial_trabajos'],
     permissions: {
       // Historial (solo ver, sin editar/eliminar)
       canViewHistorial: true,
@@ -113,11 +105,7 @@ const ROLE_PERMISSIONS = {
       // Perfil
       canViewProfile: true,
       canEditProfile: true,
-      // Informes Técnicos (limitado para técnicos)
-      canViewInformesTecnicos: false,
-      canCreateInformesTecnicos: false,
-      canEditInformesTecnicos: false,
-      canDeleteInformesTecnicos: false,
+      // Informes Técnicos - removed
       // Admin
       hasAdminAccess: false
     }
@@ -129,11 +117,12 @@ const FALLBACK_EMPLOYEE_DATA = {
   // Usuarios de prueba con diferentes roles (solo como fallback)
   'admin@gms.com': { tipo_empleado: 'administrativo', nombre: 'Ana Rodríguez - Administradora' },
   'director@gms.com': { tipo_empleado: 'directivo', nombre: 'Carlos Mendoza - Director' },
+  'sergio@gms.com': { tipo_empleado: 'directivo', nombre: 'Sergio Dabian Ayala Mondragón', nombre_completo: 'Sergio Dabian Ayala Mondragón' },
   'tecnico@gms.com': { tipo_empleado: 'tecnico', nombre: 'Miguel Torres - Técnico' },
   'tecnico2@gms.com': { tipo_empleado: 'tecnico', nombre: 'Laura Jiménez - Técnica' },
   'admin2@gms.com': { tipo_empleado: 'administrativo', nombre: 'Sofia Vargas - Coordinadora' },
-  // Email por defecto para pruebas
-  'user@example.com': { tipo_empleado: 'tecnico', nombre: 'Usuario Demo - Técnico' }
+  // Email por defecto para pruebas - actualizado a directivo para mayor funcionalidad
+  'user@example.com': { tipo_empleado: 'directivo', nombre: 'Sergio Dabian Ayala Mondragón', nombre_completo: 'Sergio Dabian Ayala Mondragón' }
 };
 
 export const RoleProvider = ({ children }) => {

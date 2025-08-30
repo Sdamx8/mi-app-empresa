@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Firestore</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>Debug Firestore Collections</h1>
+    <div id="results"></div>
+
+    <script>
+        // Configuración de Firebase (usando la misma del proyecto)
+        const firebaseConfig = {
+            // Aquí deberían ir las credenciales, pero por seguridad no las incluyo
+            // Puedes copiarlas de tu archivo firebaseConfig.js
+        };
+
+        // Función para mostrar resultados
+        function showResults(title, data) {
+            const div = document.getElementById('results');
+            div.innerHTML += `<h2>${title}</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        // Función para debuggear colecciones
+        async function debugCollections() {
+            try {
+                console.log('🔍 Verificando colección empleados...');
+                const empleadosSnapshot = await firebase.firestore().collection('empleados').get();
+                const empleados = [];
+                empleadosSnapshot.forEach(doc => {
+                    empleados.push({ id: doc.id, ...doc.data() });
+                });
+                showResults('Empleados', empleados);
+
+                console.log('🔍 Verificando colección servicios...');
+                const serviciosSnapshot = await firebase.firestore().collection('servicios').get();
+                const servicios = [];
+                serviciosSnapshot.forEach(doc => {
+                    servicios.push({ id: doc.id, ...doc.data() });
+                });
+                showResults('Servicios', servicios);
+
+                console.log('🔍 Buscando técnicos específicamente...');
+                const tecnicosSnapshot = await firebase.firestore()
+                    .collection('empleados')
+                    .where('cargo', '==', 'técnico')
+                    .get();
+                const tecnicos = [];
+                tecnicosSnapshot.forEach(doc => {
+                    tecnicos.push({ id: doc.id, ...doc.data() });
+                });
+                showResults('Técnicos (cargo=técnico)', tecnicos);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showResults('Error', error.message);
+            }
+        }
+
+        // Solo mostrar instrucciones por ahora
+        document.getElementById('results').innerHTML = `
+            <p><strong>Instrucciones:</strong></p>
+            <ol>
+                <li>Copia la configuración de Firebase de tu archivo firebaseConfig.js</li>
+                <li>Pégala en el objeto firebaseConfig arriba</li>
+                <li>Inicializa Firebase con: firebase.initializeApp(firebaseConfig)</li>
+                <li>Llama a debugCollections()</li>
+            </ol>
+        `;
+    </script>
+</body>
+</html>

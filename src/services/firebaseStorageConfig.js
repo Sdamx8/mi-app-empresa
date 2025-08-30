@@ -13,9 +13,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Permitir lectura y escritura para usuarios autenticados
-    match /informesTecnicos/{allPaths=**} {
-      allow read, write: if request.auth != null;
-    }
+    // match /informesTecnicos/{allPaths=**} {
+    //   allow read, write: if request.auth != null;
+    // }
     
     // Permitir operaciones de test para diagnóstico
     match /test/{allPaths=**} {

@@ -1,0 +1,79 @@
+// Reglas de seguridad para Firebase Firestore - Informes Técnicos
+// Agregar estas reglas a la configuración existente de firestore.rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Reglas para la colección informesTecnicos
+    match /informesTecnicos/{documentId} {
+      // Solo usuarios autenticados con roles administrativo o directivo pueden acceder
+      allow read, write: if request.auth != null 
+        && resource.data.keys().hasAll(['createdBy']) 
+        && (
+          // El usuario que creó el documento puede leerlo y editarlo
+          resource.data.createdBy == request.auth.uid ||
+          // O el usuario tiene rol administrativo/directivo (esto requiere validación adicional)
+          request.auth.token.admin == true
+        );
+      
+      // Permitir creación solo a usuarios autenticados
+      allow create: if request.auth != null 
+        && request.resource.data.keys().hasAll(['idInforme', 'numeroRemision', 'createdBy', 'createdAt'])
+        && request.resource.data.createdBy == request.auth.uid;
+      
+      // Validaciones adicionales para la estructura del documento
+      allow write: if request.auth != null 
+        && validateInformeStructure(request.resource.data);
+    }
+    
+    // Reglas para archivos de evidencias en Storage
+    // (Estas van en firebase.storage.rules)
+    
+    // Función de validación para la estructura del informe
+    function validateInformeStructure(data) {
+      return data.keys().hasAll(['idInforme', 'numeroRemision', 'createdBy', 'createdAt']) &&
+             data.idInforme is string &&
+             data.numeroRemision is string &&
+             data.createdBy is string &&
+             data.createdAt is timestamp &&
+             (data.keys().hasAny(['observaciones']) ? data.observaciones is string : true) &&
+             (data.keys().hasAny(['evidencias']) ? data.evidencias is list : true);
+    }
+    
+    // Mantener reglas existentes para otras colecciones
+    match /remisiones/{documentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /empleados/{documentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Agregar otras reglas existentes aquí...
+  }
+}
+
+// Reglas para Firebase Storage (archivo separado: storage.rules)
+/*
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Reglas para evidencias de informes técnicos
+    match /informes-tecnicos/{userId}/{informeId}/{allPaths=**} {
+      // Solo el usuario que subió el archivo o admins pueden acceder
+      allow read, write: if request.auth != null 
+        && (request.auth.uid == userId || request.auth.token.admin == true);
+      
+      // Validaciones para subida de archivos
+      allow write: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.size < 10 * 1024 * 1024 // Máximo 10MB
+        && request.resource.contentType.matches('image/.*'); // Solo imágenes
+    }
+    
+    // Reglas existentes para otros archivos...
+  }
+}
+*/

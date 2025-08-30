@@ -6,8 +6,8 @@ import { useAuth } from './AuthContext';
 import { useRole } from './RoleContext';
 import { getTechnicianStats, getMonthlyWorkSummary } from './services/technicianStatsService';
 import { THEME_COLORS, TIPOS_EMPLEADO, ESTADOS_EMPLEADO } from './constants';
-import AnunciosEmpresariales from './AnunciosEmpresariales';
-import EstadisticasAnimadas from './EstadisticasAnimadas';
+import NoticiasCompensar from './NoticiasCompensar';
+import NoticiasTest2 from './NoticiasTest2';
 import GMSLogo from './GMSLogo';
 
 // Configuración de módulos y permisos
@@ -210,35 +210,9 @@ const PerfilEmpleado = ({ onModulo }) => {
 
   // Obtener informes técnicos del empleado (mes actual)
   const fetchReportesTrabajo = useCallback(async () => {
-    if (!user?.email) return;
-    
-    try {
-      // Consultar solo por elaboradoPor para evitar índices compuestos
-      const q = query(
-        collection(db, 'informesTecnicos'),
-        where('elaboradoPor', '==', user.email)
-      );
-      const snapshot = await getDocs(q);
-      
-      // Filtrar por fecha en el cliente (mes actual)
-      const fechaInicio = new Date();
-      fechaInicio.setDate(1); // Primer día del mes
-      
-      const informesFiltrados = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(informe => {
-          if (!informe.fechaCreacion) return false;
-          const fechaInforme = new Date(informe.fechaCreacion);
-          return fechaInforme >= fechaInicio;
-        });
-        
-      setReportesTrabajo(informesFiltrados);
-    } catch (error) {
-      console.error('Error fetching reportes:', error);
-      // Si hay error de permisos, establecer array vacío
-      setReportesTrabajo([]);
-    }
-  }, [user?.email]);
+    // Informes técnicos removed from the codebase — keep reportesTrabajo empty
+    setReportesTrabajo([]);
+  }, []);
 
   // Obtener herramientas asignadas al empleado
   const fetchHerramientasAsignadas = useCallback(async () => {
@@ -395,200 +369,12 @@ const PerfilEmpleado = ({ onModulo }) => {
         </div>
       </div>
 
-      {/* Anuncios empresariales */}
-      <AnunciosEmpresariales 
+      {/* Noticias de Compensar según el rol */}
+      <NoticiasCompensar 
         userRole={empleado.tipo_empleado} 
         userName={empleado.nombre_completo.split(' ')[0]}
       />
 
-      {/* Estadísticas animadas */}
-      <EstadisticasAnimadas 
-        reportesTrabajo={reportesTrabajo}
-        herramientasElectricas={herramientasElectricas}
-        herramientasManuales={herramientasManuales}
-      />
-
-      {/* Estadísticas del técnico - Solo para técnicos */}
-      {userRole === 'tecnico' && (
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: '16px',
-          padding: '2rem',
-          margin: '2rem 0',
-          color: 'white',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-        }} className="fade-in">
-          <h3 style={{
-            margin: '0 0 1.5rem 0',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            📊 Mis Estadísticas de Trabajo
-            {loadingStats && (
-              <div style={{
-                width: '20px',
-                height: '20px',
-                border: '2px solid rgba(255,255,255,0.3)',
-                borderTop: '2px solid white',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }}></div>
-            )}
-          </h3>
-          
-          {estadisticasTecnico && !estadisticasTecnico.error ? (
-            <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    {estadisticasTecnico.trabajosDelMes}
-                  </div>
-                  <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                    Trabajos este mes
-                  </div>
-                </div>
-                
-                <div style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    ${estadisticasTecnico.totalDelMes.toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                    Total facturado
-                  </div>
-                </div>
-                
-                <div style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    ${estadisticasTecnico.promedioSemanal.toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                    Promedio semanal
-                  </div>
-                </div>
-                
-                {estadisticasTecnico.ultimoTrabajo && (
-                  <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                      {estadisticasTecnico.ultimoTrabajo.fecha}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                      Último trabajo
-                    </div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                      Remisión: {estadisticasTecnico.ultimoTrabajo.remision}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {resumenMensual && Object.keys(resumenMensual.trabajosPorDia).length > 0 && (
-                <div style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  marginTop: '1rem'
-                }}>
-                  <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem' }}>
-                    📅 Resumen del mes ({Object.keys(resumenMensual.trabajosPorDia).length} días trabajados)
-                  </h4>
-                  <div style={{
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    display: 'grid',
-                    gap: '0.5rem'
-                  }}>
-                    {Object.entries(resumenMensual.trabajosPorDia)
-                      .sort((a, b) => new Date(b[0]) - new Date(a[0]))
-                      .slice(0, 5)
-                      .map(([fecha, datos]) => (
-                        <div key={fecha} style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.5rem',
-                          background: 'rgba(255,255,255,0.05)',
-                          borderRadius: '8px'
-                        }}>
-                          <span style={{ fontSize: '0.9rem' }}>{fecha}</span>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-                              ${datos.total.toLocaleString()}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                              {datos.cantidad} trabajo{datos.cantidad !== 1 ? 's' : ''}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                  {Object.keys(resumenMensual.trabajosPorDia).length > 5 && (
-                    <div style={{ 
-                      textAlign: 'center', 
-                      marginTop: '0.5rem', 
-                      fontSize: '0.8rem', 
-                      opacity: 0.7 
-                    }}>
-                      ... y {Object.keys(resumenMensual.trabajosPorDia).length - 5} días más
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          ) : estadisticasTecnico?.error ? (
-            <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              padding: '1rem',
-              borderRadius: '12px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>⚠️</div>
-              <div>{estadisticasTecnico.error}</div>
-            </div>
-          ) : !loadingStats ? (
-            <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              padding: '1rem',
-              borderRadius: '12px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>📊</div>
-              <div>No se encontraron trabajos registrados</div>
-            </div>
-          ) : null}
-        </div>
-      )}
 
       <div style={contentGridStyle} className="stagger-animation">
         {/* Información del empleado */}

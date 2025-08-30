@@ -12,6 +12,28 @@ const HistorialTrabajosPage = () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'remisiones'));
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Debug: Mostrar la estructura de los primeros documentos
+        console.log('📊 Estructura de remisiones cargadas:');
+        console.log('Total documentos:', data.length);
+        if (data.length > 0) {
+          console.log('Primer documento:', data[0]);
+          console.log('Campos disponibles:', Object.keys(data[0]));
+          
+          // Mostrar los primeros 3 documentos para ver patrones
+          console.log('📋 Muestra de documentos:');
+          data.slice(0, 3).forEach((doc, index) => {
+            console.log(`Documento ${index + 1}:`, {
+              id: doc.id,
+              movil: doc.movil || doc.numero_movil || 'NO_FIELD',
+              remision: doc.remision || doc.numero_remision || 'NO_FIELD',
+              fecha: doc.fecha || doc.fecha_remision || 'NO_FIELD',
+              tecnico: doc.tecnico || doc.elaboradoPor || 'NO_FIELD',
+              total: doc.total || doc.montoTotal || 'NO_FIELD'
+            });
+          });
+        }
+        
         setRemisiones(data);
       } catch (error) {
         console.error('Error al cargar las remisiones:', error);
@@ -26,9 +48,11 @@ const HistorialTrabajosPage = () => {
       setFilteredRemisiones([]);
     } else {
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      const filtered = remisiones.filter(remision =>
-        remision.movil.toLowerCase().includes(lowerCaseSearchTerm)
-      );
+      const filtered = remisiones.filter(remision => {
+        // Verificar que existe el campo móvil y hacer la búsqueda
+        const movil = remision.movil || remision.numero_movil || '';
+        return movil.toString().toLowerCase().includes(lowerCaseSearchTerm);
+      });
       setFilteredRemisiones(filtered);
     }
   }, [searchTerm, remisiones]);
@@ -59,45 +83,104 @@ const HistorialTrabajosPage = () => {
         ) : filteredRemisiones.length === 0 ? (
           <p className="text-gray-500">No se encontraron trabajos para el móvil "{searchTerm}".</p>
         ) : (
-          <ul className="space-y-4">
-            {filteredRemisiones.map((remision) => (
-              <li key={remision.id} className="p-4 border rounded-lg shadow-sm bg-gray-50">
-                <p className="font-semibold text-gray-800">Móvil: {remision.movil} - Remisión #{remision.remision}</p>
-                <p className="text-sm text-gray-600">Fecha: {remision.fecha} - UNE: {remision.une}</p>
-                <p className="text-sm text-gray-600">Elaborado Por: {remision.elaboradoPor} - Aprobado Por: {remision.aprobadoPor}</p>
-                <p className="text-sm text-gray-600">Estado: <span className={`font-medium ${remision.estado === 'Pendiente' ? 'text-yellow-600' : 'text-green-600'}`}>{remision.estado}</span></p>
+          <div className="space-y-6">
+            {filteredRemisiones.map((remision) => {
+              // Función para validar la fecha de remisión
+              const validarFechaRemision = (fecha) => {
+                const fechaRemision = new Date(fecha);
+                const fechaActual = new Date();
+                const diferenciaMeses = (fechaActual - fechaRemision) / (1000 * 60 * 60 * 24 * 30.44); // Aproximadamente 30.44 días por mes
+                
+                return diferenciaMeses < 6 ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+              };
 
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-700">Trabajo Realizado:</p>
-                  <p className="text-sm text-gray-600 italic">{remision.trabajoRealizado}</p>
-                </div>
+              const colorClaseFecha = validarFechaRemision(remision.fecha || remision.fecha_remision);
 
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-700">Servicios:</p>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {remision.serviciosSeleccionados.map((servicio, index) => (
-                      <li key={index}>{servicio}</li>
-                    ))}
-                  </ul>
-                </div>
+              return (
+                <div key={remision.id} className="bg-white border rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="space-y-3">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Móvil</span>
+                        <span className="text-sm font-medium text-gray-900">{remision.movil || remision.numero_movil || 'N/A'}</span>
+                      </div>
 
-                <p className="text-sm text-gray-600 mt-2">Valor Servicio Unitario: ${remision.valorServicioUnitario} - Monto Total: ${remision.montoTotal}</p>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Remisión</span>
+                        <span className="text-sm text-gray-600">#{remision.remision || remision.numero_remision || remision.id || 'N/A'}</span>
+                      </div>
 
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700">Evidencia Fotográfica:</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {remision.evidencias.length === 0 ? (
-                      <p className="text-sm text-gray-500 italic">No hay evidencia fotográfica.</p>
-                    ) : (
-                      remision.evidencias.map((url, index) => (
-                        <img key={index} src={url} alt={`Evidencia ${index + 1}`} className="w-20 h-20 object-cover rounded-lg shadow-sm" />
-                      ))
-                    )}
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Fecha de Remisión</span>
+                        <span className={`text-sm font-medium px-2 py-1 rounded ${colorClaseFecha}`}>
+                          {remision.fecha || remision.fecha_remision || 'N/A'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">UNE</span>
+                        <span className="text-sm text-gray-600">{remision.une || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Estado</span>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit ${
+                          (remision.estado || 'Pendiente') === 'Pendiente' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {remision.estado || 'Pendiente'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Elaborado Por</span>
+                        <span className="text-sm text-gray-600">{remision.elaboradoPor || remision.tecnico || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Trabajo Realizado</span>
+                        <span className="text-sm text-gray-600">{remision.trabajoRealizado || remision.descripcion || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Monto Total</span>
+                        <span className="text-sm font-medium text-gray-900">${remision.montoTotal || remision.total || '0'}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Evidencias</span>
+                        <div className="text-sm text-gray-600">
+                          {(!remision.evidencias || remision.evidencias.length === 0) ? (
+                            <span className="text-gray-400 italic">Sin evidencias</span>
+                          ) : (
+                            <div className="flex gap-2 flex-wrap">
+                              {remision.evidencias.slice(0, 4).map((url, index) => (
+                                <img 
+                                  key={index} 
+                                  src={url} 
+                                  alt={`Evidencia ${index + 1}`} 
+                                  className="w-12 h-12 object-cover rounded border hover:scale-110 transition-transform cursor-pointer" 
+                                />
+                              ))}
+                              {remision.evidencias.length > 4 && (
+                                <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">+{remision.evidencias.length - 4}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
