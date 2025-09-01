@@ -214,6 +214,11 @@ const obtenerServicioPorTitulo = async (tituloTrabajo) => {
 const formatearFechaRemision = (fecha) => {
   if (!fecha) return 'No especificada';
   
+  // Si ya viene en formato DD/MM/YYYY, devolverlo tal como está
+  if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+    return fecha;
+  }
+  
   let fechaObj;
   
   try {
@@ -557,7 +562,7 @@ const crearSeccionRemision = (informe) => {
           width: '48%',
           stack: [
             { text: 'Número de Remisión:', style: 'fieldLabelISO' },
-            { text: informe.remision || 'No especificada', style: 'fieldValueISO' },
+            { text: informe.numeroRemision || informe.remision || 'No especificada', style: 'fieldValueISO' },
             { text: 'Número del Móvil:', style: 'fieldLabelISO' },
             { text: informe.movil || 'No especificado', style: 'fieldValueISO' },
             { text: 'Título del trabajo:', style: 'fieldLabelISO' },
@@ -608,201 +613,6 @@ const crearSeccionServicios = (informe) => {
         { text: '* Total incluye IVA', style: { fontSize: 9, italics: true, color: '#666', font: FUENTE_ISO } }
       ]
     }
-  ];
-};
-
-/**
- * 🔧 CORRECCIÓN 2: Sección 3 - ACTIVIDADES REALIZADAS (VERSIÓN MEJORADA)
- * ========================================================================
- * MEJORAS IMPLEMENTADAS:
- * - Enumeración automática de actividades (1., 2., 3., etc.)
- * - Eliminación de duplicados en actividades
- * - Consolidación de materiales (servicios + formulario) sin duplicados
- * - Combinación de recursos humanos (servicios + formulario)
- * - Cálculo correcto de tiempo total en formato Xh Ym
- * 
- * @param {Object} servicio - Datos del servicio desde Firestore
- * @param {Object} datosConsolidados - Datos consolidados desde el formulario
- * @returns {Array} Contenido de la sección para el PDF
- */
-const crearSeccionActividades = (servicio, datosConsolidados = null) => {
-  console.log('📋 ========== GENERANDO SECCIÓN 3 - ACTIVIDADES REALIZADAS (MEJORADA) ==========');
-  
-  // 🎯 PASO 1: CONSOLIDAR ACTIVIDADES SIN DUPLICADOS
-  let actividadesFinales = [];
-  
-  // Obtener actividades desde datos consolidados del formulario (PRIORIDAD)
-  if (datosConsolidados && datosConsolidados.descripciones && datosConsolidados.descripciones.length > 0) {
-    actividadesFinales = [...datosConsolidados.descripciones];
-    console.log('✅ USANDO ACTIVIDADES DESDE DATOS CONSOLIDADOS:', actividadesFinales.length);
-  } 
-  // Si no hay datos consolidados, extraer desde la colección servicios
-  else if (servicio && servicio.descripcion_actividad) {
-    const desc = servicio.descripcion_actividad;
-    // Dividir por saltos de línea o puntos
-    if (desc.includes('\n')) {
-      actividadesFinales = desc.split('\n').map(s => s.trim()).filter(Boolean);
-    } else if (desc.includes('. ')) {
-      actividadesFinales = desc.split('. ').map(s => s.trim()).filter(Boolean);
-    } else {
-      actividadesFinales = [desc];
-    }
-    console.log('✅ USANDO ACTIVIDADES DESDE SERVICIO FIRESTORE:', actividadesFinales.length);
-  }
-  // Fallback: actividades por defecto si no hay datos
-  else {
-    actividadesFinales = [
-      'Revisión completa del sistema eléctrico',
-      'Mantenimiento preventivo de equipos',
-      'Calibración de instrumentos de medición'
-    ];
-    console.log('⚠️ USANDO ACTIVIDADES POR DEFECTO');
-  }
-  
-  // ELIMINAR DUPLICADOS y limpiar actividades
-  actividadesFinales = [...new Set(actividadesFinales.map(act => act.trim()))].filter(Boolean);
-  console.log('📝 ACTIVIDADES FINALES (sin duplicados):', actividadesFinales);
-
-  // 🎯 PASO 2: CONSOLIDAR MATERIALES (servicios + formulario) SIN DUPLICADOS
-  let materialesConsolidados = [];
-  
-  // Materiales desde la colección servicios
-  if (servicio && servicio.materiales_suministrados) {
-    const materialesServicio = Array.isArray(servicio.materiales_suministrados) 
-      ? servicio.materiales_suministrados 
-      : servicio.materiales_suministrados.split(',').map(m => m.trim()).filter(Boolean);
-    materialesConsolidados.push(...materialesServicio);
-  }
-  
-  // Materiales adicionales desde datos consolidados del formulario
-  if (datosConsolidados && datosConsolidados.materiales && datosConsolidados.materiales.length > 0) {
-    materialesConsolidados.push(...datosConsolidados.materiales);
-  }
-  
-  // Materiales adicionales desde materialesAdicionales (si existen)
-  if (datosConsolidados && datosConsolidados.materialesAdicionales && datosConsolidados.materialesAdicionales.length > 0) {
-    materialesConsolidados.push(...datosConsolidados.materialesAdicionales);
-  }
-  
-  // ELIMINAR DUPLICADOS y normalizar materiales
-  materialesConsolidados = [...new Set(materialesConsolidados.map(mat => mat.trim()))].filter(Boolean);
-  
-  // Si no hay materiales, usar valor por defecto
-  if (materialesConsolidados.length === 0) {
-    materialesConsolidados = ['Materiales básicos según especificación técnica'];
-  }
-  
-  console.log('🔧 MATERIALES CONSOLIDADOS (sin duplicados):', materialesConsolidados);
-
-  // 🎯 PASO 3: CONSOLIDAR RECURSOS HUMANOS (servicios + formulario)
-  let recursosConsolidados = [];
-  
-  // Recursos desde la colección servicios
-  if (servicio && servicio.recurso_humano_requerido) {
-    const recursosServicio = Array.isArray(servicio.recurso_humano_requerido)
-      ? servicio.recurso_humano_requerido
-      : servicio.recurso_humano_requerido.split(',').map(r => r.trim()).filter(Boolean);
-    recursosConsolidados.push(...recursosServicio);
-  }
-  
-  // Recursos desde datos consolidados del formulario
-  if (datosConsolidados && datosConsolidados.recursos && datosConsolidados.recursos.length > 0) {
-    recursosConsolidados.push(...datosConsolidados.recursos);
-  }
-  
-  // ELIMINAR DUPLICADOS y normalizar recursos
-  recursosConsolidados = [...new Set(recursosConsolidados.map(rec => rec.trim()))].filter(Boolean);
-  
-  // Si no hay recursos, usar valor por defecto
-  if (recursosConsolidados.length === 0) {
-    recursosConsolidados = ['Técnico especializado'];
-  }
-  
-  console.log('👥 RECURSOS CONSOLIDADOS (sin duplicados):', recursosConsolidados);
-
-  // 🎯 PASO 4: CALCULAR TIEMPO TOTAL EN FORMATO Xh Ym
-  let tiempoEstimadoFinal = 'No especificado';
-  
-  // Prioridad 1: Tiempo total desde datos consolidados del formulario
-  if (datosConsolidados && datosConsolidados.tiempoTotal) {
-    const tiempo = datosConsolidados.tiempoTotal;
-    let tiempoTexto = '';
-    
-    if (tiempo.horas && tiempo.horas > 0) {
-      tiempoTexto += `${tiempo.horas}h`;
-    }
-    if (tiempo.minutos && tiempo.minutos > 0) {
-      if (tiempoTexto) tiempoTexto += ' ';
-      tiempoTexto += `${tiempo.minutos}m`;
-    }
-    
-    tiempoEstimadoFinal = tiempoTexto || 'No especificado';
-    console.log('⏱️ TIEMPO DESDE DATOS CONSOLIDADOS:', tiempoEstimadoFinal);
-  }
-  // Prioridad 2: Tiempo desde servicio de Firestore
-  else if (servicio && servicio.tiempo_estimado) {
-    tiempoEstimadoFinal = servicio.tiempo_estimado;
-    console.log('⏱️ TIEMPO DESDE SERVICIO FIRESTORE:', tiempoEstimadoFinal);
-  }
-  // Fallback: tiempo por defecto
-  else {
-    tiempoEstimadoFinal = '2h 30m';
-    console.log('⏱️ TIEMPO POR DEFECTO:', tiempoEstimadoFinal);
-  }
-
-  // 🎯 PASO 5: CREAR CONTENIDO ENUMERADO AUTOMÁTICAMENTE
-  const contenidoActividades = actividadesFinales.map((actividad, index) => ({
-    text: `${index + 1}. ${actividad.endsWith('.') ? actividad : actividad + '.'}`,
-    style: 'observacionesISO',
-    margin: [0, 3],
-    alignment: 'justify'
-  }));
-
-  console.log('✅ SECCIÓN 3 GENERADA EXITOSAMENTE:');
-  console.log('   - Actividades enumeradas:', actividadesFinales.length);
-  console.log('   - Materiales consolidados:', materialesConsolidados.length);
-  console.log('   - Recursos consolidados:', recursosConsolidados.length);
-  console.log('   - Tiempo estimado:', tiempoEstimadoFinal);
-
-  // 🎯 RESULTADO FINAL CON TODOS LOS DATOS CONSOLIDADOS
-  return [
-    { text: '3. ACTIVIDADES REALIZADAS', style: 'sectionTitleISO' },
-    {
-      canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }],
-      margin: [0, -5, 0, 10]
-    },
-    {
-      stack: [
-        // ACTIVIDADES ENUMERADAS
-        ...contenidoActividades,
-        { text: '', margin: [0, 10] }, // Separador
-        
-        // MATERIALES CONSOLIDADOS
-        { 
-          text: `Materiales suministrados: ${materialesConsolidados.join(', ')}`, 
-          style: 'fieldValueISO', 
-          bold: true,
-          margin: [0, 5]
-        },
-        
-        // RECURSOS CONSOLIDADOS
-        { 
-          text: `Recurso humano requerido: ${recursosConsolidados.join(', ')}`, 
-          style: 'fieldValueISO', 
-          bold: true,
-          margin: [0, 5]
-        },
-        
-        // TIEMPO TOTAL CALCULADO
-        { 
-          text: `Tiempo estimado: ${tiempoEstimadoFinal}`, 
-          style: 'fieldValueISO', 
-          bold: true,
-          margin: [0, 5]
-        }
-      ]
-    },
-    { text: '', margin: [0, 15] } // Separador final
   ];
 };
 
@@ -1125,6 +935,14 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
       throw new Error('Datos del informe requeridos');
     }
 
+    console.log('🔍 DEBUG - Datos recibidos en generarPDFInforme:');
+    console.log('  - informe.numeroRemision:', informe.numeroRemision);
+    console.log('  - informe.remision:', informe.remision);
+    console.log('  - informe.fecha_remision:', informe.fecha_remision);
+    console.log('  - informe.fechaRemision:', informe.fechaRemision);
+    console.log('  - informe.datosConsolidadosActividades:', informe.datosConsolidadosActividades);
+    console.log('  - informe.descripcionConsolidada:', informe.descripcionConsolidada);
+
     console.log('Iniciando generación de PDF para informe:', informe.idInforme);
 
     // 1. Consultar nombre completo del empleado en Firestore si el correo está presente
@@ -1212,29 +1030,75 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
     const datosConsolidados = informe.datosConsolidadosActividades || informe.actividadesConsolidadas || null;
     // Utilidad para construir descripcionConsolidada
     function buildDescripcionConsolidada(datos) {
-      if (!datos || !Array.isArray(datos.descripciones) || datos.descripciones.length === 0) return null;
-      const lines = [];
-      datos.descripciones.forEach(desc => {
-        const partes = String(desc).split(/\r?\n/).map(p => p.trim()).filter(Boolean);
-        partes.forEach(p => { if (!lines.includes(p)) lines.push(p); });
+      console.log('🔍 buildDescripcionConsolidada - ENTRADA:', datos);
+      
+      if (!datos || !Array.isArray(datos.descripciones) || datos.descripciones.length === 0) {
+        console.log('🔍 buildDescripcionConsolidada - SIN DATOS VÁLIDOS');
+        return null;
+      }
+
+      console.log('🔍 buildDescripcionConsolidada - Descripciones originales:');
+      datos.descripciones.forEach((desc, index) => {
+        console.log(`  ${index + 1}. "${desc}"`);
       });
-      const encabezadoIndex = lines.findIndex(l => /se ejecu/i.test(l)) !== -1 ? lines.findIndex(l => /se ejecu/i.test(l)) : 0;
-      const encabezado = lines[encabezadoIndex] || lines[0];
-      const pasos = lines.filter((l, i) => i !== encabezadoIndex);
-      let texto = `1. ${encabezado}\n`;
-      pasos.forEach((p, i) => { texto += `1.${i + 1} ${p}\n`; });
-      if (datos.resultado_esperado) texto += `\nResultado esperado:\n${datos.resultado_esperado}\n`;
+
+      // Aplicar deduplicación inteligente adicional en caso de que haya pasado duplicados
+      const descripcionesNormalizadas = new Map();
+      datos.descripciones.forEach(desc => {
+        const descStr = String(desc).trim();
+        if (descStr) {
+          // Normalizar para detectar duplicados - ELIMINAR PREFIJOS PRIMERO
+          let textoLimpio = descStr
+            .replace(/^["']?actividad\s+realizada\s*:\s*/i, '') // Eliminar "Actividad realizada:"
+            .replace(/^["']?descripci[oó]n\s*:\s*/i, '') // Eliminar "Descripción:"
+            .replace(/^["']?detalle\s*:\s*/i, '') // Eliminar "Detalle:"
+            .replace(/^["']/, '') // Eliminar comillas al inicio
+            .replace(/["']$/, '') // Eliminar comillas al final
+            .trim();
+          
+          const normalizada = textoLimpio.toLowerCase()
+            .replace(/\s+/g, ' ')
+            .replace(/[.,:;!?]+$/g, '');
+          
+          console.log(`🔍 Normalizando: "${descStr}" -> "${normalizada}"`);
+          
+          // Solo guardar si no existe esta descripción normalizada
+          if (!descripcionesNormalizadas.has(normalizada)) {
+            descripcionesNormalizadas.set(normalizada, descStr);
+            console.log(`   ✅ NUEVA - Guardada`);
+          } else {
+            console.log(`   ❌ DUPLICADA - Ignorada`);
+          }
+        }
+      });
+      
+      const descripcionesUnicas = Array.from(descripcionesNormalizadas.values());
+      
+      console.log('🔍 PDF - Deduplicación final de descripciones:');
+      console.log('  - Descripciones recibidas:', datos.descripciones.length);
+      console.log('  - Descripciones únicas finales:', descripcionesUnicas.length);
+      console.log('  - Descripciones finales:', descripcionesUnicas);
+
+      // Concatenar las descripciones sin numeración automática
+      const texto = descripcionesUnicas.join('\n\n');
+
       const mats = (datos.materiales || []).join(', ') || 'No especificado';
       const recs = (datos.recursos || []).join(', ') || 'No especificado';
-      const tiempo = datos.tiempoTotal ? `${datos.tiempoTotal.horas ? datos.tiempoTotal.horas + 'h ' : ''}${datos.tiempoTotal.minutos ?? 0}m` : 'No especificado';
-      texto += `\nMateriales suministrados: ${mats}\n`;
-      texto += `Recurso humano requerido: ${recs}\n`;
-      texto += `Tiempo estimado: ${tiempo}\n`;
-      return texto;
+      const tiempo = datos.tiempoTotal
+        ? `${datos.tiempoTotal.horas ? datos.tiempoTotal.horas + 'h ' : ''}${datos.tiempoTotal.minutos ?? 0}m`
+        : 'No especificado';
+
+      return `${texto}\n\nMateriales suministrados: ${mats}\nRecurso humano requerido: ${recs}\nTiempo estimado: ${tiempo}`;
     }
 
     // Sección de actividades: usar descripcionConsolidada si existe
     const descripcionConsolidada = (informe.descripcionConsolidada || (datosConsolidados ? buildDescripcionConsolidada(datosConsolidados) : null));
+    console.log('🔍 DEBUG - Actividades DETALLADO:');
+    console.log('  - informe.descripcionConsolidada:', informe.descripcionConsolidada);
+    console.log('  - datosConsolidados:', datosConsolidados);
+    console.log('  - descripcionConsolidada final:', descripcionConsolidada);
+    console.log('  - Longitud del texto final:', descripcionConsolidada?.length);
+    
     const actividadesBloque = [
       { text: '3. ACTIVIDADES REALIZADAS', style: 'sectionTitleISO' },
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }], margin: [0, -5, 0, 10] },
@@ -1268,8 +1132,10 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
     // Preparar datos para secciones
     const nombreElaborador = empleadoFirestore?.nombre_completo || await resolverNombreElaborador(informe.creadoPor || informe.elaboradoPor || (opciones.currentEmployee && opciones.currentEmployee.email));
     const seccionInforme = crearSeccionInforme({ ...informe, elaboradoPor: nombreElaborador }, opciones.currentEmployee);
-    const seccionRemision = crearSeccionRemision({
+    
+    const datosSeccionRemision = {
       ...informe,
+      numeroRemision: informe.numeroRemision || informe.remision,
       movil: normalizarMovil(informe.movil || informe.datosRemision?.movil || informe.remisionData?.movil),
       fecha_remision: (() => {
         if (fechaRemisionFirestore && typeof fechaRemisionFirestore === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fechaRemisionFirestore)) return fechaRemisionFirestore;
@@ -1278,7 +1144,13 @@ export const generarPDFInforme = async (informe, opciones = {}) => {
         if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) return fecha;
         return fechaRemisionFirestore || fecha || 'No registrada';
       })()
-    });
+    };
+    
+    console.log('🔍 DEBUG - Datos para sección remisión:');
+    console.log('  - numeroRemision final:', datosSeccionRemision.numeroRemision);
+    console.log('  - fecha_remision final:', datosSeccionRemision.fecha_remision);
+    
+    const seccionRemision = crearSeccionRemision(datosSeccionRemision);
     const seccionValores = [
       { text: '4. VALORACIÓN ECONÓMICA DE SERVICIOS', style: 'sectionTitleISO' },
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#0056A6' }], margin: [0, -5, 0, 10] },

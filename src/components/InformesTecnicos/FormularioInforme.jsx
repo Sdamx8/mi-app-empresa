@@ -163,7 +163,7 @@ const FormularioInforme = ({
           movil: String(remisionData.movil || ''),
           tituloTrabajo: String(remisionData.descripcion || prev.tituloTrabajo || ''),
           tecnico: String(remisionData.tecnico || ''),
-      fechaRemision: String(remisionData.fecha_remision || ''), // usar campo DD/MM/YYYY guardado en Firestore
+          fechaRemision: String(remisionData.fecha_remision || ''),
           autorizo: String(remisionData.autorizo || ''),
           une: String(remisionData.une || ''),
           subtotal: String(remisionData.subtotal || ''),
@@ -435,9 +435,9 @@ const FormularioInforme = ({
         materialesActividades, // NUEVO: Incluir materiales de actividades
         datosConsolidadosActividades, // NUEVO: Incluir datos consolidados para recuperación
         idInforme: informe?.idInforme || `INF-${formData.numeroRemision}-${Date.now()}`,
-        fechaCreacion: informe?.fechaCreacion || serverTimestamp(),
-        fechaActualizacion: serverTimestamp(),
-        creadoPor: user?.email || 'usuario',
+        creadoEn: informe?.creadoEn || serverTimestamp(),
+        modificadoEn: serverTimestamp(),
+        elaboradoPor: user?.email || 'usuario',
         estado: 'completado'
       };
 

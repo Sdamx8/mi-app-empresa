@@ -31,22 +31,38 @@ const GestionInformes = () => {
   const cargarInformes = async () => {
     setLoading(true);
     try {
+      console.log('📋 Iniciando carga de informes técnicos...');
+      
       const q = query(
         collection(db, 'informesTecnicos'),
-        orderBy('fechaCreacion', 'desc')
+        orderBy('creadoEn', 'desc')
       );
       const querySnapshot = await getDocs(q);
       
-      const informesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        fechaCreacion: doc.data().fechaCreacion?.toDate?.() || new Date(),
-        fechaModificacion: doc.data().fechaModificacion?.toDate?.() || new Date()
-      }));
+      console.log('📊 Total de informes encontrados:', querySnapshot.size);
+      
+      const informesData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('📋 Informe encontrado:', {
+          id: doc.id,
+          idInforme: data.idInforme,
+          numeroRemision: data.numeroRemision,
+          creadoEn: data.creadoEn,
+          elaboradoPor: data.elaboradoPor
+        });
+        
+        return {
+          id: doc.id,
+          ...data,
+          fechaCreacion: data.creadoEn?.toDate?.() || data.fechaCreacion?.toDate?.() || new Date(),
+          fechaModificacion: data.modificadoEn?.toDate?.() || data.fechaModificacion?.toDate?.() || new Date()
+        };
+      });
       
       setInformes(informesData);
+      console.log('✅ Informes cargados exitosamente:', informesData.length);
     } catch (error) {
-      console.error('Error al cargar informes:', error);
+      console.error('❌ Error al cargar informes:', error);
     } finally {
       setLoading(false);
     }

@@ -10,11 +10,6 @@ const PDFGenerator = ({ informeData, isPreview = false, onClose }) => {
   const [error, setError] = useState(null);
   const [exito, setExito] = useState(false);
 
-const PDFGenerator = ({ informeData, isPreview = false, onClose }) => {
-  const [generando, setGenerando] = useState(false);
-  const [error, setError] = useState(null);
-  const [exito, setExito] = useState(false);
-
   // Resolver nombre del elaborador (lookup en EMPLEADOS)
   const resolverNombreElaborador = async (correo) => {
     if (!correo || !String(correo).includes('@')) return correo || 'N/A';
@@ -47,43 +42,19 @@ const PDFGenerator = ({ informeData, isPreview = false, onClose }) => {
       return null;
     }
 
-    // 1) Flatten y deduplicate por líneas
-    const lines = [];
-    datosConsolidados.descripciones.forEach(desc => {
-      const partes = String(desc).split(/\r?\n/).map(p => p.trim()).filter(Boolean);
-      partes.forEach(p => { if (!lines.includes(p)) lines.push(p); });
-    });
+    // Unir descripciones sin numeración extra
+    const texto = datosConsolidados.descripciones
+      .map(desc => String(desc).trim())
+      .filter(Boolean)
+      .join('\n\n'); // separa por doble salto de línea
 
-    // 2) Elegir encabezado: preferir la línea que contiene 'Se ejecut' o usar la primera
-    const encabezadoIndex = lines.findIndex(l => /se ejecu/i.test(l)) !== -1 ? lines.findIndex(l => /se ejecu/i.test(l)) : 0;
-    const encabezado = lines[encabezadoIndex] || lines[0];
-
-    // 3) Crear pasos: todas las líneas excepto el encabezado
-    const pasos = lines.filter((l, i) => i !== encabezadoIndex);
-
-    // 4) Construir texto con numeración 1, 1.1, 1.2...
-    let texto = `1. ${encabezado}\n`;
-    pasos.forEach((p, i) => {
-      texto += `1.${i + 1} ${p}\n`;
-    });
-
-    // 5) Añadir resultado esperado si viene en los datos
-    if (datosConsolidados.resultado_esperado) {
-      texto += `\nResultado esperado:\n${datosConsolidados.resultado_esperado}\n`;
-    }
-
-    // 6) Añadir Materiales, Recursos, Tiempo
     const mats = (datosConsolidados.materiales || []).join(', ') || 'No especificado';
     const recs = (datosConsolidados.recursos || []).join(', ') || 'No especificado';
     const tiempo = datosConsolidados.tiempoTotal
       ? `${datosConsolidados.tiempoTotal.horas ? datosConsolidados.tiempoTotal.horas + 'h ' : ''}${datosConsolidados.tiempoTotal.minutos ?? 0}m`
       : 'No especificado';
 
-    texto += `\nMateriales suministrados: ${mats}\n`;
-    texto += `Recurso humano requerido: ${recs}\n`;
-    texto += `Tiempo estimado: ${tiempo}\n`;
-
-    return texto;
+    return `${texto}\n\nMateriales suministrados: ${mats}\nRecurso humano requerido: ${recs}\nTiempo estimado: ${tiempo}`;
   };
 
   // Preparar datos del informe para el generador de PDF
@@ -105,7 +76,7 @@ const PDFGenerator = ({ informeData, isPreview = false, onClose }) => {
     return {
       // Información básica del informe
       idInforme: informeData.idInforme || informeData.numeroRemision || `INF-${informeData.remision}-${Date.now()}`,
-      numeroRemision: informeData.remision || informeData.numeroRemision || '',
+      numeroRemision: informeData.remision || informeData.numeroRemision || 'No especificada',
       fechaElaboracion: new Date(),
       elaboradoPor: nombreElaborador,
       
@@ -115,7 +86,7 @@ const PDFGenerator = ({ informeData, isPreview = false, onClose }) => {
         movil: normalizarMovil(informeData.movil || informeData.remisionData?.movil || informeData.remision?.movil),
         descripcion: informeData.remisionData?.descripcion || 'N/A',
         tecnico: informeData.remisionData?.tecnico || 'N/A',
-        fecha_remision: informeData.fecha_remision || informeData.datosRemision?.fecha_remision || informeData.remisionData?.fecha_remision || informeData.fechaRemision || 'No registrada',
+        fecha_remision: informeData.fecha_remision || informeData.fechaRemision || 'No registrada',
         autorizo: informeData.remisionData?.autorizo || 'N/A',
         une: informeData.remisionData?.une || 'N/A',
         subtotal: informeData.subtotal || informeData.datosRemision?.subtotal || informeData.remisionData?.subtotal || 0,

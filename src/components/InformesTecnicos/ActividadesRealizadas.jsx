@@ -79,7 +79,11 @@ const ActividadesRealizadas = ({
       }
 
       if (todasLasActividades.length > 0) {
-        console.log('ActividadesFetch: Total de actividades encontradas:', todasLasActividades.length, todasLasActividades);
+        console.log('ActividadesFetch: Total de actividades encontradas:', todasLasActividades.length);
+        console.log('ActividadesFetch: Detalles de actividades encontradas:');
+        todasLasActividades.forEach((act, index) => {
+          console.log(`  ${index + 1}. Título: "${act.tituloOriginal}" | Descripción: "${act.descripcion_actividad?.substring(0, 100)}..."`);
+        });
         setActividades(todasLasActividades);
       } else {
         console.log('ActividadesFetch: No se encontraron actividades para ninguno de los títulos');
@@ -120,12 +124,60 @@ const ActividadesRealizadas = ({
   const datosConsolidados = useMemo(() => {
     if (actividades.length === 0) return null;
 
-    // 1. DESCRIPCIONES: Eliminar duplicados (usando descripcion_actividad)
-    const descripcionesUnicas = [...new Set(
-      actividades
-        .map(act => act.descripcion_actividad) // CORREGIDO: campo correcto
-        .filter(desc => desc && desc.trim() !== '')
-    )];
+    // 1. DESCRIPCIONES: Eliminar duplicados inteligentes (descripcion_actividad)
+    const descripcionesConProcesamiento = actividades
+      .map(act => act.descripcion_actividad)
+      .filter(desc => desc && desc.trim() !== '');
+    
+    console.log('🔍 ActividadesRealizadas - ENTRADA COMPLETA:');
+    console.log('  - Total actividades encontradas:', actividades.length);
+    actividades.forEach((act, index) => {
+      console.log(`  ${index + 1}. Título: "${act.tituloOriginal}" | ID: ${act.id}`);
+      console.log(`      Descripción: "${act.descripcion_actividad?.substring(0, 200)}..."`);
+    });
+    
+    console.log('🔍 ActividadesRealizadas - DESCRIPCIONES EXTRAÍDAS:');
+    descripcionesConProcesamiento.forEach((desc, index) => {
+      console.log(`  ${index + 1}. "${desc?.substring(0, 200)}..."`);
+    });
+    
+    // Normalizar descripciones para detectar duplicados más eficientemente
+    const descripcionesNormalizadas = new Map();
+    descripcionesConProcesamiento.forEach((desc, index) => {
+      // Primero eliminar prefijos comunes antes de normalizar
+      let textoLimpio = desc.trim()
+        .replace(/^["']?actividad\s+realizada\s*:\s*/i, '') // Eliminar "Actividad realizada:"
+        .replace(/^["']?descripci[oó]n\s*:\s*/i, '') // Eliminar "Descripción:"
+        .replace(/^["']?detalle\s*:\s*/i, '') // Eliminar "Detalle:"
+        .replace(/^["']/, '') // Eliminar comillas al inicio
+        .replace(/["']$/, '') // Eliminar comillas al final
+        .trim();
+      
+      // Normalizar: minúsculas, sin espacios extra, sin caracteres especiales al final
+      const normalizada = textoLimpio.toLowerCase()
+        .replace(/\s+/g, ' ')  // Múltiples espacios a uno solo
+        .replace(/[.,:;!?]+$/g, '');  // Remover puntuación al final
+      
+      console.log(`🔍 Procesando descripción ${index + 1}:`);
+      console.log(`    Original: "${desc?.substring(0, 100)}..."`);
+      console.log(`    Texto limpio: "${textoLimpio?.substring(0, 100)}..."`);
+      console.log(`    Normalizada: "${normalizada?.substring(0, 100)}..."`);
+      
+      // Si no existe esta descripción normalizada, guardar la original
+      if (!descripcionesNormalizadas.has(normalizada)) {
+        descripcionesNormalizadas.set(normalizada, desc.trim());
+        console.log(`    ✅ NUEVA - Guardada`);
+      } else {
+        console.log(`    ❌ DUPLICADA - Ignorada`);
+      }
+    });
+    
+    const descripcionesUnicas = Array.from(descripcionesNormalizadas.values());
+    
+    console.log('🔍 Consolidación de descripciones:');
+    console.log('  - Descripciones originales:', descripcionesConProcesamiento.length);
+    console.log('  - Descripciones únicas:', descripcionesUnicas.length);
+    console.log('  - Descripciones procesadas:', descripcionesUnicas);
 
     // 2. MATERIALES: Combinar y eliminar duplicados
     const materialesOriginales = [];
@@ -193,6 +245,8 @@ const ActividadesRealizadas = ({
 
   // CRÍTICO: Notificar cambios de materiales al componente padre
   useEffect(() => {
+    console.log('🔍 ActividadesRealizadas - ENVIANDO DATOS CONSOLIDADOS:', datosConsolidados);
+    
     if (datosConsolidados && onMaterialesChange) {
       const materialesCompletos = [
         ...datosConsolidados.materiales,
