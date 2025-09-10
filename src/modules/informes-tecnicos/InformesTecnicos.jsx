@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 
 import FormularioInforme from './FormularioInforme';
 import GestionInformes from './GestionInformes';
-import { useAuth } from '../../AuthContext';
-import { useRole } from '../../RoleContext';
+import { useAuth } from '../../core/auth/AuthContext';
+import { useRole } from '../../core/auth/RoleContext';
 
 const InformesTecnicos = () => {
   const [activeTab, setActiveTab] = useState('nuevo');

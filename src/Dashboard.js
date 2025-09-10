@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CRM from './modules/crm';
+import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado';
 import BuscarHistorialOptimizado from './modules/historial-trabajos/BuscarHistorialOptimizado';
 import IngresarTrabajo from './modules/ingresar-trabajo';
 import HerramientaElectrica from './modules/herramientas-electricas';
@@ -196,7 +197,7 @@ const Dashboard = () => {
         if (!safeHasModuleAccess('historial_trabajos')) return <AccessDenied module="Historial de Trabajos" />;
         return (
           <ErrorBoundary>
-            <BuscarHistorialOptimizado 
+            <HistorialTrabajosOptimizado 
               canEdit={safeUserPermissions.canEditHistorial}
               canDelete={safeUserPermissions.canDeleteHistorial}
               userRole={userRole}
