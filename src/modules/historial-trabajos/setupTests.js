@@ -26,14 +26,14 @@ jest.mock('firebase/auth', () => ({
 }));
 
 // Mock servicios
-jest.mock('../services/remisionesService', () => ({
+jest.mock('../../services/remisionesService', () => ({
   fetchRemisiones: jest.fn(),
   fetchHistorialRemision: jest.fn(),
   fetchAllRemisionesForExport: jest.fn(),
 }));
 
 // Mock contextos
-jest.mock('../../../core/auth/AuthContext', () => ({
+jest.mock('../../core/auth/AuthContext', () => ({
   useAuth: jest.fn(() => ({
     user: {
       uid: 'test-user-id',

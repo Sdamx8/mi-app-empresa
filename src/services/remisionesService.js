@@ -17,6 +17,8 @@ import {
   getDocs,
   doc,
   getDoc,
+  updateDoc,
+  deleteDoc,
   Timestamp
 } from 'firebase/firestore';
 
@@ -71,37 +73,44 @@ const prepareFilters = (filtros) => {
 
 /**
  * Construye query de Firestore con filtros aplicados
+ * Simplificado para evitar errores de índices compuestos
  */
 const buildQuery = (filtros, pageSize, startAfterDoc) => {
   let q = query(collection(db, COLLECTION_NAME));
   
-  // Aplicar filtros simples
-  if (filtros.movil) {
-    q = query(q, where('movil', '==', filtros.movil));
-  }
+  // Solo aplicar un filtro principal para evitar índices compuestos
+  // Los demás filtros se aplicarán post-query en processDocuments
   
-  if (filtros.estado) {
-    q = query(q, where('estado', '==', filtros.estado));
-  }
-  
-  if (filtros.remision) {
-    q = query(q, where('remision', '==', filtros.remision));
-  }
-  
-  // Filtro por rango de fechas
-  if (filtros.fechaInicio && filtros.fechaFin) {
+  // Priorizar filtro por fecha si existe (más común)
+  if (filtros.fechaInicio) {
     q = query(q, 
       where('fecha_remision', '>=', filtros.fechaInicio),
-      where('fecha_remision', '<=', filtros.fechaFin)
+      orderBy('fecha_remision', 'desc')
     );
-  } else if (filtros.fechaInicio) {
-    q = query(q, where('fecha_remision', '>=', filtros.fechaInicio));
   } else if (filtros.fechaFin) {
-    q = query(q, where('fecha_remision', '<=', filtros.fechaFin));
+    q = query(q, 
+      where('fecha_remision', '<=', filtros.fechaFin),
+      orderBy('fecha_remision', 'desc')
+    );
+  } else if (filtros.movil) {
+    // Filtro por móvil directo en query
+    q = query(q, 
+      where('movil', '==', filtros.movil),
+      orderBy('fecha_remision', 'desc')
+    );
+  } else if (filtros.estado) {
+    // Si no hay filtro de fecha ni móvil, usar estado
+    q = query(q, 
+      where('estado', '==', filtros.estado),
+      orderBy('fecha_remision', 'desc')
+    );
+  } else if (filtros.remision) {
+    // Filtro por número de remisión específico
+    q = query(q, where('remision', '==', filtros.remision));
+  } else {
+    // Query básica sin filtros WHERE - solo ordenar
+    q = query(q, orderBy('fecha_remision', 'desc'));
   }
-  
-  // Ordenar por fecha de remisión (descendente) - más recientes primero
-  q = query(q, orderBy('fecha_remision', 'desc'));
   
   // Paginación con cursor
   if (startAfterDoc) {
@@ -126,6 +135,43 @@ const processDocuments = (docs, filtros) => {
     migratedAt: doc.data().migratedAt?.toDate?.() || doc.data().migratedAt
   }));
   
+  // Aplicar filtros que no se aplicaron en la query principal
+  
+  // Filtro por móvil (solo si no se aplicó en query)
+  if (filtros.movil && !filtros.fechaInicio && !filtros.fechaFin) {
+    // Ya se aplicó en query, no filtrar de nuevo
+  } else if (filtros.movil) {
+    // Filtrar por móvil cuando se combinó con fecha
+    processedDocs = processedDocs.filter(doc => 
+      doc.movil && doc.movil.toLowerCase().includes(filtros.movil.toLowerCase())
+    );
+  }
+  
+  // Filtro por estado (si no se aplicó en query)
+  if (filtros.estado && !filtros.fechaInicio && !filtros.fechaFin) {
+    // Ya se aplicó en query, no filtrar de nuevo
+  } else if (filtros.estado) {
+    processedDocs = processedDocs.filter(doc => 
+      doc.estado === filtros.estado
+    );
+  }
+  
+  // Filtro por remisión (si no se aplicó en query)
+  if (filtros.remision && filtros.fechaInicio) {
+    processedDocs = processedDocs.filter(doc =>
+      doc.remision && doc.remision.includes(filtros.remision)
+    );
+  }
+  
+  // Filtro por rango de fechas (si no se aplicó completamente en query)
+  if (filtros.fechaInicio && filtros.fechaFin && !filtros.fechaInicio) {
+    // Si solo se aplicó fechaInicio, aplicar fechaFin aquí
+    processedDocs = processedDocs.filter(doc => {
+      const docDate = doc.fecha_remision;
+      return docDate <= filtros.fechaFin;
+    });
+  }
+  
   // Filtro por técnico (post-query porque requiere array-contains-any o lógica compleja)
   if (filtros.tecnico) {
     processedDocs = processedDocs.filter(doc => {
@@ -147,6 +193,20 @@ const processDocuments = (docs, filtros) => {
       }
       
       return false;
+    });
+  }
+  
+  // Filtro por texto general (búsqueda en múltiples campos)
+  if (filtros.texto) {
+    const textoLower = filtros.texto.toLowerCase();
+    processedDocs = processedDocs.filter(doc => {
+      return (
+        (doc.remision && doc.remision.toLowerCase().includes(textoLower)) ||
+        (doc.cliente && doc.cliente.toLowerCase().includes(textoLower)) ||
+        (doc.movil && doc.movil.toLowerCase().includes(textoLower)) ||
+        (doc.descripcion && doc.descripcion.toLowerCase().includes(textoLower)) ||
+        (doc.observaciones && doc.observaciones.toLowerCase().includes(textoLower))
+      );
     });
   }
   
@@ -354,11 +414,54 @@ export const fetchRemisionesStats = async (filtros = {}) => {
   }
 };
 
+/**
+ * Actualiza una remisión existente
+ */
+export const updateRemision = async (remisionId, updates) => {
+  try {
+    if (!remisionId) {
+      throw new Error('ID de remisión requerido');
+    }
+
+    const remisionRef = doc(db, COLLECTION_NAME, remisionId);
+    await updateDoc(remisionRef, {
+      ...updates,
+      updated_at: Timestamp.now()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating remision:', error);
+    throw new Error(`Error al actualizar remisión: ${error.message}`);
+  }
+};
+
+/**
+ * Elimina una remisión
+ */
+export const deleteRemision = async (remisionId) => {
+  try {
+    if (!remisionId) {
+      throw new Error('ID de remisión requerido');
+    }
+
+    const remisionRef = doc(db, COLLECTION_NAME, remisionId);
+    await deleteDoc(remisionRef);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting remision:', error);
+    throw new Error(`Error al eliminar remisión: ${error.message}`);
+  }
+};
+
 // Exportar funciones adicionales
 export default {
   fetchRemisiones,
   fetchRemisionById,
   fetchHistorialRemision,
   fetchAllRemisionesForExport,
-  fetchRemisionesStats
+  fetchRemisionesStats,
+  updateRemision,
+  deleteRemision
 };

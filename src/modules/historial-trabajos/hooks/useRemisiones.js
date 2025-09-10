@@ -10,7 +10,8 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { fetchRemisiones, fetchHistorialRemision } from '../../services/remisionesService';
+import { fetchRemisiones, fetchHistorialRemision } from '../../../services/remisionesService';
+import { useAuth } from '../../../core/auth/AuthContext';
 
 const INITIAL_STATE = {
   remisiones: [],
@@ -34,6 +35,7 @@ export const useRemisiones = ({ pageSize = 25 } = {}) => {
   const [state, setState] = useState(INITIAL_STATE);
   const currentFiltersRef = useRef({});
   const abortControllerRef = useRef(null);
+  const { user } = useAuth();
 
   /**
    * Actualiza el estado de forma inmutable

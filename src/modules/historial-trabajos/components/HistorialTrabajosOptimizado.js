@@ -15,6 +15,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRemisiones, useHistorialRemision } from '../hooks/useRemisiones';
 import { useEmpleadoAuth } from '../hooks/useEmpleadoAuth';
+import { updateRemision, deleteRemision } from '../../../services/remisionesService';
 import './Historial.css';
 
 // Componente de Skeleton Loader
@@ -232,7 +233,7 @@ const FiltrosAvanzados = ({ onFilter, loading, appliedFilters }) => {
 };
 
 // Componente de tarjeta de remisión profesional
-const RemisionCard = ({ remision, onVerDetalle, onExport }) => {
+const RemisionCard = ({ remision, onVerDetalle, onExport, onEditar, onEliminar }) => {
   const renderTextoSeguro = (valor) => {
     if (typeof valor === 'object' && valor !== null) {
       return JSON.stringify(valor);
@@ -244,13 +245,50 @@ const RemisionCard = ({ remision, onVerDetalle, onExport }) => {
     if (!fecha) return 'N/A';
     try {
       const fechaObj = fecha instanceof Date ? fecha : new Date(fecha);
-      return fechaObj.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      
+      // Verificar si la fecha es válida
+      if (isNaN(fechaObj.getTime())) {
+        return 'Fecha inválida';
+      }
+
+      // Usar getFullYear, getMonth, getDate para evitar problemas de zona horaria
+      const año = fechaObj.getFullYear();
+      const mes = fechaObj.getMonth();
+      const dia = fechaObj.getDate();
+      
+      const nombresMeses = [
+        'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+        'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+      ];
+      
+      return `${dia} ${nombresMeses[mes]} ${año}`;
     } catch (error) {
+      console.error('Error formateando fecha:', error);
       return 'Fecha inválida';
+    }
+  };
+
+  const getFechaClass = (fecha) => {
+    if (!fecha) return '';
+    
+    try {
+      const fechaObj = fecha instanceof Date ? fecha : new Date(fecha);
+      const ahora = new Date();
+      const diffTime = fechaObj.getTime() - ahora.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Fechas próximas a mantenimiento (próximos 30 días)
+      if (diffDays >= 0 && diffDays <= 7) {
+        return 'fecha-urgente'; // Próximos 7 días
+      } else if (diffDays > 7 && diffDays <= 30) {
+        return 'fecha-proxima'; // Próximos 30 días
+      } else if (diffDays < 0) {
+        return 'fecha-vencida'; // Fecha ya pasó
+      }
+      
+      return '';
+    } catch (error) {
+      return '';
     }
   };
 
@@ -303,7 +341,9 @@ const RemisionCard = ({ remision, onVerDetalle, onExport }) => {
             Remisión #{renderTextoSeguro(remision.remision)}
           </h3>
           <div className="card-metadata">
-            <span className="card-fecha">{formatFecha(remision.fecha_remision)}</span>
+            <span className={`card-fecha ${getFechaClass(remision.fecha_remision)}`}>
+              {formatFecha(remision.fecha_remision)}
+            </span>
             <span className="card-movil">Móvil: {renderTextoSeguro(remision.movil)}</span>
           </div>
         </div>
@@ -352,15 +392,37 @@ const RemisionCard = ({ remision, onVerDetalle, onExport }) => {
           onClick={() => onVerDetalle(remision)}
           className="btn btn-outline btn-sm"
           data-cy="btn-ver-detalle"
+          title="Ver detalles de la remisión"
         >
           <span className="btn-icon">👁️</span>
-          Ver Detalle
+          Ver
+        </button>
+
+        <button
+          onClick={() => onEditar(remision)}
+          className="btn btn-primary btn-sm"
+          data-cy="btn-editar"
+          title="Editar remisión"
+        >
+          <span className="btn-icon">✏️</span>
+          Editar
+        </button>
+
+        <button
+          onClick={() => onEliminar(remision)}
+          className="btn btn-danger btn-sm"
+          data-cy="btn-eliminar"
+          title="Eliminar remisión"
+        >
+          <span className="btn-icon">🗑️</span>
+          Eliminar
         </button>
 
         <button
           onClick={() => onExport(remision)}
           className="btn btn-outline btn-sm"
           data-cy="btn-exportar"
+          title="Exportar remisión"
         >
           <span className="btn-icon">📊</span>
           Exportar
@@ -470,6 +532,121 @@ const HistorialTimeline = ({ remisionId, onClose }) => {
   );
 };
 
+// Componente Modal para Editar Remisión
+const ModalEditarRemision = ({ isOpen, remision, onSave, onClose, loading }) => {
+  const [formData, setFormData] = React.useState({
+    movil: '',
+    cliente: '',
+    estado: '',
+    observaciones: ''
+  });
+
+  React.useEffect(() => {
+    if (remision) {
+      setFormData({
+        movil: remision.movil || '',
+        cliente: remision.cliente || '',
+        estado: remision.estado || '',
+        observaciones: remision.observaciones || ''
+      });
+    }
+  }, [remision]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Editar Remisión #{remision?.remision}</h3>
+          <button onClick={onClose} className="modal-close">×</button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label htmlFor="movil">Móvil:</label>
+            <input
+              type="text"
+              id="movil"
+              name="movil"
+              value={formData.movil}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="cliente">Cliente:</label>
+            <input
+              type="text"
+              id="cliente"
+              name="cliente"
+              value={formData.cliente}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="estado">Estado:</label>
+            <select
+              id="estado"
+              name="estado"
+              value={formData.estado}
+              onChange={handleChange}
+              className="form-input"
+              required
+            >
+              <option value="">Seleccionar estado</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En Proceso</option>
+              <option value="completado">Completado</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="facturado">Facturado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="observaciones">Observaciones:</label>
+            <textarea
+              id="observaciones"
+              name="observaciones"
+              value={formData.observaciones}
+              onChange={handleChange}
+              className="form-input"
+              rows="3"
+            />
+          </div>
+          
+          <div className="modal-actions">
+            <button type="button" onClick={onClose} className="btn btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Componente principal
 const HistorialTrabajosOptimizado = () => {
   const { empleado, rol } = useEmpleadoAuth();
@@ -490,6 +667,9 @@ const HistorialTrabajosOptimizado = () => {
 
   const [remisionSeleccionada, setRemisionSeleccionada] = useState(null);
   const [busquedaRealizada, setBusquedaRealizada] = useState(false);
+  const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
+  const [remisionAEditar, setRemisionAEditar] = useState(null);
+  const [procesandoAccion, setProcesandoAccion] = useState(false);
 
   // Manejar filtros
   const handleFiltrar = useCallback((filtros) => {
@@ -524,6 +704,81 @@ const HistorialTrabajosOptimizado = () => {
   const handleCerrarDetalle = useCallback(() => {
     setRemisionSeleccionada(null);
   }, []);
+
+  // Manejar editar
+  const handleEditar = useCallback((remision) => {
+    setRemisionAEditar(remision);
+    setMostrarModalEditar(true);
+  }, []);
+
+  // Manejar guardar edición
+  const handleGuardarEdicion = useCallback(async (datosActualizados) => {
+    if (!remisionAEditar) return;
+    
+    setProcesandoAccion(true);
+    try {
+      await updateRemision(remisionAEditar.id, datosActualizados);
+      
+      // Actualizar la lista
+      fetchFirstPage(appliedFilters);
+      
+      setMostrarModalEditar(false);
+      setRemisionAEditar(null);
+      
+      // Mostrar mensaje de éxito
+      window.dispatchEvent(new CustomEvent('ui:notification', {
+        detail: {
+          type: 'success',
+          message: 'Remisión actualizada exitosamente'
+        }
+      }));
+    } catch (error) {
+      console.error('Error al actualizar remisión:', error);
+      window.dispatchEvent(new CustomEvent('ui:notification', {
+        detail: {
+          type: 'error',
+          message: `Error al actualizar: ${error.message}`
+        }
+      }));
+    } finally {
+      setProcesandoAccion(false);
+    }
+  }, [remisionAEditar, appliedFilters, fetchFirstPage]);
+
+  // Manejar eliminar
+  const handleEliminar = useCallback(async (remision) => {
+    const confirmar = window.confirm(
+      `¿Está seguro de que desea eliminar la remisión ${remision.remision}?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (!confirmar) return;
+
+    setProcesandoAccion(true);
+    try {
+      await deleteRemision(remision.id);
+      
+      // Actualizar la lista
+      fetchFirstPage(appliedFilters);
+      
+      // Mostrar mensaje de éxito
+      window.dispatchEvent(new CustomEvent('ui:notification', {
+        detail: {
+          type: 'success',
+          message: 'Remisión eliminada exitosamente'
+        }
+      }));
+    } catch (error) {
+      console.error('Error al eliminar remisión:', error);
+      window.dispatchEvent(new CustomEvent('ui:notification', {
+        detail: {
+          type: 'error',
+          message: `Error al eliminar: ${error.message}`
+        }
+      }));
+    } finally {
+      setProcesandoAccion(false);
+    }
+  }, [appliedFilters, fetchFirstPage]);
 
   return (
     <div className="historial-container" data-cy="historial-container">
@@ -640,6 +895,8 @@ const HistorialTrabajosOptimizado = () => {
                     remision={remision}
                     onVerDetalle={handleVerDetalle}
                     onExport={handleExportar}
+                    onEditar={handleEditar}
+                    onEliminar={handleEliminar}
                   />
                 ))}
               </div>
@@ -695,6 +952,15 @@ const HistorialTrabajosOptimizado = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de editar */}
+      <ModalEditarRemision
+        isOpen={mostrarModalEditar}
+        remision={remisionAEditar}
+        onSave={handleGuardarEdicion}
+        onClose={() => setMostrarModalEditar(false)}
+        loading={procesandoAccion}
+      />
     </div>
   );
 };
