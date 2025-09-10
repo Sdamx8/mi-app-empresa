@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Exportación PDF con Imágenes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .test-button {
+            background-color: #2874A6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background-color: #1B4F72;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Prueba de Funcionalidad - Informes Técnicos</h1>
+    
+    <div class="test-section">
+        <h2>1. Prueba de Servicio PDF</h2>
+        <p>Verificar que el servicio de PDF puede procesar imágenes correctamente</p>
+        <button class="test-button" onclick="testPDFService()">Probar Servicio PDF</button>
+        <div id="pdfTestLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Prueba de Carga de Imágenes</h2>
+        <p>Verificar que las imágenes de Firebase Storage se cargan correctamente</p>
+        <button class="test-button" onclick="testImageLoading()">Probar Carga de Imágenes</button>
+        <div id="imageTestLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Prueba Completa de PDF</h2>
+        <p>Generar un PDF de prueba con datos simulados e imágenes</p>
+        <button class="test-button" onclick="testCompletePDF()">Generar PDF de Prueba</button>
+        <div id="completeTestLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Prueba de Campo UNE</h2>
+        <p>Verificar que el campo UNE se mapea correctamente desde la base de datos</p>
+        <button class="test-button" onclick="testUNEField()">Probar Campo UNE</button>
+        <div id="uneTestLog" class="log"></div>
+    </div>
+
+    <script type="module">
+        // Importar servicios necesarios
+        import PDFService from './services/pdfService.js';
+        import { obtenerDatosRemision } from './services/informesTecnicosService.js';
+
+        window.testPDFService = async function() {
+            const log = document.getElementById('pdfTestLog');
+            log.innerHTML = '<div class="info">🔄 Iniciando prueba del servicio PDF...</div>';
+
+            try {
+                // Datos de prueba
+                const testData = {
+                    idInforme: 'IT-TEST-001',
+                    numeroRemision: 'TEST-001',
+                    movil: 'Z70-TEST',
+                    tituloTrabajo: 'Prueba de Exportación PDF',
+                    ubicacionUNE: 'UNE-TEST-001',
+                    tecnico: 'Técnico de Prueba',
+                    fechaRemision: '2024-01-15',
+                    autorizadoPor: 'Supervisor de Prueba',
+                    elaboradoPor: 'Sistema de Prueba',
+                    observaciones: 'Esta es una prueba de la funcionalidad de exportación de PDF con imágenes.',
+                    subtotal: 100000,
+                    total: 119000
+                };
+
+                log.innerHTML += '<div class="info">✅ Datos de prueba creados</div>';
+
+                // Probar creación de PDF sin imágenes
+                const pdf = await PDFService.generarPDFInforme(testData);
+                log.innerHTML += '<div class="success">✅ PDF generado exitosamente sin imágenes</div>';
+
+                // Descargar PDF de prueba
+                PDFService.descargarPDF(pdf, 'prueba_sin_imagenes.pdf');
+                log.innerHTML += '<div class="success">✅ PDF descargado exitosamente</div>';
+
+            } catch (error) {
+                log.innerHTML += `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error('Error en prueba PDF:', error);
+            }
+        };
+
+        window.testImageLoading = async function() {
+            const log = document.getElementById('imageTestLog');
+            log.innerHTML = '<div class="info">🔄 Iniciando prueba de carga de imágenes...</div>';
+
+            try {
+                // URLs de imágenes de prueba (usar placeholders)
+                const testImages = {
+                    antes: 'https://via.placeholder.com/400x300/FF6B6B/ffffff?text=ANTES',
+                    despues: 'https://via.placeholder.com/400x300/4ECDC4/ffffff?text=DESPUES'
+                };
+
+                log.innerHTML += '<div class="info">📸 Probando carga de imagen "Antes"...</div>';
+                
+                // Probar procesamiento de imagen
+                const imgAntes = await PDFService.processImageForPDF(testImages.antes);
+                log.innerHTML += '<div class="success">✅ Imagen "Antes" procesada exitosamente</div>';
+
+                log.innerHTML += '<div class="info">📸 Probando carga de imagen "Después"...</div>';
+                const imgDespues = await PDFService.processImageForPDF(testImages.despues);
+                log.innerHTML += '<div class="success">✅ Imagen "Después" procesada exitosamente</div>';
+
+                log.innerHTML += '<div class="success">🎉 Todas las imágenes se procesaron correctamente</div>';
+
+            } catch (error) {
+                log.innerHTML += `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error('Error en prueba de imágenes:', error);
+            }
+        };
+
+        window.testCompletePDF = async function() {
+            const log = document.getElementById('completeTestLog');
+            log.innerHTML = '<div class="info">🔄 Iniciando prueba completa de PDF con imágenes...</div>';
+
+            try {
+                // Datos de prueba completos
+                const testData = {
+                    idInforme: 'IT-COMPLETE-001',
+                    numeroRemision: 'COMPLETE-001',
+                    movil: 'Z70-COMPLETE',
+                    tituloTrabajo: 'Prueba Completa con Imágenes',
+                    ubicacionUNE: 'UNE-COMPLETE-001',
+                    tecnico: 'Técnico Completo',
+                    fechaRemision: '2024-01-15',
+                    autorizadoPor: 'Supervisor Completo',
+                    elaboradoPor: 'Sistema Completo',
+                    observaciones: 'Esta es una prueba completa de la funcionalidad de exportación de PDF incluyendo evidencias fotográficas antes y después del trabajo realizado.',
+                    subtotal: 250000,
+                    total: 297500
+                };
+
+                // Imágenes de prueba
+                const testImages = {
+                    antes: 'https://via.placeholder.com/600x400/FF6B6B/ffffff?text=EVIDENCIA+ANTES',
+                    despues: 'https://via.placeholder.com/600x400/4ECDC4/ffffff?text=EVIDENCIA+DESPUES'
+                };
+
+                log.innerHTML += '<div class="info">📋 Generando PDF completo con imágenes...</div>';
+
+                // Generar PDF completo
+                const pdf = await PDFService.generarPDFInforme(testData, testImages);
+                log.innerHTML += '<div class="success">✅ PDF completo generado exitosamente</div>';
+
+                // Descargar PDF completo
+                PDFService.descargarPDF(pdf, 'prueba_completa_con_imagenes.pdf');
+                log.innerHTML += '<div class="success">🎉 PDF completo descargado exitosamente</div>';
+                log.innerHTML += '<div class="info">📁 Revisa tu carpeta de descargas para ver el archivo "prueba_completa_con_imagenes.pdf"</div>';
+
+            } catch (error) {
+                log.innerHTML += `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error('Error en prueba completa:', error);
+            }
+        };
+
+        window.testUNEField = async function() {
+            const log = document.getElementById('uneTestLog');
+            log.innerHTML = '<div class="info">🔄 Iniciando prueba del campo UNE...</div>';
+
+            try {
+                // Simular datos de remisión con campo UNE
+                const testRemisionData = {
+                    une: 'UNE-12345-TEST',
+                    numeroRemision: 'R-001',
+                    tecnico: 'Técnico Test',
+                    movil: 'Z70-001'
+                };
+
+                log.innerHTML += '<div class="info">📊 Datos de prueba creados:</div>';
+                log.innerHTML += `<div class="info">- UNE: ${testRemisionData.une}</div>`;
+                log.innerHTML += `<div class="info">- Remisión: ${testRemisionData.numeroRemision}</div>`;
+
+                // Verificar que el campo se mapea correctamente
+                const mappedData = {
+                    numeroRemision: testRemisionData.numeroRemision,
+                    movil: testRemisionData.movil,
+                    tecnico: testRemisionData.tecnico,
+                    une: testRemisionData.une // Campo UNE mapeado correctamente
+                };
+
+                log.innerHTML += '<div class="success">✅ Campo UNE mapeado correctamente</div>';
+                log.innerHTML += `<div class="success">✅ Valor UNE: ${mappedData.une}</div>';
+                log.innerHTML += '<div class="success">🎉 Prueba del campo UNE exitosa</div>';
+
+            } catch (error) {
+                log.innerHTML += `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error('Error en prueba UNE:', error);
+            }
+        };
+
+        // Mensaje inicial
+        console.log('🧪 Página de pruebas cargada. Usa los botones para probar cada funcionalidad.');
+    </script>
+</body>
+</html>

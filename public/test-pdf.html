@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba PDF - Informes Técnicos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background-color: #2874A6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .test-button:hover {
+            background-color: #1B4F72;
+        }
+        .test-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de Exportación PDF - Informes Técnicos</h1>
+        <p>Esta página prueba la funcionalidad de exportación de PDF con imágenes para verificar las correcciones implementadas.</p>
+        
+        <h2>🔧 Pruebas Disponibles</h2>
+        
+        <div>
+            <button class="test-button" onclick="testImageProcessing()">1. Probar Procesamiento de Imágenes</button>
+            <button class="test-button" onclick="testPDFGeneration()">2. Generar PDF de Prueba</button>
+            <button class="test-button" onclick="testCompleteWorkflow()">3. Flujo Completo</button>
+            <button class="test-button" onclick="clearLog()">🗑️ Limpiar Log</button>
+        </div>
+
+        <div id="statusDiv"></div>
+        <div id="logDiv" class="log">
+            <div class="info">📋 Listo para ejecutar pruebas...</div>
+            <div class="info">🔧 Presiona cualquier botón para comenzar</div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones de utilidad para logging
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('logDiv');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `<div class="${type}">[${timestamp}] ${message}</div>`;
+            logDiv.innerHTML += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function setStatus(message, isSuccess = true) {
+            const statusDiv = document.getElementById('statusDiv');
+            statusDiv.innerHTML = `<div class="status ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        function clearLog() {
+            document.getElementById('logDiv').innerHTML = '<div class="info">📋 Log limpiado...</div>';
+            document.getElementById('statusDiv').innerHTML = '';
+        }
+
+        // Función para procesar imagen similar a la del servicio real
+        async function processImageForPDF(imageUrl) {
+            log(`🖼️ Procesando imagen: ${imageUrl}`, 'info');
+            
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                const timeout = setTimeout(() => {
+                    log('❌ Timeout al cargar imagen', 'error');
+                    reject(new Error('Timeout al cargar imagen'));
+                }, 10000);
+                
+                img.onload = () => {
+                    clearTimeout(timeout);
+                    log('✅ Imagen cargada exitosamente', 'success');
+                    
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Redimensionar imagen
+                        const maxWidth = 500;
+                        const maxHeight = 400;
+                        let { width, height } = img;
+                        
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        const newWidth = width * ratio;
+                        const newHeight = height * ratio;
+                        
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+                        
+                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                        
+                        const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                        log(`✅ Imagen convertida a base64 (${Math.round(newWidth)}x${Math.round(newHeight)})`, 'success');
+                        resolve({
+                            dataURL,
+                            width: newWidth,
+                            height: newHeight
+                        });
+                        
+                    } catch (error) {
+                        clearTimeout(timeout);
+                        log(`❌ Error procesando imagen: ${error.message}`, 'error');
+                        reject(error);
+                    }
+                };
+                
+                img.onerror = (error) => {
+                    clearTimeout(timeout);
+                    log(`❌ Error cargando imagen: ${error}`, 'error');
+                    reject(new Error(`Error cargando imagen: ${imageUrl}`));
+                };
+                
+                img.src = imageUrl;
+            });
+        }
+
+        // Prueba 1: Procesamiento de imágenes
+        async function testImageProcessing() {
+            log('🚀 Iniciando prueba de procesamiento de imágenes...', 'info');
+            
+            const testImages = [
+                'https://via.placeholder.com/600x400/FF6B6B/ffffff?text=IMAGEN+ANTES',
+                'https://via.placeholder.com/600x400/4ECDC4/ffffff?text=IMAGEN+DESPUES',
+                'https://picsum.photos/400/300?random=1',
+                'https://picsum.photos/400/300?random=2'
+            ];
+
+            let successCount = 0;
+            let totalCount = testImages.length;
+
+            for (let i = 0; i < testImages.length; i++) {
+                try {
+                    log(`📸 Probando imagen ${i + 1}/${totalCount}...`, 'info');
+                    const result = await processImageForPDF(testImages[i]);
+                    log(`✅ Imagen ${i + 1} procesada: ${result.width}x${result.height}`, 'success');
+                    successCount++;
+                } catch (error) {
+                    log(`❌ Error en imagen ${i + 1}: ${error.message}`, 'error');
+                }
+            }
+
+            const message = `🎯 Procesamiento completado: ${successCount}/${totalCount} imágenes exitosas`;
+            log(message, successCount === totalCount ? 'success' : 'warning');
+            setStatus(message, successCount === totalCount);
+        }
+
+        // Prueba 2: Generación de PDF
+        async function testPDFGeneration() {
+            log('📄 Iniciando prueba de generación de PDF...', 'info');
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Configuración básica
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                let currentY = 20;
+
+                // Encabezado
+                pdf.setFillColor(40, 116, 166);
+                pdf.rect(0, 0, pageWidth, 50, 'F');
+                
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFontSize(20);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('Global Mobility Solutions', 20, 18);
+                
+                pdf.setFontSize(14);
+                pdf.text('INFORME TÉCNICO DE PRUEBA', 20, 28);
+                
+                pdf.setFontSize(8);
+                pdf.text('Prueba de funcionalidad - Sistema de Informes', 20, 38);
+                
+                currentY = 60;
+
+                // Información del informe
+                pdf.setTextColor(0, 0, 0);
+                pdf.setFontSize(14);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('INFORMACIÓN DEL INFORME', 20, currentY);
+                currentY += 15;
+
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'normal');
+                
+                const infoData = [
+                    ['ID Informe:', 'IT-PRUEBA-001'],
+                    ['Fecha:', new Date().toLocaleDateString('es-ES')],
+                    ['Estado:', 'Prueba Exitosa'],
+                    ['UNE:', 'UNE-PRUEBA-12345']
+                ];
+
+                infoData.forEach(([label, value], index) => {
+                    const yPos = currentY + (index * 6);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(label, 20, yPos);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.text(value, 60, yPos);
+                });
+
+                currentY += infoData.length * 6 + 20;
+
+                // Probar inserción de imagen
+                log('🖼️ Intentando insertar imagen de prueba...', 'info');
+                
+                try {
+                    const imageResult = await processImageForPDF('https://via.placeholder.com/400x300/2874A6/ffffff?text=EVIDENCIA+DE+PRUEBA');
+                    
+                    pdf.setFontSize(12);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text('EVIDENCIA FOTOGRÁFICA:', 20, currentY);
+                    currentY += 10;
+
+                    pdf.addImage(imageResult.dataURL, 'JPEG', 20, currentY, 70, 50);
+                    log('✅ Imagen insertada en PDF exitosamente', 'success');
+                    
+                } catch (imageError) {
+                    log(`❌ Error insertando imagen: ${imageError.message}`, 'error');
+                    pdf.setFontSize(10);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.text('Error al cargar imagen de prueba', 20, currentY);
+                }
+
+                // Pie de página
+                const footerY = pdf.internal.pageSize.getHeight() - 20;
+                pdf.setFontSize(8);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(`Documento de prueba generado: ${new Date().toLocaleString('es-ES')}`, 20, footerY);
+
+                // Descargar PDF
+                pdf.save('prueba_informe_tecnico.pdf');
+                
+                log('✅ PDF generado y descargado exitosamente', 'success');
+                setStatus('🎉 PDF generado exitosamente - Revisa tu carpeta de descargas', true);
+                
+            } catch (error) {
+                log(`❌ Error generando PDF: ${error.message}`, 'error');
+                setStatus(`❌ Error: ${error.message}`, false);
+            }
+        }
+
+        // Prueba 3: Flujo completo
+        async function testCompleteWorkflow() {
+            log('🔄 Iniciando flujo completo de prueba...', 'info');
+            
+            try {
+                // Paso 1: Datos de prueba
+                log('📋 Paso 1: Preparando datos de prueba...', 'info');
+                const testData = {
+                    idInforme: 'IT-COMPLETO-001',
+                    numeroRemision: 'R-COMPLETO-001',
+                    movil: 'Z70-COMPLETO',
+                    tituloTrabajo: 'Prueba Completa de Funcionalidad',
+                    ubicacionUNE: 'UNE-COMPLETO-12345',
+                    tecnico: 'Técnico de Prueba Completa',
+                    fechaRemision: '2024-01-15',
+                    autorizadoPor: 'Supervisor de Pruebas',
+                    elaboradoPor: 'Sistema Automatizado',
+                    observaciones: 'Esta es una prueba completa del sistema de informes técnicos, incluyendo la funcionalidad de exportación de PDF con evidencias fotográficas.',
+                    subtotal: 500000,
+                    total: 595000
+                };
+                log('✅ Datos de prueba preparados', 'success');
+
+                // Paso 2: Procesar imágenes
+                log('📸 Paso 2: Procesando imágenes de evidencia...', 'info');
+                const imagenes = {};
+                
+                try {
+                    imagenes.antes = await processImageForPDF('https://via.placeholder.com/600x400/E74C3C/ffffff?text=EVIDENCIA+ANTES+DEL+TRABAJO');
+                    log('✅ Imagen "Antes" procesada', 'success');
+                } catch (error) {
+                    log(`❌ Error procesando imagen "Antes": ${error.message}`, 'error');
+                }
+
+                try {
+                    imagenes.despues = await processImageForPDF('https://via.placeholder.com/600x400/27AE60/ffffff?text=EVIDENCIA+DESPUES+DEL+TRABAJO');
+                    log('✅ Imagen "Después" procesada', 'success');
+                } catch (error) {
+                    log(`❌ Error procesando imagen "Después": ${error.message}`, 'error');
+                }
+
+                // Paso 3: Generar PDF completo
+                log('📄 Paso 3: Generando PDF completo...', 'info');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                let currentY = 20;
+
+                // Encabezado corporativo
+                pdf.setFillColor(40, 116, 166);
+                pdf.rect(0, 0, pageWidth, 50, 'F');
+                
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFontSize(20);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('Global Mobility Solutions', 20, 18);
+                
+                pdf.setFontSize(14);
+                pdf.text('INFORME TÉCNICO COMPLETO', 20, 28);
+                
+                pdf.setFontSize(8);
+                pdf.text('Calle 65 Sur no 79C - 27 Bosa Centro | Tel: 311-486-1431', 20, 38);
+                pdf.text('globalmobilitysolutions8@gmail.com', 20, 42);
+
+                currentY = 60;
+
+                // Información del informe
+                pdf.setTextColor(0, 0, 0);
+                pdf.setFontSize(14);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('INFORMACIÓN DEL INFORME', 20, currentY);
+                currentY += 15;
+
+                const infoCompleta = [
+                    ['ID Informe:', testData.idInforme],
+                    ['Número de Remisión:', testData.numeroRemision],
+                    ['Móvil:', testData.movil],
+                    ['Título del Trabajo:', testData.tituloTrabajo],
+                    ['Ubicación UNE:', testData.ubicacionUNE],
+                    ['Técnico:', testData.tecnico],
+                    ['Fecha Remisión:', testData.fechaRemision],
+                    ['Autorizado por:', testData.autorizadoPor],
+                    ['Elaborado por:', testData.elaboradoPor]
+                ];
+
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'normal');
+                
+                infoCompleta.forEach(([label, value], index) => {
+                    const yPos = currentY + (index * 6);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(label, 20, yPos);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.text(value, 70, yPos);
+                });
+
+                currentY += infoCompleta.length * 6 + 20;
+
+                // Datos financieros
+                pdf.setFontSize(14);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('DATOS FINANCIEROS', 20, currentY);
+                currentY += 15;
+
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'normal');
+                pdf.text('Subtotal:', 20, currentY);
+                pdf.text(`$${testData.subtotal.toLocaleString('es-CO')}`, 70, currentY);
+                currentY += 6;
+                pdf.text('Total:', 20, currentY);
+                pdf.text(`$${testData.total.toLocaleString('es-CO')}`, 70, currentY);
+                currentY += 20;
+
+                // Observaciones
+                pdf.setFontSize(14);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('OBSERVACIONES', 20, currentY);
+                currentY += 15;
+
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'normal');
+                const lines = pdf.splitTextToSize(testData.observaciones, pageWidth - 40);
+                lines.forEach((line, index) => {
+                    pdf.text(line, 20, currentY + (index * 5));
+                });
+                currentY += lines.length * 5 + 20;
+
+                // Evidencias fotográficas
+                if (imagenes.antes || imagenes.despues) {
+                    // Verificar si necesitamos nueva página
+                    if (currentY + 100 > pageHeight - 30) {
+                        pdf.addPage();
+                        currentY = 20;
+                    }
+
+                    pdf.setFontSize(14);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text('EVIDENCIAS FOTOGRÁFICAS', 20, currentY);
+                    currentY += 15;
+
+                    if (imagenes.antes) {
+                        pdf.setFontSize(12);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text('ANTES:', 20, currentY);
+                        currentY += 8;
+                        pdf.addImage(imagenes.antes.dataURL, 'JPEG', 20, currentY, 70, 50);
+                        currentY += 60;
+                        log('✅ Imagen "Antes" insertada en PDF', 'success');
+                    }
+
+                    if (imagenes.despues) {
+                        pdf.setFontSize(12);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text('DESPUÉS:', 20, currentY);
+                        currentY += 8;
+                        pdf.addImage(imagenes.despues.dataURL, 'JPEG', 20, currentY, 70, 50);
+                        log('✅ Imagen "Después" insertada en PDF', 'success');
+                    }
+                }
+
+                // Pie de página
+                const footerY = pageHeight - 20;
+                pdf.setFontSize(8);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(`Documento generado: ${new Date().toLocaleString('es-ES')}`, 20, footerY);
+                pdf.text(`ID: ${testData.idInforme}`, pageWidth - 60, footerY);
+
+                // Descargar PDF
+                pdf.save('informe_tecnico_completo_prueba.pdf');
+                
+                log('🎉 Flujo completo ejecutado exitosamente', 'success');
+                setStatus('🎉 ¡Flujo completo exitoso! PDF descargado con evidencias fotográficas', true);
+                
+            } catch (error) {
+                log(`❌ Error en flujo completo: ${error.message}`, 'error');
+                setStatus(`❌ Error en flujo completo: ${error.message}`, false);
+            }
+        }
+
+        // Inicialización
+        log('🚀 Página de pruebas inicializada', 'success');
+        log('🔧 jsPDF versión: ' + (window.jspdf ? 'Cargado correctamente' : 'No disponible'), window.jspdf ? 'success' : 'error');
+    </script>
+</body>
+</html>

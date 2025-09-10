@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // REGLAS ULTRA SIMPLIFICADAS PARA DESARROLLO
+    // Cualquier usuario autenticado puede hacer cualquier cosa
+    
+    // Reglas para empleados - SIMPLIFICADO
+    match /empleados/{empleadoId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para EMPLEADOS (colección original) - SIMPLIFICADO
+    match /EMPLEADOS/{empleadoId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para informes técnicos - SIMPLIFICADO
+    match /informesTecnicos/{informeId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para historial de trabajos - SIMPLIFICADO
+    match /historialTrabajos/{trabajoId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para remisiones - SIMPLIFICADO
+    match /remisiones/{remisionId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para estadísticas de técnicos - SIMPLIFICADO
+    match /technicianStats/{statId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para herramientas eléctricas - SIMPLIFICADO
+    match /HERRAMIENTA_ELECTRICA/{herramientaId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para herramientas manuales - SIMPLIFICADO
+    match /HERRAMIENTA_MANUAL/{herramientaId} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+    
+    // Reglas para remisiones - PERMITIR LECTURA PÚBLICA
+    match /remisiones/{remisionId} {
+      // Permitir lectura sin autenticación para consulta pública
+      allow read: if true;
+      // Escritura solo para usuarios autenticados
+      allow write, create, update, delete: if request.auth != null;
+    }
+    
+    // Permitir acceso a cualquier otra colección para usuarios autenticados
+    match /{document=**} {
+      allow read, write, create, update, delete: if request.auth != null;
+    }
+  }
+}

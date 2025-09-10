@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Verificación Final - Informes Técnicos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2874A6, #1B4F72);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 40px;
+        }
+        .verification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .verification-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .verification-card:hover {
+            border-color: #2874A6;
+            box-shadow: 0 5px 15px rgba(40, 116, 166, 0.1);
+            transform: translateY(-2px);
+        }
+        .verification-card h3 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.2em;
+        }
+        .verification-card p {
+            color: #6c757d;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+        .verification-button {
+            background: linear-gradient(135deg, #2874A6, #3498db);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .verification-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(40, 116, 166, 0.3);
+        }
+        .verification-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .main-verification {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #e8f5e8, #f1f8ff);
+            border-radius: 15px;
+            border: 2px solid #27ae60;
+        }
+        .main-button {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+        .main-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(39, 174, 96, 0.4);
+        }
+        .console-output {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            border: 2px solid #333;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-pending { background: #ffc107; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-running { background: #17a2b8; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .feature-list h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #495057;
+        }
+        .feature-item::before {
+            content: "✅";
+            margin-right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Verificación Final</h1>
+            <p>Módulo de Informes Técnicos - Correcciones Implementadas</p>
+        </div>
+        
+        <div class="content">
+            <div class="feature-list">
+                <h3>🎯 Correcciones Implementadas:</h3>
+                <div class="feature-item">Campo UNE mapeado desde base de datos (campo "une")</div>
+                <div class="feature-item">Campo "Estado" removido completamente</div>
+                <div class="feature-item">Exportación de imágenes en PDF mejorada</div>
+                <div class="feature-item">Manejo robusto de errores de imágenes</div>
+                <div class="feature-item">Logs detallados para debugging</div>
+                <div class="feature-item">Mayor calidad de imágenes (0.9 vs 0.8)</div>
+                <div class="feature-item">Timeout de 10 segundos para carga de imágenes</div>
+            </div>
+
+            <div class="verification-grid">
+                <div class="verification-card" onclick="ejecutarVerificacionUNE()">
+                    <h3>
+                        <span class="status-indicator status-pending" id="status-une"></span>
+                        📊 Campo UNE
+                    </h3>
+                    <p>Verificar que el campo UNE se mapea correctamente desde la base de datos y que el campo "Estado" ha sido removido.</p>
+                    <button class="verification-button" onclick="ejecutarVerificacionUNE()">Verificar Campo UNE</button>
+                </div>
+
+                <div class="verification-card" onclick="ejecutarVerificacionImagenes()">
+                    <h3>
+                        <span class="status-indicator status-pending" id="status-images"></span>
+                        🖼️ Procesamiento de Imágenes
+                    </h3>
+                    <p>Probar que las imágenes se procesan correctamente con las mejoras implementadas para Firebase Storage.</p>
+                    <button class="verification-button" onclick="ejecutarVerificacionImagenes()">Verificar Imágenes</button>
+                </div>
+
+                <div class="verification-card" onclick="ejecutarVerificacionPDF()">
+                    <h3>
+                        <span class="status-indicator status-pending" id="status-pdf"></span>
+                        📄 Generación PDF
+                    </h3>
+                    <p>Generar un PDF completo con todas las correcciones aplicadas, incluyendo evidencias fotográficas.</p>
+                    <button class="verification-button" onclick="ejecutarVerificacionPDF()">Verificar PDF</button>
+                </div>
+            </div>
+
+            <div class="main-verification">
+                <h2>🚀 Verificación Completa</h2>
+                <p>Ejecutar todas las pruebas en secuencia para validar completamente la funcionalidad</p>
+                <button class="main-button" onclick="ejecutarVerificacionCompleta()" id="main-verify-btn">
+                    🧪 Ejecutar Verificación Completa
+                </button>
+            </div>
+
+            <div id="console-container" style="display: none;">
+                <h3>📋 Output de Consola:</h3>
+                <div id="console-output" class="console-output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="test-informes-tecnicos.js"></script>
+    <script>
+        // Variables de estado
+        let consoleContainer = document.getElementById('console-container');
+        let consoleOutput = document.getElementById('console-output');
+        let originalConsoleLog = console.log;
+        let isCapturingConsole = false;
+
+        // Interceptar console.log para mostrar en la página
+        function startConsoleCapture() {
+            isCapturingConsole = true;
+            consoleContainer.style.display = 'block';
+            consoleOutput.innerHTML = '';
+            
+            console.log = function(...args) {
+                originalConsoleLog.apply(console, args);
+                if (isCapturingConsole) {
+                    const message = args.join(' ');
+                    const timestamp = new Date().toLocaleTimeString();
+                    consoleOutput.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }
+            };
+        }
+
+        function stopConsoleCapture() {
+            isCapturingConsole = false;
+            console.log = originalConsoleLog;
+        }
+
+        // Funciones de estado de verificación
+        function setVerificationStatus(type, status) {
+            const indicator = document.getElementById(`status-${type}`);
+            indicator.className = `status-indicator status-${status}`;
+        }
+
+        // Función para ejecutar verificación del campo UNE
+        async function ejecutarVerificacionUNE() {
+            setVerificationStatus('une', 'running');
+            startConsoleCapture();
+            
+            try {
+                console.log('🧪 INICIANDO VERIFICACIÓN CAMPO UNE...');
+                const resultado = window.verificacionInformesTecnicos.verificarCampoUNE();
+                console.log('✅ VERIFICACIÓN UNE EXITOSA');
+                setVerificationStatus('une', 'success');
+                
+                setTimeout(() => {
+                    alert('✅ Campo UNE verificado correctamente!\n\n' +
+                          '• Campo "une" mapeado desde DB\n' +
+                          '• Campo "estado" removido\n' +
+                          '• Revisa la consola para detalles');
+                }, 500);
+                
+            } catch (error) {
+                console.log(`❌ ERROR: ${error.message}`);
+                setVerificationStatus('une', 'error');
+                alert(`❌ Error en verificación UNE: ${error.message}`);
+            }
+        }
+
+        // Función para ejecutar verificación de imágenes
+        async function ejecutarVerificacionImagenes() {
+            setVerificationStatus('images', 'running');
+            startConsoleCapture();
+            
+            try {
+                console.log('🧪 INICIANDO VERIFICACIÓN IMÁGENES...');
+                await window.verificacionInformesTecnicos.verificarProcesamientoImagenes();
+                console.log('✅ VERIFICACIÓN IMÁGENES EXITOSA');
+                setVerificationStatus('images', 'success');
+                
+                setTimeout(() => {
+                    alert('✅ Procesamiento de imágenes verificado!\n\n' +
+                          '• Imágenes cargadas correctamente\n' +
+                          '• Redimensionamiento funcionando\n' +
+                          '• Conversión a base64 exitosa\n' +
+                          '• Revisa la consola para detalles');
+                }, 500);
+                
+            } catch (error) {
+                console.log(`❌ ERROR: ${error.message}`);
+                setVerificationStatus('images', 'error');
+                alert(`❌ Error en verificación de imágenes: ${error.message}`);
+            }
+        }
+
+        // Función para ejecutar verificación de PDF
+        async function ejecutarVerificacionPDF() {
+            setVerificationStatus('pdf', 'running');
+            startConsoleCapture();
+            
+            try {
+                console.log('🧪 INICIANDO VERIFICACIÓN PDF...');
+                const resultado = await window.verificacionInformesTecnicos.verificarGeneracionPDF();
+                console.log('✅ VERIFICACIÓN PDF EXITOSA');
+                setVerificationStatus('pdf', 'success');
+                
+                setTimeout(() => {
+                    alert(`✅ PDF generado exitosamente!\n\n` +
+                          `• Archivo: ${resultado.fileName}\n` +
+                          `• Imágenes incluidas en PDF\n` +
+                          `• Formato corporativo aplicado\n` +
+                          `• Revisa tu carpeta de descargas`);
+                }, 500);
+                
+            } catch (error) {
+                console.log(`❌ ERROR: ${error.message}`);
+                setVerificationStatus('pdf', 'error');
+                alert(`❌ Error en verificación de PDF: ${error.message}`);
+            }
+        }
+
+        // Función para ejecutar verificación completa
+        async function ejecutarVerificacionCompleta() {
+            const btn = document.getElementById('main-verify-btn');
+            btn.disabled = true;
+            btn.textContent = '🔄 Ejecutando Verificación...';
+            
+            // Resetear estados
+            ['une', 'images', 'pdf'].forEach(type => {
+                setVerificationStatus(type, 'pending');
+            });
+            
+            startConsoleCapture();
+            
+            try {
+                console.log('🚀 INICIANDO VERIFICACIÓN COMPLETA...');
+                const resultado = await window.verificacionInformesTecnicos.ejecutarVerificacionCompleta();
+                
+                if (resultado.success) {
+                    ['une', 'images', 'pdf'].forEach(type => {
+                        setVerificationStatus(type, 'success');
+                    });
+                    
+                    btn.textContent = '✅ Verificación Exitosa';
+                    btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                    
+                    setTimeout(() => {
+                        alert('🎉 VERIFICACIÓN COMPLETA EXITOSA!\n\n' +
+                              '✅ Todas las correcciones funcionan correctamente:\n\n' +
+                              '• Campo UNE: Mapeado desde DB\n' +
+                              '• Campo Estado: Removido\n' +
+                              '• Imágenes: Procesamiento mejorado\n' +
+                              '• PDF: Generación con evidencias\n\n' +
+                              `📁 Archivo generado: ${resultado.archivoGenerado}\n\n` +
+                              '🎯 El módulo está listo para producción!');
+                    }, 1000);
+                    
+                } else {
+                    throw new Error(resultado.error);
+                }
+                
+            } catch (error) {
+                console.log(`❌ ERROR GENERAL: ${error.message}`);
+                ['une', 'images', 'pdf'].forEach(type => {
+                    setVerificationStatus(type, 'error');
+                });
+                
+                btn.textContent = '❌ Error en Verificación';
+                btn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                
+                alert(`❌ Error en verificación completa: ${error.message}`);
+                
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🧪 Ejecutar Verificación Completa';
+                    btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                }, 3000);
+            }
+        }
+
+        // Inicialización
+        console.log('🎯 Página de verificación cargada');
+        console.log('📋 Presiona cualquier botón para comenzar las pruebas');
+    </script>
+</body>
+</html>

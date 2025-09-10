@@ -1,0 +1,11 @@
+<!-- Este es un archivo placeholder. 
+     Reemplaza este archivo con el logo real de Global Mobility Solutions.
+     El archivo debe llamarse "logo.png" y tener dimensiones recomendadas de 200x150 px -->
+<svg width="200" height="150" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="150" fill="#2874a6"/>
+  <text x="100" y="75" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">
+    <tspan x="100" dy="0">GLOBAL</tspan>
+    <tspan x="100" dy="20">MOBILITY</tspan>
+    <tspan x="100" dy="20">SOLUTIONS</tspan>
+  </text>
+</svg>
