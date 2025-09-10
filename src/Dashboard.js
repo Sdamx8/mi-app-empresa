@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CRM from './modules/crm';
 import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado';
-import BuscarHistorialOptimizado from './modules/historial-trabajos/BuscarHistorialOptimizado';
 import IngresarTrabajo from './modules/ingresar-trabajo';
 import HerramientaElectrica from './modules/herramientas-electricas';
 import HerramientaManual from './modules/herramientas-manuales';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { useAuth } from './core/auth/AuthContext';
 import GMSLogo from './shared/components/GMSLogo';
-import BuscarHistorialOptimizado from './modules/historial-trabajos/BuscarHistorialOptimizado';
+import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado';
 
 import './LoginPage.css';
 
@@ -68,7 +68,7 @@ const LoginPage = () => {
         </div>
         
         {/* Componente de búsqueda sin autenticación */}
-        <BuscarHistorialOptimizado 
+        <HistorialTrabajosOptimizado 
           canEdit={false} 
           canDelete={false} 
           userRole="publico" 

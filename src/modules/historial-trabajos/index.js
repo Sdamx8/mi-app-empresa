@@ -1,13 +1,6 @@
-// Exportador principal del módulo Historial de Trabajos
+// Exportador principal del módulo Consultar Trabajo
 export { default } from './components/HistorialTrabajosOptimizado';
-export { default as HistorialTrabajosOptimizado } from './components/HistorialTrabajosOptimizado';
-export { default as BuscarHistorialOptimizado } from './BuscarHistorialOptimizado';
+export { default as ConsultarTrabajo } from './components/HistorialTrabajosOptimizado';
 
-// Exportar componentes del módulo
-export { default as ResultsTable } from './components/ResultsTable';
-export { default as HistorialTrabajosPage } from './components/HistorialTrabajosPage';
-export { default as DetalleRemision } from './components/DetalleRemision';
-
-// Exportar hooks del módulo
-export { default as useSearch } from './hooks/useSearch';
-export { default as useHistorialOptimizado } from './hooks/useHistorialOptimizado';
+// Exportar hook de autenticación
+export { default as useEmpleadoAuth } from './hooks/useEmpleadoAuth';
