@@ -1,8 +1,8 @@
 import React from 'react';
 import Dashboard from './Dashboard';
 import LoginPage from './LoginPage';
-import { AuthProvider, useAuth } from './AuthContext';
-import { RoleProvider } from './RoleContext';
+import { AuthProvider, useAuth } from './core/auth/AuthContext';
+import { RoleProvider } from './core/auth/RoleContext';
 
 // Error Boundary Component
 class AppErrorBoundary extends React.Component {

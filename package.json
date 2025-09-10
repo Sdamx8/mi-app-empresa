@@ -33,7 +33,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set BROWSER=none && set WDS_SOCKET_HOST=localhost && set WDS_SOCKET_PORT=3001 && react-scripts start",
+    "start:dev": "cross-env NODE_ENV=development react-scripts start",
+    "start:env": "react-scripts start",
     "start:original": "set DISABLE_ESLINT_PLUGIN=true && set WDS_SOCKET_HOST=localhost && set WDS_SOCKET_PORT=3001 && set FAST_REFRESH=false && react-scripts start",
     "start:clean": "react-scripts start",
     "build": "react-scripts build",

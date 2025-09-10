@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import CRM from './CRM';
-import BuscarHistorialOptimizado from './BuscarHistorialOptimizado';
-import IngresarTrabajo from './IngresarTrabajo';
-import HerramientaElectrica from './HerramientaElectrica';
-import HerramientaManual from './HerramientaManual';
-import Empleados from './Empleados';
-import PerfilEmpleado from './PerfilEmpleado';
-import CorporateLogo from './CorporateLogo';
-import ErrorBoundary from './ErrorBoundary'; // Error Boundary corregido
-import InformesTecnicosPage from './components/InformesTecnicos/InformesTecnicosPage';
-import Financiero from './components/Financiero/Financiero';
-import { useAuth } from './AuthContext';
-import { useRole } from './RoleContext';
+import CRM from './modules/crm';
+import BuscarHistorialOptimizado from './modules/historial-trabajos/BuscarHistorialOptimizado';
+import IngresarTrabajo from './modules/ingresar-trabajo';
+import HerramientaElectrica from './modules/herramientas-electricas';
+import HerramientaManual from './modules/herramientas-manuales';
+import Empleados from './modules/empleados';
+import PerfilEmpleado from './modules/perfil-empleado';
+import CorporateLogo from './shared/components/CorporateLogo';
+import ErrorBoundary from './shared/components/ErrorBoundary'; // Error Boundary corregido
+import InformesTecnicosPage from './modules/informes-tecnicos/InformesTecnicosPage';
+import Financiero from './modules/financiero/Financiero';
+import { useAuth } from './core/auth/AuthContext';
+import { useRole } from './core/auth/RoleContext';
 import './Dashboard.css';
 
 // Hook personalizado para manejar carga de módulos

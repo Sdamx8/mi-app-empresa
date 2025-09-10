@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-import { useAuth } from './AuthContext';
-import GMSLogo from './GMSLogo';
-import BuscarHistorialOptimizado from './BuscarHistorialOptimizado';
+import { useAuth } from './core/auth/AuthContext';
+import GMSLogo from './shared/components/GMSLogo';
+import BuscarHistorialOptimizado from './modules/historial-trabajos/BuscarHistorialOptimizado';
 
 import './LoginPage.css';
 
