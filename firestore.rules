@@ -2,60 +2,108 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGLAS ULTRA SIMPLIFICADAS PARA DESARROLLO
-    // Cualquier usuario autenticado puede hacer cualquier cosa
+    // ===== FUNCIONES AUXILIARES =====
     
-    // Reglas para empleados - SIMPLIFICADO
+    // Verificar si el usuario está autenticado
+    function isAuth() { 
+      return request.auth != null; 
+    }
+    
+    // Verificar si el usuario tiene un rol específico
+    function hasRole(role) { 
+      return isAuth() && request.auth.token.role == role; 
+    }
+    
+    // Verificar si el usuario tiene cualquiera de los roles especificados
+    function hasAnyRole(roles) {
+      return isAuth() && request.auth.token.role in roles;
+    }
+    
+    // Verificar si el estado permite modificaciones
+    function canModifyByStatus(data) {
+      return !(data.estado in ['finalizado', 'facturado', 'cancelado']);
+    }
+    
+    // ===== REGLAS PARA REMISIONES =====
+    
+    match /remisiones/{remisionId} {
+      // Lectura: técnicos, administrativos, directivos
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      
+      // Creación: administrativos, directivos
+      allow create: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      
+      // Actualización y eliminación: administrativos, directivos
+      // Bloqueada si estado es finalizado, facturado o cancelado
+      allow update, delete: if isAuth() && 
+        hasAnyRole(['administrativo', 'directivo']) &&
+        canModifyByStatus(resource.data);
+    }
+    
+    // ===== REGLAS PARA HISTORIAL DE REMISIONES =====
+    
+    match /remisiones/{remisionId}/historial/{historialId} {
+      // Lectura: técnicos, administrativos, directivos
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      
+      // Creación: técnicos, administrativos, directivos (para registrar actividades)
+      allow create: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      
+      // Actualización y eliminación: solo administrativos, directivos
+      allow update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+    }
+    
+    // ===== REGLAS PARA EMPLEADOS =====
+    
     match /empleados/{empleadoId} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Reglas para EMPLEADOS (colección original) - SIMPLIFICADO
     match /EMPLEADOS/{empleadoId} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Reglas para informes técnicos - SIMPLIFICADO
+    // ===== REGLAS PARA INFORMES TÉCNICOS =====
+    
     match /informesTecnicos/{informeId} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Reglas para historial de trabajos - SIMPLIFICADO
-    match /historialTrabajos/{trabajoId} {
-      allow read, write, create, update, delete: if request.auth != null;
-    }
+    // ===== REGLAS PARA HERRAMIENTAS =====
     
-    // Reglas para remisiones - SIMPLIFICADO
-    match /remisiones/{remisionId} {
-      allow read, write, create, update, delete: if request.auth != null;
-    }
-    
-    // Reglas para estadísticas de técnicos - SIMPLIFICADO
-    match /technicianStats/{statId} {
-      allow read, write, create, update, delete: if request.auth != null;
-    }
-    
-    // Reglas para herramientas eléctricas - SIMPLIFICADO
     match /HERRAMIENTA_ELECTRICA/{herramientaId} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Reglas para herramientas manuales - SIMPLIFICADO
     match /HERRAMIENTA_MANUAL/{herramientaId} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Reglas para remisiones - PERMITIR LECTURA PÚBLICA
-    match /remisiones/{remisionId} {
-      // Permitir lectura sin autenticación para consulta pública
-      allow read: if true;
-      // Escritura solo para usuarios autenticados
-      allow write, create, update, delete: if request.auth != null;
+    // ===== REGLAS PARA ESTADÍSTICAS =====
+    
+    match /technicianStats/{statId} {
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
     
-    // Permitir acceso a cualquier otra colección para usuarios autenticados
+    // ===== REGLAS PARA HISTORIAL DE TRABAJOS (legacy) =====
+    
+    match /historialTrabajos/{trabajoId} {
+      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
+      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+    }
+    
+    // ===== REGLA POR DEFECTO PARA OTRAS COLECCIONES =====
+    // Solo usuarios autenticados con rol administrativo o directivo
     match /{document=**} {
-      allow read, write, create, update, delete: if request.auth != null;
+      allow read: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow write: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
     }
   }
 }
