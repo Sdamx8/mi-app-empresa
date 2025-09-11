@@ -113,8 +113,7 @@ const ServiciosList = () => {
       </motion.div>
     </div>
   );
-
-};
+}
 
 const btnActionStyle = {
   background: '#5DADE2',
