@@ -15,7 +15,7 @@ export const useRole = () => {
 // Definición de permisos por tipo de empleado
 const ROLE_PERMISSIONS = {
   directivo: {
-    modules: ['perfil', 'crm', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,

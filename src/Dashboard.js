@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CRM from './modules/crm';
+import ServiciosPage from './modules/servicios';
 import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado';
 import IngresarTrabajo from './modules/ingresar-trabajo';
 import HerramientaElectrica from './modules/herramientas-electricas';
@@ -195,6 +196,9 @@ const Dashboard = () => {
       case 'crm':
         if (!safeHasModuleAccess('crm')) return <AccessDenied module="CRM" />;
         return <ErrorBoundary><CRM /></ErrorBoundary>;
+      case 'servicios':
+        if (!safeHasModuleAccess('servicios')) return <AccessDenied module="Catálogo de servicios" />;
+        return <ErrorBoundary><ServiciosPage /></ErrorBoundary>;
       case 'historial_trabajos':
         if (!safeHasModuleAccess('historial_trabajos')) return <AccessDenied module="Historial de Trabajos" />;
         return (
@@ -242,7 +246,8 @@ const Dashboard = () => {
     recursos: [
       { key: 'herramientas_electricas', icon: '⚡', label: 'Herramientas' },
       { key: 'herramientas_manuales', icon: '🔨', label: 'Manuales' },
-      { key: 'empleados', icon: '👥', label: 'Empleados' }
+      { key: 'empleados', icon: '👥', label: 'Empleados' },
+      { key: 'servicios', icon: '🛠️', label: 'Catálogo de servicios', isNew: true }
     ],
     gestion: [
       { key: 'informes_tecnicos', icon: '📄', label: 'Informes Técnicos' },
@@ -386,7 +391,7 @@ const Dashboard = () => {
             alignItems: 'center'
           }} className="fade-in">
             {modules.filter(module => safeHasModuleAccess(module.key)).map(module => 
-              createNavButton(module.key, module.icon, module.label, false)
+              createNavButton(module.key, module.icon, module.label, module.isNew)
             )}
             
             {/* Botón de cerrar sesión */}
