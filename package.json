@@ -59,7 +59,7 @@
       "compression": "gzip"
     },
     {
-      "path": "./build/static/css/*.css", 
+      "path": "./build/static/css/*.css",
       "maxSize": "50 kB",
       "compression": "gzip"
     }

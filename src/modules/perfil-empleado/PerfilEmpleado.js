@@ -9,6 +9,7 @@ import { THEME_COLORS, TIPOS_EMPLEADO, ESTADOS_EMPLEADO } from '../../shared/con
 import NoticiasCompensar from './components/NoticiasCompensar';
 import NoticiasTest2 from './components/NoticiasTest2';
 import GMSLogo from '../../shared/components/GMSLogo';
+import ERPStatsWidget from '../../shared/components/ERPStatsWidget';
 
 // Configuración de módulos y permisos
 const MODULES_CONFIG = {
@@ -374,6 +375,19 @@ const PerfilEmpleado = ({ onModulo }) => {
         userRole={empleado.tipo_empleado} 
         userName={empleado.nombre_completo.split(' ')[0]}
       />
+
+      {/* Widget de estadísticas empresariales */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        padding: '0',
+        margin: '20px 0',
+        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+        border: '2px solid #e9ecef',
+        overflow: 'hidden'
+      }} className="slide-in-up">
+        <ERPStatsWidget />
+      </div>
 
 
       <div style={contentGridStyle} className="stagger-animation">

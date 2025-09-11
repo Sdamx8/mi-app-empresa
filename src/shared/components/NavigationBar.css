@@ -1,0 +1,375 @@
+/* =======================================================
+   🚀 GLOBAL MOBILITY SOLUTIONS - NAVEGACIÓN
+   ======================================================= */
+
+.navigation-bar {
+  --color-primary: #5DADE2;
+  --color-secondary: #BDC3C7;
+  --color-background: #F8F9FA;
+  --color-text: #2C3E50;
+  --color-border: #E8E8E8;
+  --color-hover: #3498DB;
+  --color-disabled: #95A5A6;
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #FFFFFF, #F8F9FA);
+  border-bottom: 2px solid var(--color-border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+/* ==================
+   CONTROLES NAV
+   ================== */
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 25px;
+  background: white;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  min-width: 90px;
+  justify-content: center;
+}
+
+.nav-btn:hover:not(.disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(93, 173, 226, 0.3);
+  transform: translateY(-1px);
+}
+
+.nav-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--color-disabled);
+  color: var(--color-disabled);
+}
+
+.nav-btn.disabled:hover {
+  transform: none;
+  border-color: var(--color-disabled);
+  background: white;
+  color: var(--color-disabled);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.nav-icon {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.nav-text {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-back {
+  flex-direction: row;
+}
+
+.nav-forward {
+  flex-direction: row-reverse;
+}
+
+.nav-refresh {
+  min-width: 50px;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+}
+
+.nav-refresh .nav-icon {
+  font-size: 20px;
+}
+
+/* ==================
+   CONTENIDO NAV
+   ================== */
+
+.nav-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px;
+}
+
+.nav-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/* ==================
+   BREADCRUMBS
+   ================== */
+
+.breadcrumbs {
+  width: 100%;
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text);
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.breadcrumb-item.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.breadcrumb-item:not(.active):hover {
+  color: var(--color-hover);
+}
+
+.breadcrumb-separator {
+  color: var(--color-secondary);
+  font-weight: bold;
+  font-size: 16px;
+  user-select: none;
+}
+
+.breadcrumb-home {
+  font-size: 16px;
+}
+
+.breadcrumb-text {
+  white-space: nowrap;
+}
+
+/* ==================
+   ACCIONES NAV
+   ================== */
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 768px) {
+  .navigation-bar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 12px 15px;
+  }
+  
+  .nav-controls {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .nav-content {
+    order: 2;
+    margin: 0;
+    width: 100%;
+  }
+  
+  .nav-actions {
+    order: 3;
+  }
+  
+  .nav-title {
+    font-size: 18px;
+  }
+  
+  .breadcrumb-list {
+    font-size: 12px;
+    gap: 4px;
+  }
+  
+  .breadcrumb-text {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 70px;
+  }
+  
+  .nav-refresh {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .nav-refresh .nav-icon {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navigation-bar {
+    padding: 10px;
+  }
+  
+  .nav-btn .nav-text {
+    display: none;
+  }
+  
+  .nav-btn {
+    min-width: 40px;
+    padding: 8px;
+  }
+  
+  .breadcrumb-text {
+    max-width: 60px;
+  }
+  
+  .nav-title {
+    font-size: 16px;
+  }
+}
+
+/* ==================
+   ANIMACIONES
+   ================== */
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.navigation-bar {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.nav-btn:active:not(.disabled) {
+  animation: pulse 0.2s ease;
+}
+
+/* ==================
+   ESTADOS ESPECIALES
+   ================== */
+
+.navigation-bar.loading .nav-refresh {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==================
+   ACCESIBILIDAD
+   ================== */
+
+.nav-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.breadcrumb-item:focus {
+  outline: 1px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reducir movimiento para usuarios que lo prefieren */
+@media (prefers-reduced-motion: reduce) {
+  .nav-btn,
+  .breadcrumb-item,
+  .navigation-bar {
+    transition: none;
+    animation: none;
+  }
+  
+  .nav-btn:hover:not(.disabled) {
+    transform: none;
+  }
+}
+
+/* ==================
+   MODO OSCURO
+   ================== */
+
+@media (prefers-color-scheme: dark) {
+  .navigation-bar {
+    --color-background: #2C3E50;
+    --color-text: #FFFFFF;
+    --color-border: #34495E;
+    
+    background: linear-gradient(135deg, #34495E, #2C3E50);
+    border-bottom-color: #34495E;
+  }
+  
+  .nav-btn {
+    background: #34495E;
+    color: #FFFFFF;
+    border-color: #34495E;
+  }
+  
+  .nav-btn:hover:not(.disabled) {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+}

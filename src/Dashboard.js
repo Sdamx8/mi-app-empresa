@@ -8,6 +8,8 @@ import Empleados from './modules/empleados';
 import PerfilEmpleado from './modules/perfil-empleado';
 import CorporateLogo from './shared/components/CorporateLogo';
 import ErrorBoundary from './shared/components/ErrorBoundary'; // Error Boundary corregido
+import SuccessNotification from './shared/components/SuccessNotification';
+import NotificationCenter from './shared/components/NotificationCenter';
 import InformesTecnicosPage from './modules/informes-tecnicos/InformesTecnicosPage';
 import Financiero from './modules/financiero/Financiero';
 import { useAuth } from './core/auth/AuthContext';
@@ -59,6 +61,7 @@ const ModuleLoader = ({ moduleName }) => (
 
 const Dashboard = () => {
   const [activeModule, setActiveModule] = useState('perfil');
+  const [showSuccessNotification, setShowSuccessNotification] = useState(true);
   const { isLoading, loadingModule } = useModuleLoader(activeModule);
   const { logout } = useAuth();
   const { 
@@ -226,20 +229,31 @@ const Dashboard = () => {
     }
   };
 
-  // Definir módulos disponibles
-  const modules = [
-    { key: 'perfil', icon: '🏠', label: 'Inicio' },
-    { key: 'crm', icon: '💼', label: 'CRM' },
-    { key: 'historial_trabajos', icon: '📊', label: 'Historial' },
-    { key: 'ingresar_trabajo', icon: '🔧', label: 'Ingresar Trabajo' },
-    { key: 'herramientas_electricas', icon: '⚡', label: 'Herramientas' },
-    { key: 'herramientas_manuales', icon: '🔨', label: 'Manuales' },
-    { key: 'empleados', icon: '👥', label: 'Empleados' },
-    { key: 'informes_tecnicos', icon: '📄', label: 'Informes Técnicos' },
-    { key: 'financiero', icon: '💰', label: 'Financiero' }
-  ];
+  // Definir módulos disponibles organizados por categorías
+  const moduleCategories = {
+    core: [
+      { key: 'perfil', icon: '🏠', label: 'Inicio' },
+      { key: 'crm', icon: '💼', label: 'CRM' }
+    ],
+    trabajo: [
+      { key: 'historial_trabajos', icon: '📊', label: 'Historial' },
+      { key: 'ingresar_trabajo', icon: '🔧', label: 'Ingresar Trabajo' }
+    ],
+    recursos: [
+      { key: 'herramientas_electricas', icon: '⚡', label: 'Herramientas' },
+      { key: 'herramientas_manuales', icon: '🔨', label: 'Manuales' },
+      { key: 'empleados', icon: '👥', label: 'Empleados' }
+    ],
+    gestion: [
+      { key: 'informes_tecnicos', icon: '📄', label: 'Informes Técnicos' },
+      { key: 'financiero', icon: '💰', label: 'Financiero' }
+    ]
+  };
 
-  const createNavButton = (moduleKey, icon, label, specialStyle = {}) => (
+  // Lista plana para compatibilidad
+  const modules = Object.values(moduleCategories).flat();
+
+  const createNavButton = (moduleKey, icon, label, isNewModule = false) => (
     <button
       key={moduleKey}
       onClick={() => setActiveModule(moduleKey)}
@@ -259,16 +273,30 @@ const Dashboard = () => {
         boxShadow: activeModule === moduleKey ? '0 2px 8px rgba(0,123,255,0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
         transform: activeModule === moduleKey ? 'translateY(-1px)' : 'none',
         transition: 'all 0.3s ease',
-        ...specialStyle
+        position: 'relative'
       }}
     >
       <span style={{ fontSize: '1.1rem' }}>{icon}</span>
       <span>{label}</span>
+      {isNewModule && (
+        <span className="new-module-badge">
+          NUEVO
+        </span>
+      )}
     </button>
   );
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+      {/* Notificación de éxito del nuevo módulo */}
+      {showSuccessNotification && safeHasModuleAccess('historial_trabajos') && (
+        <SuccessNotification
+          message="El módulo 'Historial' ahora incluye funcionalidades de administración de remisiones. ¡Descúbrelas en la pestaña correspondiente!"
+          onClose={() => setShowSuccessNotification(false)}
+          duration={8000}
+        />
+      )}
+      
       {roleLoading ? (
         // Pantalla de carga mientras se obtienen los datos del empleado
         <div style={{
@@ -321,7 +349,7 @@ const Dashboard = () => {
             <CorporateLogo />
           </div>
 
-          {/* Información del usuario */}
+          {/* Información del usuario y notificaciones */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -329,6 +357,7 @@ const Dashboard = () => {
             color: '#6c757d',
             fontSize: '0.9rem'
           }}>
+            <NotificationCenter />
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -357,7 +386,7 @@ const Dashboard = () => {
             alignItems: 'center'
           }} className="fade-in">
             {modules.filter(module => safeHasModuleAccess(module.key)).map(module => 
-              createNavButton(module.key, module.icon, module.label)
+              createNavButton(module.key, module.icon, module.label, false)
             )}
             
             {/* Botón de cerrar sesión */}

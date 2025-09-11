@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { fetchRemisiones, fetchHistorialRemision } from '../../../services/remisionesService';
+import { fetchRemisiones, fetchHistorialRemision, fetchRemisionesByMovilSimple } from '../../../services/remisionesService';
 import { useAuth } from '../../../core/auth/AuthContext';
 
 const INITIAL_STATE = {
@@ -106,11 +106,26 @@ export const useRemisiones = ({ pageSize = 25 } = {}) => {
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error('Error fetching first page:', error);
+        
+        // Determinar mensaje de error específico
+        let errorMessage = 'Error al cargar remisiones';
+        
+        if (error.message.includes('index')) {
+          errorMessage = 'La consulta requiere configuración adicional. Intente con filtros más simples.';
+        } else if (error.message.includes('permission')) {
+          errorMessage = 'No tiene permisos para acceder a esta información.';
+        } else if (error.message.includes('unavailable')) {
+          errorMessage = 'Servicio temporalmente no disponible. Intente nuevamente.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         updateState({
           loading: false,
-          error: error.message || 'Error al cargar remisiones',
+          error: errorMessage,
           remisiones: [],
-          hasMore: false
+          hasMore: false,
+          totalFiltered: 0
         });
       }
     }
@@ -146,9 +161,21 @@ export const useRemisiones = ({ pageSize = 25 } = {}) => {
 
     } catch (error) {
       console.error('Error fetching next page:', error);
+      
+      // Determinar mensaje de error específico para paginación
+      let errorMessage = 'Error al cargar más remisiones';
+      
+      if (error.message.includes('index')) {
+        errorMessage = 'No se pueden cargar más resultados con estos filtros. Requiere configuración adicional.';
+      } else if (error.message.includes('permission')) {
+        errorMessage = 'No tiene permisos para cargar más resultados.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       updateState({
         loading: false,
-        error: error.message || 'Error al cargar más remisiones'
+        error: errorMessage
       });
     }
   }, [state.hasMore, state.loading, state.lastDoc, state.remisiones, state.totalFiltered, state.page, pageSize, updateState]);
@@ -245,6 +272,60 @@ export const useRemisiones = ({ pageSize = 25 } = {}) => {
     cancelCurrentRequest();
   }, [cancelCurrentRequest]);
 
+  /**
+   * Busca remisiones por número de móvil específico
+   * 
+   * @param {string} numeroMovil - Número del móvil a buscar
+   * @returns {Promise<Array>} Lista de remisiones para el móvil
+   */
+  const fetchRemisionesByMovil = useCallback(async (numeroMovil) => {
+    try {
+      // Validar input según tipo (número o BO-)
+      if (!numeroMovil) {
+        throw new Error('Número de móvil inválido');
+      }
+      
+      // Si es string BO-, validar formato
+      if (typeof numeroMovil === 'string' && numeroMovil.toUpperCase().startsWith('BO-')) {
+        const suffix = numeroMovil.substring(3).trim();
+        if (!suffix) {
+          throw new Error('Móvil BO- inválido');
+        }
+        // Usar directamente el string BO-
+        const remisiones = await fetchRemisionesByMovilSimple(numeroMovil, 100);
+        return remisiones;
+      }
+      
+      // Para números, convertir y validar
+      const movilNum = parseInt(numeroMovil);
+      if (isNaN(movilNum)) {
+        throw new Error('Número de móvil inválido');
+      }
+      
+      // Usar la nueva función que no requiere índices compuestos
+      const remisiones = await fetchRemisionesByMovilSimple(movilNum, 100);
+      
+      return remisiones;
+    } catch (error) {
+      console.error('Error fetching remisiones by movil:', error);
+      
+      // Manejo específico de errores para búsqueda por móvil
+      if (error.message.includes('inválido')) {
+        throw error; // Re-lanzar error de validación
+      }
+      
+      if (error.message.includes('index')) {
+        throw new Error('La búsqueda por móvil requiere configuración adicional en la base de datos');
+      }
+      
+      if (error.message.includes('permission')) {
+        throw new Error('No tiene permisos para buscar remisiones por móvil');
+      }
+      
+      throw new Error(error.message || 'Error al buscar remisiones por móvil');
+    }
+  }, []);
+
   return {
     // Estado
     remisiones: state.remisiones,
@@ -258,6 +339,7 @@ export const useRemisiones = ({ pageSize = 25 } = {}) => {
     // Acciones principales
     fetchFirstPage,
     fetchNextPage,
+    fetchRemisionesByMovil,
     reset,
     reload,
     

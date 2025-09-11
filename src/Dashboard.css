@@ -54,6 +54,36 @@
   }
 }
 
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Estilos para el indicador de nuevo módulo */
+.new-module-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #28a745;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+  z-index: 10;
+}
+
 @keyframes bounceIn {
   0% {
     opacity: 0;

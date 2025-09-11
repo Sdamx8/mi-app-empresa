@@ -3,32 +3,39 @@
  * 
  * Este módulo proporciona funcionalidades para:
  * - Consultar historial de remisiones
+ * - Administrar remisiones por estados y roles
  * - Filtrar y buscar trabajos realizados
  * - Ver detalles y timeline de trabajos
  * - Exportar datos de trabajos
  * 
  * Estructura del módulo:
- * - HistorialTrabajosOptimizado: Componente principal
+ * - HistorialTrabajosOptimizado: Componente principal de consulta
+ * - AdministrarRemisiones: Componente para administración de remisiones
  * - useRemisiones: Hook para gestión de estado
- * - BuscarHistorialOptimizado: Componente de búsqueda legacy (si existe)
+ * - useEmpleadoAuth: Hook para autenticación de empleados
  * 
- * @version 1.0.0
+ * @version 2.0.0
  * @author Sistema ERP
  */
 
 // Exportación por defecto del componente principal
 export { default } from './components/HistorialTrabajosOptimizado';
 
-// Exportaciones nombradas para acceso directo
+// Exportaciones adicionales de componentes
+export { default as AdministrarRemisiones } from './components/AdministrarRemisiones';
 export { default as HistorialTrabajosOptimizado } from './components/HistorialTrabajosOptimizado';
 export { default as ConsultarTrabajo } from './components/HistorialTrabajosOptimizado'; // Compatibilidad
-export { default as useRemisiones } from './hooks/useRemisiones';
 
-// Hooks de autenticación
-export { default as useEmpleadoAuth } from './hooks/useEmpleadoAuth';
+// Exportaciones de hooks
+export { useRemisiones, useHistorialRemision } from './hooks/useRemisiones';
+export { useEmpleadoAuth } from './hooks/useEmpleadoAuth';
 
-// Re-exportar BuscarHistorialOptimizado si existe (compatibilidad)
-export { default as BuscarHistorialOptimizado } from './BuscarHistorialOptimizado';
+// Re-exportaciones de constantes desde shared
+export { 
+  ESTADOS_REMISION_PROCESO, 
+  SUPER_ADMIN, 
+  PERIODOS_FECHA 
+} from '../../shared/constants';
 
 /**
  * Configuración del módulo

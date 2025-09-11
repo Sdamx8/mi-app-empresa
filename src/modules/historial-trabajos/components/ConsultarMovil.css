@@ -1,0 +1,486 @@
+/* =======================================================
+   🚀 GLOBAL MOBILITY SOLUTIONS - CONSULTAR MÓVIL
+   ======================================================= */
+
+/* Variables de color corporativo */
+.consultar-movil {
+  --color-primary: #5DADE2;
+  --color-secondary: #BDC3C7;
+  --color-background: #F8F9FA;
+  --color-text: #2C3E50;
+  --color-success: #27AE60;
+  --color-warning: #F1C40F;
+  --color-danger: #E74C3C;
+  --color-info: #3498DB;
+  --color-purple: #9B59B6;
+  --color-teal: #1ABC9C;
+  --color-gray: #95A5A6;
+  --color-dark: #34495E;
+  --color-orange: #F39C12;
+  
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  background-color: var(--color-background);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ================
+   HEADER SECTION
+   ================ */
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-role-badge {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
+  color: white;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+.user-email {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ==================
+   SEARCH SECTION
+   ================== */
+
+.search-section {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #E8E8E8;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 600px;
+}
+
+.search-group label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.search-input-container {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 15px 20px;
+  border: 2px solid #E8E8E8;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-search-movil {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(93, 173, 226, 0.3);
+  white-space: nowrap;
+}
+
+.btn-search-movil:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(93, 173, 226, 0.4);
+}
+
+.btn-search-movil:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.search-info {
+  background: linear-gradient(135deg, #E8F6F3, #D5F4E6);
+  border: 1px solid var(--color-teal);
+  border-radius: 12px;
+  padding: 15px;
+  color: var(--color-dark);
+}
+
+.search-info p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ==================
+   RESULTS SECTION
+   ================== */
+
+.results-section {
+  margin-bottom: 30px;
+}
+
+.results-header {
+  margin-bottom: 25px;
+}
+
+.results-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border: 1px solid #E8E8E8;
+}
+
+/* ==================
+   REMISIONES CARDS
+   ================== */
+
+.remisiones-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 25px;
+}
+
+.remision-card-busqueda {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #E8E8E8;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.remision-card-busqueda:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+/* Alerta de 6 meses */
+.alerta-6-meses {
+  color: white;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+/* Header del card */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #F8F9FA, #E9ECEF);
+  border-bottom: 1px solid #E8E8E8;
+}
+
+.remision-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.remision-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.movil-display {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.estado-badge {
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Contenido del card */
+.card-content {
+  padding: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: var(--color-dark);
+  font-size: 14px;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.info-row .value {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+}
+
+.fecha-destacada {
+  background: linear-gradient(135deg, var(--color-info), var(--color-primary));
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.une-destacada {
+  background: linear-gradient(135deg, var(--color-purple), #8E44AD);
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.servicios-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.servicios-row .label {
+  margin-bottom: 5px;
+}
+
+.servicios-list {
+  width: 100%;
+  background: #F8F9FA;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #E8E8E8;
+}
+
+.servicio-item {
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 5px;
+  padding-left: 10px;
+}
+
+.servicio-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Footer del card */
+.card-footer {
+  background: linear-gradient(135deg, #F8F9FA, #E9ECEF);
+  padding: 15px 20px;
+  border-top: 1px solid #E8E8E8;
+}
+
+.total-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-weight: 600;
+  color: var(--color-dark);
+  font-size: 16px;
+}
+
+.total-value {
+  font-weight: 700;
+  color: var(--color-success);
+  font-size: 18px;
+}
+
+/* ==================
+   MENSAJES
+   ================== */
+
+.error-message {
+  background: linear-gradient(135deg, #FADBD8, #F1948A);
+  color: #C0392B;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #E74C3C;
+  margin-bottom: 20px;
+}
+
+.loading-message {
+  background: linear-gradient(135deg, #D6EAF8, #AED6F1);
+  color: var(--color-info);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid var(--color-info);
+  margin-bottom: 20px;
+}
+
+.no-results {
+  background: linear-gradient(135deg, #FEF9E7, #FCF3CF);
+  color: #B7950B;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid var(--color-warning);
+  font-size: 16px;
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 768px) {
+  .consultar-movil {
+    padding: 15px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .search-input-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .search-input,
+  .btn-search-movil {
+    width: 100%;
+  }
+  
+  .remisiones-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .info-row .value {
+    text-align: left;
+  }
+  
+  .card-header {
+    padding: 15px;
+  }
+  
+  .card-content {
+    padding: 15px;
+  }
+  
+  .remision-number {
+    font-size: 16px;
+  }
+  
+  .movil-display {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .search-section {
+    padding: 20px;
+  }
+  
+  .search-info p {
+    font-size: 13px;
+  }
+}
