@@ -97,11 +97,11 @@ const ServiciosList = () => {
     <div className="catalogo-servicios">
       {/* Header Section */}
       <div className="header-section">
-        <h1 className="page-title">Catálogo de Servicios</h1>
+        <h1 className="page-title">Catálogo de Servicios</h1> {/* Nombre estándar según manual */}
         <motion.button
           className="add-service-button"
           onClick={() => { setShowModal(true); setModalData(null); }}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.05 }} // Escala suave 1.05 según manual
           whileTap={{ scale: 0.98 }}
         >
           <span>📝</span> Agregar Servicio
@@ -259,7 +259,7 @@ const ServiciosList = () => {
                           <motion.button 
                             onClick={() => handleVer(servicio)} 
                             className="btn-action-table btn-view"
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.05 }} // Hover escala suave según manual
                             whileTap={{ scale: 0.9 }}
                             title="Ver detalles"
                           >
@@ -268,7 +268,7 @@ const ServiciosList = () => {
                           <motion.button 
                             onClick={() => handleEditar(servicio)} 
                             className="btn-action-table btn-edit"
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.05 }} // Hover escala suave según manual
                             whileTap={{ scale: 0.9 }}
                             title="Editar servicio"
                           >
@@ -277,7 +277,7 @@ const ServiciosList = () => {
                           <motion.button 
                             onClick={() => handleEliminar(servicio)} 
                             className="btn-action-table btn-delete"
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.05 }} // Hover escala suave según manual
                             whileTap={{ scale: 0.9 }}
                             title="Eliminar servicio"
                           >

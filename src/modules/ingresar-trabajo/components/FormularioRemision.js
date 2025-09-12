@@ -2,6 +2,7 @@
 import React, { memo, useEffect } from 'react';
 import { THEME_COLORS, MESSAGES, ESTADOS_REMISION, FORM_CONFIG } from '../../../shared/constants';
 import useFormRemision from '../hooks/useFormRemision';
+import './FormularioRemision.css';
 
 const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }) => {
   const {
@@ -109,14 +110,27 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
 
   if (!isOpen) return null;
 
+  // Función para manejar clicks en el overlay (solo cerrar si es exactamente el overlay)
+  const handleOverlayClick = (e) => {
+    // Solo cerrar si el click fue exactamente en el overlay, no en el modal
+    if (e.target.classList && e.target.classList.contains('formulario-modal-overlay')) {
+      onClose();
+    }
+  };
+
+  // Prevenir la propagación de eventos del modal hacia el overlay
+  const handleModalClick = (e) => {
+    e.stopPropagation();
+  };
+
   return (
     <div
-      style={overlayStyle}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      className="formulario-modal-overlay"
+      onClick={handleOverlayClick}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
-      <div style={modalStyle}>
+      <div className="formulario-modal" onClick={handleModalClick}>
         {/* Header del modal */}
         <div style={headerStyle}>
           <h2 style={titleStyle}>
@@ -237,26 +251,78 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
               />
             </div>
 
-            {/* Fila 4: Descripción (campo largo) */}
+            {/* Fila 4: Servicios realizados */}
             <div style={fullWidthRowStyle}>
               <div style={fieldStyle}>
-                <label style={labelStyle}>Descripción del Trabajo *</label>\n
-                <textarea
-                  value={formData.descripcion}
-                  onChange={(e) => updateField('descripcion', e.target.value)}
-                  style={{
-                    ...textareaStyle,
-                    borderColor: errors.descripcion ? THEME_COLORS.danger : '#ced4da'
-                  }}
-                  placeholder="Describa detalladamente el trabajo realizado..."
-                  rows={3}
-                  disabled={loading}
-                />
-                {errors.descripcion && <span style={errorStyle}>{errors.descripcion}</span>}
+                <label style={labelStyle}>Servicios Realizados</label>
+                <div style={{display: 'grid', gap: '8px'}}>
+                  <FormField
+                    label="Servicio 1 *"
+                    value={formData.servicio1}
+                    onChange={(value) => updateField('servicio1', value)}
+                    error={errors.servicio1}
+                    placeholder="Describa el primer servicio realizado..."
+                    disabled={loading}
+                  />
+                  <FormField
+                    label="Servicio 2"
+                    value={formData.servicio2}
+                    onChange={(value) => updateField('servicio2', value)}
+                    placeholder="Describa el segundo servicio (opcional)..."
+                    disabled={loading}
+                  />
+                  <FormField
+                    label="Servicio 3"
+                    value={formData.servicio3}
+                    onChange={(value) => updateField('servicio3', value)}
+                    placeholder="Describa el tercer servicio (opcional)..."
+                    disabled={loading}
+                  />
+                  <FormField
+                    label="Servicio 4"
+                    value={formData.servicio4}
+                    onChange={(value) => updateField('servicio4', value)}
+                    placeholder="Describa el cuarto servicio (opcional)..."
+                    disabled={loading}
+                  />
+                  <FormField
+                    label="Servicio 5"
+                    value={formData.servicio5}
+                    onChange={(value) => updateField('servicio5', value)}
+                    placeholder="Describa el quinto servicio (opcional)..."
+                    disabled={loading}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Fila 5: Información adicional */}
+            {/* Fila 5: Técnicos asignados */}
+            <div style={rowStyle}>
+              <FormField
+                label="Técnico 1 *"
+                value={formData.tecnico1}
+                onChange={(value) => updateField('tecnico1', value)}
+                error={errors.tecnico1}
+                placeholder="Nombre del técnico principal"
+                disabled={loading}
+              />
+              <FormField
+                label="Técnico 2"
+                value={formData.tecnico2}
+                onChange={(value) => updateField('tecnico2', value)}
+                placeholder="Nombre del segundo técnico (opcional)"
+                disabled={loading}
+              />
+              <FormField
+                label="Técnico 3"
+                value={formData.tecnico3}
+                onChange={(value) => updateField('tecnico3', value)}
+                placeholder="Nombre del tercer técnico (opcional)"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Fila 6: Información adicional */}
             <div style={rowStyle}>
               <FormField
                 label="Autorizó"
@@ -274,7 +340,7 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
               />
             </div>
 
-            {/* Fila 6: Números de orden y factura */}
+            {/* Fila 7: Números de orden y factura */}
             <div style={rowStyle}>
               <FormField
                 label="No. Orden"
@@ -290,15 +356,24 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
                 placeholder="Número de factura"
                 disabled={loading}
               />
+              <FormField
+                label="No. ID Bit"
+                value={formData.no_id_bit}
+                onChange={(value) => updateField('no_id_bit', value)}
+                placeholder="Número ID bit"
+                type="number"
+                disabled={loading}
+              />
             </div>
 
-            {/* Fila 7: Radicación y género */}
+            {/* Fila 8: Radicación y género */}
             <div style={rowStyle}>
               <FormField
                 label="Radicación"
                 value={formData.radicacion}
                 onChange={(value) => updateField('radicacion', value)}
-                placeholder="Número de radicación"
+                placeholder="Fecha de radicación"
+                type="date"
                 disabled={loading}
               />
               <FormField
@@ -306,17 +381,6 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
                 value={formData.genero}
                 onChange={(value) => updateField('genero', value)}
                 placeholder="Quien generó"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Fila 8: Técnico y UNE */}
-            <div style={rowStyle}>
-              <FormField
-                label="Técnico"
-                value={formData.tecnico}
-                onChange={(value) => updateField('tecnico', value)}
-                placeholder="Nombre del técnico"
                 disabled={loading}
               />
               <FormField
@@ -403,11 +467,13 @@ const overlayStyle = {
   bottom: 0,
   backgroundColor: 'rgba(0, 0, 0, 0.6)',
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'flex-start', // Cambiar de 'center' a 'flex-start' para posicionar al inicio
   justifyContent: 'center',
   zIndex: 1000,
   padding: '20px',
-  backdropFilter: 'blur(2px)'
+  paddingTop: '40px', // Espacio desde la parte superior
+  backdropFilter: 'blur(2px)',
+  overflowY: 'auto' // Permitir scroll si el modal es muy alto
 };
 
 const modalStyle = {
@@ -415,12 +481,12 @@ const modalStyle = {
   borderRadius: '12px',
   width: '100%',
   maxWidth: FORM_CONFIG.MODAL_WIDTH,
-  maxHeight: '90vh', // Altura máxima responsiva
+  maxHeight: 'calc(100vh - 80px)', // Ajustar altura máxima considerando padding
   boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
   display: 'flex',
   flexDirection: 'column',
   animation: `modalSlideIn ${FORM_CONFIG.ANIMATION_DURATION} ease-out`,
-  margin: '20px' // Margen para pantallas pequeñas
+  margin: '0 20px' // Margen lateral para pantallas pequeñas
 };
 
 const headerStyle = {

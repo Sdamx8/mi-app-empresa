@@ -4,6 +4,8 @@ import { useAuth } from '../../core/auth/AuthContext';
 import LoginComponent from '../../shared/components/LoginComponent';
 import FormularioRemisionCorregido from './components/FormularioRemision';
 import { THEME_COLORS } from '../../shared/constants';
+import { motion } from 'framer-motion';
+import './components/IngresarTrabajo.css'; // CSS del manual de identidad
 import { 
   obtenerOpcionesIntegracion, 
   generarPDFDirecto,
@@ -227,20 +229,28 @@ const IngresarTrabajo = () => {
   }
 
   return (
-    <div style={containerStyle}>
-      {/* Header del módulo */}
-      <div style={headerStyle}>
+    <motion.div 
+      className="ingresar-trabajo"
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header Section - Estructura según manual */}
+      <div className="header-section">
         <div>
-          <h1 style={titleStyle}>
-            🔧 Ingresar Trabajo Realizado
-          </h1>
-          <p style={subtitleStyle}>
+          <h1 className="page-title">Ingresar Trabajo Realizado</h1> {/* Nombre estándar según manual */}
+          <p style={{ color: '#95A5A6', fontSize: '14px', margin: '8px 0 0 0', lineHeight: 1.5 }}>
             Registre los trabajos y servicios realizados en las unidades móviles
           </p>
         </div>
-        <button onClick={openModal} style={primaryButtonStyle}>
-          ➕ Nueva Remisión
-        </button>
+        <motion.button 
+          onClick={openModal} 
+          className="nueva-remision-button"
+          whileHover={{ scale: 1.05 }} // Escala suave según manual
+          whileTap={{ scale: 0.98 }}
+        >
+          <span>📝</span> Nueva Remisión
+        </motion.button>
       </div>
 
       {/* Notificación con opciones de integración */}
@@ -262,151 +272,190 @@ const IngresarTrabajo = () => {
 
       {/* Contenido principal */}
       <div style={contentStyle}>
-        {/* Estadísticas rápidas */}
-        <div style={statsContainerStyle}>
+        {/* Estadísticas rápidas - Dashboard Cards según manual */}
+        <div className="dashboard-cards">
           <StatCard
             icon="📝"
             title="Remisiones Hoy"
             value="8"
             subtitle="3 pendientes"
-            color={THEME_COLORS.primary}
+            color="#5DADE2"
           />
           <StatCard
             icon="✅"
             title="Completadas"
             value="15"
             subtitle="Esta semana"
-            color={THEME_COLORS.success}
+            color="#27AE60"
           />
           <StatCard
             icon="🔄"
             title="En Proceso"
             value="5"
             subtitle="Requieren atención"
-            color={THEME_COLORS.warning}
+            color="#F1C40F"
           />
           <StatCard
             icon="💰"
             title="Total Facturado"
             value="$2.4M"
             subtitle="Este mes"
-            color={THEME_COLORS.info}
+            color="#3498DB"
           />
         </div>
 
-        {/* Acciones rápidas */}
-        <div style={actionsContainerStyle}>
-          <h3 style={sectionTitleStyle}>⚡ Acciones Rápidas</h3>
-          <div style={actionsGridStyle}>
-            <ActionCard
-              icon="📝"
-              title="Nueva Remisión"
-              description="Crear una nueva remisión de trabajo"
+        {/* Acciones rápidas según manual */}
+        <div className="actions-section">
+          <h3 className="section-title">⚡ Acciones Rápidas</h3>
+          <div className="actions-grid">
+            <motion.div 
+              className="action-card highlighted"
               onClick={openModal}
-              primary={true}
-            />
-            <ActionCard
-              icon="🔍"
-              title="Buscar Remisiones"
-              description="Consultar historial de trabajos"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="action-icon">📝</span>
+              <div className="action-title">Nueva Remisión</div>
+              <div className="action-description">Crear una nueva remisión de trabajo</div>
+            </motion.div>
+            <motion.div 
+              className="action-card"
               onClick={() => window.location.hash = '#historial'}
-            />
-            <ActionCard
-              icon="📊"
-              title="Generar Reporte"
-              description="Exportar datos para análisis"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="action-icon">🔍</span>
+              <div className="action-title">Buscar Remisiones</div>
+              <div className="action-description">Consultar historial de trabajos</div>
+            </motion.div>
+            <motion.div 
+              className="action-card"
               onClick={() => alert('Función próximamente disponible')}
-            />
-            <ActionCard
-              icon="⚙️"
-              title="Configuración"
-              description="Ajustar parámetros del sistema"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="action-icon">📊</span>
+              <div className="action-title">Generar Reporte</div>
+              <div className="action-description">Exportar datos para análisis</div>
+            </motion.div>
+            <motion.div 
+              className="action-card"
               onClick={() => alert('Función próximamente disponible')}
-            />
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="action-icon">⚙️</span>
+              <div className="action-title">Configuración</div>
+              <div className="action-description">Ajustar parámetros del sistema</div>
+            </motion.div>
           </div>
         </div>
 
-        {/* Historial de últimas remisiones ingresadas */}
-        <div style={historialContainerStyle}>
-          <div style={historialHeaderStyle}>
-            <h3 style={sectionTitleStyle}>📚 Historial de últimas remisiones</h3>
-            <div style={historialActionsStyle}>
-              <span style={historialMetaStyle}>
+        {/* Historial de últimas remisiones según manual */}
+        <div className="historial-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 className="section-title">📚 Historial de últimas remisiones</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ color: '#95A5A6', fontSize: '14px' }}>
                 {cargandoHistorial ? 'Cargando…' : `Mostrando ${historialRemisiones.length} remisiones`}
               </span>
-              <button
+              <motion.button
                 onClick={() => cargarHistorialRemisiones(20)}
-                style={secondaryButtonStyle}
+                className="nueva-remision-button"
+                style={{ padding: '8px 16px', fontSize: '12px', minHeight: '32px' }}
                 disabled={cargandoHistorial}
                 title="Refrescar historial"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
               >
                 🔄 Refrescar
-              </button>
+              </motion.button>
             </div>
           </div>
 
           {errorHistorial && (
-            <div style={errorBannerStyle}>
+            <div className="error-message">
               ❌ {errorHistorial}
             </div>
           )}
 
-          <div style={tableWrapperStyle}>
-            <table style={tableStyle}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="historial-table">
               <thead>
                 <tr>
-                  <th style={thStyle}>Remisión</th>
-                  <th style={thStyle}>Móvil</th>
-                  <th style={thStyle}>Técnico</th>
-                  <th style={thStyle}>Fecha</th>
-                  <th style={{...thStyle, textAlign:'right'}}>Total</th>
-                  <th style={{...thStyle, textAlign:'center'}}>Acciones</th>
+                  <th>Remisión</th>
+                  <th>Móvil</th>
+                  <th>Técnico</th>
+                  <th>Fecha</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
+                  <th style={{ textAlign: 'center' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {cargandoHistorial ? (
                   <tr>
-                    <td style={tdStyle} colSpan={6}>Cargando historial…</td>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>
+                      <div className="loading-message">
+                        <span>🔄</span> Cargando historial…
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   historialRemisiones.length === 0 ? (
                     <tr>
-                      <td style={tdStyle} colSpan={6}>No hay remisiones registradas aún.</td>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>
+                        <div className="empty-state">
+                          <span className="empty-state-icon">📋</span>
+                          <div>No hay remisiones registradas aún.</div>
+                          <small>Haz clic en "Nueva Remisión" para comenzar.</small>
+                        </div>
+                      </td>
                     </tr>
                   ) : (
-                    historialRemisiones.map((r) => (
-                      <tr key={r.id} style={trStyle}>
-                        <td style={tdStyle}><strong>{r.remision || '—'}</strong></td>
-                        <td style={tdStyle}>{r.movil || '—'}</td>
-                        <td style={tdStyle}>{r.tecnico || r.autorizo || '—'}</td>
-                        <td style={tdStyle}>{formatearFechaBasica(r.fecha_remision)}</td>
-                        <td style={{...tdStyle, textAlign:'right'}}>{formatearMoneda(r.total)}</td>
-                        <td style={{...tdStyle, textAlign:'center'}}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                            <button
-                              style={smallPrimaryButtonStyle}
+                    historialRemisiones.map((r, index) => (
+                      <motion.tr 
+                        key={r.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.02 }}
+                      >
+                        <td><strong>{r.remision || '—'}</strong></td>
+                        <td>{r.movil || '—'}</td>
+                        <td>{r.tecnico1 || r.autorizo || '—'}</td>
+                        <td>{formatearFechaBasica(r.fecha_remision)}</td>
+                        <td style={{ textAlign: 'right' }}><strong style={{ color: '#27AE60' }}>{formatearMoneda(r.total)}</strong></td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                            <motion.button
+                              className="btn-action"
                               onClick={() => redirigirAInformesTecnicos(r.remision)}
                               title="Crear/Completar Informe Técnico"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.9 }}
                             >
-                              📝 Informe
-                            </button>
-                            <button
-                              style={smallSecondaryButtonStyle}
+                              📝
+                            </motion.button>
+                            <motion.button
+                              className="btn-action btn-edit"
                               onClick={() => handleEditarRemision(r)}
                               title="Editar remisión"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.9 }}
                             >
-                              ✏️ Editar
-                            </button>
-                            <button
-                              style={smallDangerButtonStyle}
+                              ✏️
+                            </motion.button>
+                            <motion.button
+                              className="btn-action btn-delete"
                               onClick={() => handleEliminarRemision(r)}
                               title="Eliminar remisión"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.9 }}
                             >
-                              🗑️ Eliminar
-                            </button>
+                              🗑️
+                            </motion.button>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))
                   )
                 )}
@@ -443,7 +492,7 @@ const IngresarTrabajo = () => {
         onSave={handleSaveSuccess}
         initialData={editingRemision}
       />
-    </div>
+    </motion.div>
   );
 };
 
@@ -545,16 +594,24 @@ const NotificationConIntegracion = ({
   );
 };
 
-// Componente de tarjeta estadística
+// Componente de tarjeta estadística según manual
 const StatCard = ({ icon, title, value, subtitle, color }) => (
-  <div style={statCardStyle}>
-    <div style={statIconStyle}>{icon}</div>
-    <div style={statContentStyle}>
-      <div style={statTitleStyle}>{title}</div>
-      <div style={{ ...statValueStyle, color }}>{value}</div>
-      <div style={statSubtitleStyle}>{subtitle}</div>
+  <motion.div 
+    className="dashboard-card"
+    whileHover={{ scale: 1.02 }}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="card-header">
+      <div className="card-icon" style={{ background: `linear-gradient(135deg, ${color}, #3498DB)` }}>
+        {icon}
+      </div>
+      <div className="card-title">{title}</div>
     </div>
-  </div>
+    <div className="card-value" style={{ color }}>{value}</div>
+    <div className="card-subtitle">{subtitle}</div>
+  </motion.div>
 );
 
 // Componente de tarjeta de acción

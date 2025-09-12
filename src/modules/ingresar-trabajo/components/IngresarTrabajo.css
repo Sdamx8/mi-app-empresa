@@ -1,14 +1,15 @@
 /* =======================================================
-   GLOBAL MOBILITY SOLUTIONS - CATÁLOGO DE SERVICIOS
+   GLOBAL MOBILITY SOLUTIONS - INGRESAR TRABAJO REALIZADO
    ======================================================= */
 
 /* Variables de color corporativo - Manual de Identidad */
-.catalogo-servicios {
+.ingresar-trabajo {
   /* Colores principales según manual */
   --color-primary: #5DADE2;       /* Azul claro - acciones principales */
   --color-secondary: #BDC3C7;     /* Gris plata - fondos neutros */
   --color-background: #F8F9FA;    /* Gris claro - fondo general */
   --color-text: #2C3E50;          /* Gris oscuro - texto principal */
+  --color-white: #FFFFFF;
   
   /* Colores complementarios */
   --color-success: #27AE60;
@@ -20,7 +21,6 @@
   --color-gray: #95A5A6;
   --color-dark: #34495E;
   --color-orange: #F39C12;
-  --color-white: #FFFFFF;
   
   /* Tipografía según manual */
   font-family: 'Poppins', 'Roboto', sans-serif;
@@ -54,7 +54,7 @@
   text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.add-service-button {
+.nueva-remision-button {
   /* Botón primario según manual */
   background: var(--color-primary);
   color: var(--color-white);
@@ -75,130 +75,187 @@
   line-height: 1.5;
 }
 
-.add-service-button:hover {
+.nueva-remision-button:hover {
   /* Hover con sombra ligera según manual */
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(93, 173, 226, 0.4);
   filter: brightness(1.1);
 }
 
+.nueva-remision-button:disabled {
+  background: var(--color-gray);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ==================
-   FILTERS SECTION
+   DASHBOARD CARDS
    ================== */
 
-.filters-section {
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-card {
   /* Tarjetas según manual: fondo blanco, sombra suave, border-radius 16px */
   background: var(--color-white);
   border-radius: 16px;
   padding: 20px; /* Espaciado interno 16-20px según manual */
-  margin-bottom: 30px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   border: 1px solid var(--color-secondary);
+  transition: all 0.3s ease;
 }
 
-.filters-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  align-items: end;
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
 
-.filter-group {
+.card-header {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.filter-group label {
-  /* Labels según manual: 14px, semibold, encima del input */
-  font-size: 14px;
+.card-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
+  color: var(--color-white);
+}
+
+.card-title {
+  /* Subtítulos H2-H3: 16-18px, semibold según manual */
+  font-size: 16px;
   font-weight: 600; /* semibold */
   color: var(--color-text);
-  margin-bottom: 8px;
   line-height: 1.5;
+  margin: 0;
+}
+
+.card-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--color-gray);
+  line-height: 1.5;
+}
+
+/* ==================
+   ACTIONS SECTION
+   ================== */
+
+.actions-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  /* H2 según manual: 16-18px, semibold */
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.action-card {
+  background: var(--color-white);
+  border: 2px solid var(--color-secondary);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.action-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(93, 173, 226, 0.15);
+  background: linear-gradient(135deg, rgba(93, 173, 226, 0.05), rgba(52, 152, 219, 0.05));
+}
+
+.action-card.highlighted {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, rgba(93, 173, 226, 0.1), rgba(52, 152, 219, 0.05));
+}
+
+.action-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
   display: block;
 }
 
-.filter-group input,
-.filter-group select {
-  /* Inputs según manual: borde gris #BDC3C7 */
-  padding: 12px 16px;
-  border: 2px solid var(--color-secondary);
-  border-radius: 10px;
-  font-size: 14px; /* Texto general: 14px según manual */
-  font-family: inherit;
-  transition: all 0.3s ease;
-  background: var(--color-white);
-  width: 100%;
-  box-sizing: border-box;
+.action-title {
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-text);
+  margin-bottom: 8px;
   line-height: 1.5;
 }
 
-.filter-group input:focus,
-.filter-group select:focus {
-  outline: none;
-  /* Focus azul según manual */
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.1);
-  transform: translateY(-1px);
-}
-
-/* ==================
-   RESULTS SECTION
-   ================== */
-
-.results-section {
-  margin-bottom: 30px;
-}
-
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.results-count {
-  /* Subtítulos H2-H3: 16-18px, semibold según manual */
-  font-size: 18px;
-  font-weight: 600; /* semibold */
-  color: var(--color-text);
+.action-description {
+  font-size: 13px;
+  color: var(--color-gray);
   line-height: 1.5;
 }
 
 /* ==================
-   TABLA SERVICIOS
+   HISTORIAL SECTION
    ================== */
 
-.tabla-servicios {
-  /* Tarjetas según manual: fondo blanco, sombra suave, border-radius 16px */
+.historial-section {
   background: var(--color-white);
   border-radius: 16px;
-  padding: 20px; /* Espaciado interno 16-20px según manual */
+  padding: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   border: 1px solid var(--color-secondary);
   overflow-x: auto;
 }
 
-.servicios-table {
+.historial-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px; /* Texto general: 14-16px según manual */
+  font-size: 14px;
   line-height: 1.5;
 }
 
-.servicios-table th {
+.historial-table th {
   /* Encabezados con fondo gris claro según manual */
   background: var(--color-secondary);
   color: var(--color-text);
   padding: 15px 12px;
   text-align: left; /* Alineación izquierda según manual */
   font-weight: 600; /* semibold */
-  font-size: 14px; /* Botones/Inputs: 14px según manual */
-  text-transform: uppercase; /* uppercase según manual */
+  font-size: 14px;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--color-primary);
   position: sticky;
@@ -207,136 +264,66 @@
   line-height: 1.5;
 }
 
-.servicios-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.servicios-table th.sortable:hover {
-  /* Hover sutil según manual */
-  background: var(--color-primary);
-  color: var(--color-white);
-  transform: translateY(-1px);
-}
-
-.sort-indicator {
-  margin-left: 8px;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.servicios-table td {
+.historial-table td {
   padding: 15px 12px;
   border-bottom: 1px solid #F0F0F0;
   vertical-align: middle;
   transition: all 0.3s ease;
-  font-size: 14px; /* Texto general: 14-16px según manual */
+  font-size: 14px;
   line-height: 1.5;
   color: var(--color-text);
 }
 
-.servicios-table tr:hover td {
+.historial-table tr:hover td {
   /* Hover resaltado según manual */
   background-color: var(--color-background) !important;
   transform: scale(1.01);
 }
 
-.servicios-table tr:nth-child(even) td {
+.historial-table tr:nth-child(even) td {
   /* Zebra striping según manual */
   background-color: #FAFBFC;
 }
 
-/* Estilos específicos para celdas */
-.titulo-cell {
-  font-weight: 600; /* semibold */
-  color: var(--color-text);
-  font-size: 15px;
-  max-width: 300px;
-  line-height: 1.5;
-}
-
-.categoria-cell {
-  text-align: center;
-}
-
-.categoria-badge {
+/* Estados y badges */
+.estado-badge {
   display: inline-block;
-  background: var(--color-purple);
-  color: var(--color-white);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600; /* semibold */
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3);
-  line-height: 1.5;
-}
-
-.costo-cell {
-  text-align: right;
-}
-
-.price-table {
-  color: var(--color-success);
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.tiempo-cell {
-  text-align: center;
-}
-
-.tiempo-badge {
-  display: inline-block;
-  background: var(--color-orange);
-  color: var(--color-white);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600; /* semibold */
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
-  line-height: 1.5;
-}
-
-.id-cell {
-  text-align: center;
-}
-
-.id-code {
-  background: #F8F9FA;
-  color: var(--color-primary);
   padding: 4px 8px;
-  border-radius: 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 600;
-  border: 1px solid #E8F4FD;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.5;
 }
 
-.actions-cell {
-  text-align: center;
-  white-space: nowrap;
+.estado-badge.pendiente {
+  background: var(--color-warning);
+  color: var(--color-white);
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
+.estado-badge.en-proceso {
+  background: var(--color-info);
+  color: var(--color-white);
 }
 
-.btn-action-table {
-  /* Botones según manual: border-radius 12px, altura mínima 40px */
+.estado-badge.completado {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.estado-badge.radicado {
+  background: var(--color-teal);
+  color: var(--color-white);
+}
+
+/* Botones de acción en tabla */
+.btn-action {
   background: none;
   border: none;
   cursor: pointer;
   padding: 8px;
-  border-radius: 12px; /* Forma redondeada según manual */
+  border-radius: 12px;
   font-size: 16px;
   transition: all 0.3s ease;
   display: flex;
@@ -345,48 +332,33 @@
   width: 35px;
   height: 35px;
   min-height: 35px;
+  margin: 0 2px;
 }
 
-.btn-action-table:hover {
-  /* Hover escala suave según manual */
+.btn-action:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.btn-action-table.btn-view:hover {
-  background: rgba(52, 152, 219, 0.1);
-}
-
-.btn-action-table.btn-edit:hover {
+.btn-action.btn-edit:hover {
   background: rgba(241, 196, 15, 0.1);
 }
 
-.btn-action-table.btn-delete:hover {
+.btn-action.btn-delete:hover {
   background: rgba(231, 76, 60, 0.1);
 }
 
-.btn-action-table:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.empty-row {
-  text-align: center;
-  padding: 40px !important;
-}
-
 /* ==================
-   ESTADOS DE CARGA
+   LOADING STATES
    ================== */
 
 .loading-message {
   text-align: center;
   color: var(--color-primary);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   padding: 40px;
-  background: white;
+  background: var(--color-white);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   margin: 20px 0;
@@ -394,6 +366,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
+  line-height: 1.5;
 }
 
 .error-message {
@@ -406,6 +379,7 @@
   border: 1px solid rgba(231, 76, 60, 0.2);
   border-radius: 16px;
   margin: 20px 0;
+  line-height: 1.5;
 }
 
 .empty-state {
@@ -414,10 +388,11 @@
   font-size: 16px;
   font-weight: 500;
   padding: 60px 20px;
-  background: white;
+  background: var(--color-white);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   margin: 20px 0;
+  line-height: 1.5;
 }
 
 .empty-state-icon {
@@ -427,12 +402,45 @@
 }
 
 /* ==================
+   NOTIFICACIONES
+   ================== */
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.5;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.notification.success {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.notification.error {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.notification.info {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+/* ==================
    RESPONSIVE DESIGN
    ================== */
 
-/* Ajustes responsividad según manual: 320px-1440px */
 @media (max-width: 768px) {
-  .catalogo-servicios {
+  .ingresar-trabajo {
     padding: 15px;
   }
   
@@ -443,102 +451,72 @@
   }
   
   .page-title {
-    /* H1 responsivo: 20px en móvil según manual */
-    font-size: 20px;
+    font-size: 20px; /* H1 responsivo según manual */
     text-align: center;
   }
   
-  .add-service-button {
+  .nueva-remision-button {
     align-self: center;
     padding: 12px 24px;
-    /* Mantener altura mínima 40px según manual */
     min-height: 40px;
   }
   
-  .filters-section {
-    padding: 16px; /* Espaciado interno 16-20px según manual */
-  }
-  
-  .filters-grid {
+  .dashboard-cards {
     grid-template-columns: 1fr;
     gap: 16px;
   }
   
-  .tabla-servicios {
-    padding: 16px; /* Espaciado interno 16-20px según manual */
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
   
-  .servicios-table th,
-  .servicios-table td {
+  .historial-section {
+    padding: 16px;
+  }
+  
+  .historial-table th,
+  .historial-table td {
     padding: 10px 8px;
-    font-size: 14px; /* Mantener texto general 14px según manual */
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .btn-action-table {
-    width: 30px;
-    height: 30px;
     font-size: 14px;
-    border-radius: 12px; /* Mantener forma redondeada según manual */
   }
 }
 
-/* Responsividad móvil extremo: 320px según manual */
 @media (max-width: 480px) {
-  .tabla-servicios {
-    padding: 16px; /* Espaciado interno 16-20px según manual */
-    border-radius: 16px; /* Mantener border-radius según manual */
+  .historial-section {
+    padding: 12px;
+    border-radius: 16px;
   }
   
-  .servicios-table {
-    font-size: 14px; /* Mantener texto general 14px según manual */
+  .historial-table {
+    font-size: 12px;
   }
   
-  .servicios-table th,
-  .servicios-table td {
+  .historial-table th,
+  .historial-table td {
     padding: 8px 6px;
   }
   
-  .titulo-cell {
-    max-width: 150px;
-    font-size: 14px; /* Mantener texto general 14px según manual */
+  .card-value {
+    font-size: 24px;
   }
   
-  .categoria-badge,
-  .tiempo-badge {
-    padding: 4px 8px;
-    font-size: 10px;
-  }
-  
-  .id-code {
-    font-size: 10px;
-    padding: 2px 4px;
-  }
-  
-  .price-table {
-    font-size: 14px; /* Mantener texto general 14px según manual */
+  .btn-action {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
   }
 }
 
 /* Responsividad máxima: 1440px desktop según manual */
 @media (min-width: 1440px) {
-  .catalogo-servicios {
+  .ingresar-trabajo {
     padding: 30px;
     max-width: 1400px;
     margin: 0 auto;
   }
   
   .page-title {
-    /* H1 máximo: 24px según manual */
-    font-size: 24px;
-  }
-  
-  .results-count {
-    /* H2-H3 máximo: 18px según manual */
-    font-size: 18px;
+    font-size: 24px; /* H1 máximo según manual */
   }
 }

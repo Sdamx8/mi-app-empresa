@@ -6,20 +6,38 @@ import { MESSAGES, DB_FIELDS } from '../../../shared/constants';
 
 export const useFormRemision = (initialData = null) => {
   const [formData, setFormData] = useState({
+    // Campos básicos
     remision: '',
     movil: '',
-    estado: 'pendiente',
-    descripcion: '',
-    subtotal: '',
+    estado: 'PENDIENTE', // Estados según Firestore: PENDIENTE, EN_PROCESO, COMPLETADO, RADICADO
+    
+    // Información del trabajo
     autorizo: '',
     carroceria: '',
     no_orden: '',
     no_fact_elect: '',
+    no_id_bit: '', // Nuevo campo según estructura Firestore
     radicacion: '',
     genero: '',
-    tecnico: '',
     une: '',
+    
+    // Servicios (hasta 5 según estructura Firestore)
+    servicio1: '',
+    servicio2: '',
+    servicio3: '',
+    servicio4: '',
+    servicio5: '',
+    
+    // Técnicos (hasta 3 según estructura Firestore)
+    tecnico1: '',
+    tecnico2: '',
+    tecnico3: '',
+    
+    // Costos
+    subtotal: '',
     total: '',
+    
+    // Fechas
     fecha_remision: '',
     fecha_bit_prof: '',
     fecha_maximo: ''
@@ -28,7 +46,7 @@ export const useFormRemision = (initialData = null) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Validar campos requeridos
+  // Validar campos requeridos según estructura Firestore
   const validateForm = useCallback(() => {
     const newErrors = {};
     
@@ -42,9 +60,14 @@ export const useFormRemision = (initialData = null) => {
       newErrors.movil = 'Móvil es obligatorio';
     }
     
-    // Validar descripción
-    if (!formData.descripcion || !formData.descripcion.toString().trim()) {
-      newErrors.descripcion = 'Descripción es obligatoria';
+    // Validar al menos un servicio
+    if (!formData.servicio1 || !formData.servicio1.trim()) {
+      newErrors.servicio1 = 'Al menos el primer servicio es obligatorio';
+    }
+    
+    // Validar al menos un técnico
+    if (!formData.tecnico1 || !formData.tecnico1.trim()) {
+      newErrors.tecnico1 = 'Al menos el primer técnico es obligatorio';
     }
     
     // Validar estado
@@ -55,6 +78,11 @@ export const useFormRemision = (initialData = null) => {
     // Validar subtotal
     if (formData.subtotal && isNaN(parseFloat(formData.subtotal))) {
       newErrors.subtotal = 'Subtotal debe ser un número válido';
+    }
+
+    // Validar no_id_bit si se proporciona
+    if (formData.no_id_bit && isNaN(parseInt(formData.no_id_bit))) {
+      newErrors.no_id_bit = 'No. ID BIT debe ser un número válido';
     }
 
     setErrors(newErrors);
@@ -94,20 +122,38 @@ export const useFormRemision = (initialData = null) => {
   // Limpiar formulario
   const resetForm = useCallback(() => {
     setFormData({
+      // Campos básicos
       remision: '',
       movil: '',
-      estado: 'pendiente',
-      descripcion: '',
-      subtotal: '',
+      estado: 'PENDIENTE',
+      
+      // Información del trabajo
       autorizo: '',
       carroceria: '',
       no_orden: '',
       no_fact_elect: '',
+      no_id_bit: '',
       radicacion: '',
       genero: '',
-      tecnico: '',
       une: '',
+      
+      // Servicios
+      servicio1: '',
+      servicio2: '',
+      servicio3: '',
+      servicio4: '',
+      servicio5: '',
+      
+      // Técnicos
+      tecnico1: '',
+      tecnico2: '',
+      tecnico3: '',
+      
+      // Costos
+      subtotal: '',
       total: '',
+      
+      // Fechas
       fecha_remision: '',
       fecha_bit_prof: '',
       fecha_maximo: ''
@@ -115,25 +161,42 @@ export const useFormRemision = (initialData = null) => {
     setErrors({});
   }, []);
 
-  // Cargar datos iniciales para edición
+  // Cargar datos iniciales para edición según estructura Firestore
   const loadFromData = useCallback((data) => {
     if (!data) return;
     setFormData(prev => ({
       ...prev,
+      // Campos básicos
       remision: data.remision || '',
-      movil: data.movil || '',
-      estado: data.estado || 'pendiente',
-      descripcion: data.descripcion || '',
-      subtotal: data.subtotal?.toString?.() || '',
+      movil: data.movil?.toString?.() || '',
+      estado: data.estado || 'PENDIENTE',
+      
+      // Información del trabajo
       autorizo: data.autorizo || '',
       carroceria: data.carroceria || '',
       no_orden: data.no_orden || '',
       no_fact_elect: data.no_fact_elect || '',
+      no_id_bit: data.no_id_bit?.toString?.() || '',
       radicacion: data.radicacion || '',
       genero: data.genero || '',
-      tecnico: data.tecnico || '',
       une: data.une || '',
+      
+      // Servicios
+      servicio1: data.servicio1 || '',
+      servicio2: data.servicio2 || '',
+      servicio3: data.servicio3 || '',
+      servicio4: data.servicio4 || '',
+      servicio5: data.servicio5 || '',
+      
+      // Técnicos
+      tecnico1: data.tecnico1 || '',
+      tecnico2: data.tecnico2 || '',
+      tecnico3: data.tecnico3 || '',
+      
+      // Costos
+      subtotal: data.subtotal?.toString?.() || '',
       total: data.total?.toString?.() || '',
+      
       // Fechas: mostrar en formato YYYY-MM-DD si vienen como Date/Timestamp/String
       fecha_remision: normalizarFechaInput(data.fecha_remision),
       fecha_bit_prof: normalizarFechaInput(data.fecha_bit_prof),
@@ -156,7 +219,7 @@ export const useFormRemision = (initialData = null) => {
     } catch { return ''; }
   };
 
-  // Guardar remisión en Firestore
+  // Guardar remisión en Firestore con estructura correcta
   const saveRemision = useCallback(async () => {
     if (!validateForm()) {
       return { success: false, error: MESSAGES.REQUIRED_FIELDS };
@@ -165,7 +228,7 @@ export const useFormRemision = (initialData = null) => {
     setLoading(true);
     
     try {
-      // Preparar datos para Firestore con validación segura
+      // Preparar datos para Firestore según estructura real
       const parseFecha = (s) => {
         if (!s) return null;
         const d = new Date(s);
@@ -173,54 +236,54 @@ export const useFormRemision = (initialData = null) => {
       };
 
       const dataToSave = {
-        [DB_FIELDS.REMISION]: formData.remision ? formData.remision.toString().trim() : '',
-        [DB_FIELDS.MOVIL]: formData.movil ? formData.movil.toString().trim() : '',
-        [DB_FIELDS.ESTADO]: formData.estado,
-        [DB_FIELDS.DESCRIPCION]: formData.descripcion ? formData.descripcion.toString().trim() : '',
-        [DB_FIELDS.FECHA_ID_BIT]: Date.now(),
+        // Campos básicos obligatorios
+        remision: formData.remision ? formData.remision.toString().trim() : '',
+        movil: formData.movil ? parseInt(formData.movil) : null,
+        estado: formData.estado || 'PENDIENTE',
+        
+        // Timestamp de actualización
         updated_at: serverTimestamp()
       };
+
+      // Información del trabajo (campos opcionales)
+      if (formData.autorizo?.trim()) dataToSave.autorizo = formData.autorizo.trim();
+      if (formData.carroceria?.trim()) dataToSave.carroceria = formData.carroceria.trim();
+      if (formData.no_orden?.trim()) dataToSave.no_orden = formData.no_orden.trim();
+      if (formData.no_fact_elect?.trim()) dataToSave.no_fact_elect = formData.no_fact_elect.trim();
+      if (formData.no_id_bit?.trim()) dataToSave.no_id_bit = parseInt(formData.no_id_bit) || null;
+      if (formData.radicacion?.trim()) dataToSave.radicacion = parseFecha(formData.radicacion);
+      if (formData.genero?.trim()) dataToSave.genero = formData.genero.trim();
+      if (formData.une?.trim()) dataToSave.une = formData.une.trim();
+      
+      // Servicios (solo agregar si tienen contenido)
+      if (formData.servicio1?.trim()) dataToSave.servicio1 = formData.servicio1.trim();
+      if (formData.servicio2?.trim()) dataToSave.servicio2 = formData.servicio2.trim();
+      if (formData.servicio3?.trim()) dataToSave.servicio3 = formData.servicio3.trim();
+      if (formData.servicio4?.trim()) dataToSave.servicio4 = formData.servicio4.trim();
+      if (formData.servicio5?.trim()) dataToSave.servicio5 = formData.servicio5.trim();
+      
+      // Técnicos (solo agregar si tienen contenido)
+      if (formData.tecnico1?.trim()) dataToSave.tecnico1 = formData.tecnico1.trim();
+      if (formData.tecnico2?.trim()) dataToSave.tecnico2 = formData.tecnico2.trim();
+      if (formData.tecnico3?.trim()) dataToSave.tecnico3 = formData.tecnico3.trim();
 
       // Fechas
       const fr = parseFecha(formData.fecha_remision);
       const fb = parseFecha(formData.fecha_bit_prof);
       const fm = parseFecha(formData.fecha_maximo);
-      if (fr) dataToSave[DB_FIELDS.FECHA_REMISION] = fr; else if (!initialData?.id) dataToSave[DB_FIELDS.FECHA_REMISION] = serverTimestamp();
-      if (fb) dataToSave[DB_FIELDS.FECHA_BIT_PROF] = fb;
-      if (fm) dataToSave[DB_FIELDS.FECHA_MAXIMO] = fm;
+      
+      if (fr) dataToSave.fecha_remision = fr;
+      else if (!initialData?.id) dataToSave.fecha_remision = serverTimestamp(); // Fecha actual si es nueva
+      
+      if (fb) dataToSave.fecha_bit_prof = fb;
+      if (fm) dataToSave.fecha_maximo = fm;
 
-      // Números
+      // Números (subtotal y total)
       if (formData.subtotal && !isNaN(parseFloat(formData.subtotal))) {
-        dataToSave[DB_FIELDS.SUBTOTAL] = parseFloat(formData.subtotal);
+        dataToSave.subtotal = parseFloat(formData.subtotal);
       }
       if (formData.total && !isNaN(parseFloat(formData.total))) {
-        dataToSave[DB_FIELDS.TOTAL] = parseFloat(formData.total);
-      }
-
-      // Campos de texto opcionales
-      if (formData.autorizo && formData.autorizo.toString().trim()) {
-        dataToSave[DB_FIELDS.AUTORIZO] = formData.autorizo.toString().trim();
-      }
-      if (formData.carroceria && formData.carroceria.toString().trim()) {
-        dataToSave[DB_FIELDS.CARROCERIA] = formData.carroceria.toString().trim();
-      }
-      if (formData.no_orden && formData.no_orden.toString().trim()) {
-        dataToSave[DB_FIELDS.NO_ORDEN] = formData.no_orden.toString().trim();
-      }
-      if (formData.no_fact_elect && formData.no_fact_elect.toString().trim()) {
-        dataToSave[DB_FIELDS.NO_FACT_ELECT] = formData.no_fact_elect.toString().trim();
-      }
-      if (formData.radicacion && formData.radicacion.toString().trim()) {
-        dataToSave[DB_FIELDS.RADICACION] = formData.radicacion.toString().trim();
-      }
-      if (formData.genero && formData.genero.toString().trim()) {
-        dataToSave[DB_FIELDS.GENERO] = formData.genero.toString().trim();
-      }
-      if (formData.tecnico && formData.tecnico.toString().trim()) {
-        dataToSave[DB_FIELDS.TECNICO] = formData.tecnico.toString().trim();
-      }
-      if (formData.une && formData.une.toString().trim()) {
-        dataToSave[DB_FIELDS.UNE] = formData.une.toString().trim();
+        dataToSave.total = parseFloat(formData.total);
       }
 
       // Usar el número de remisión como ID del documento
@@ -249,9 +312,8 @@ export const useFormRemision = (initialData = null) => {
         success: true, 
         id: savedId,
         message: initialData?.id ? 'Remisión actualizada exitosamente' : MESSAGES.SAVE_SUCCESS,
-        numeroRemision: formData.remision.toString().trim() // Incluir número de remisión para integración
+        numeroRemision: formData.remision.toString().trim()
       };
-
 
     } catch (error) {
       console.error('Error guardando remisión:', error);
