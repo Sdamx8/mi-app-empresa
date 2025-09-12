@@ -1,0 +1,27 @@
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.label {
+  font-size: 14px;
+  color: #1e3c72;
+}
+.input {
+  border: 1px solid #BDC3C7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+}
+.input:focus {
+  border-color: #5DADE2;
+}
+.input[aria-invalid="true"] {
+  border-color: #E74C3C;
+}
+.error {
+  color: #E74C3C;
+  font-size: 12px;
+}

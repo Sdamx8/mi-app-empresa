@@ -4,18 +4,27 @@ import LoginPage from './LoginPage';
 import { AuthProvider, useAuth } from './core/auth/AuthContext';
 import { RoleProvider } from './core/auth/RoleContext';
 
+interface AppErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: { componentStack: string } | null;
+}
+
 // Error Boundary Component
-class AppErrorBoundary extends React.Component {
-  constructor(props) {
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  AppErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): Partial<AppErrorBoundaryState> {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
     console.error('Error en App:', error, errorInfo);
     this.setState({
       error: error,
@@ -89,7 +98,7 @@ class AppErrorBoundary extends React.Component {
   }
 }
 
-const AppContent = () => {
+const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -127,7 +136,7 @@ const AppContent = () => {
   }
 };
 
-function App() {
+const App: React.FC = () => {
   return (
     <AppErrorBoundary>
       <AuthProvider>
@@ -139,6 +148,6 @@ function App() {
       </AuthProvider>
     </AppErrorBoundary>
   );
-}
+};
 
 export default App;

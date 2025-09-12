@@ -39,13 +39,20 @@ jobs:
           ${{ runner.os }}-node-${{ env.CACHE_VERSION }}-
           
     - name: 🔧 Instalar dependencias
-      run: npm ci
+      run: npm ci --legacy-peer-deps
       
-    - name: 🔍 Linting
-      run: npm run lint || echo "Lint warnings found"
+    - name: � Type checking
+      run: npm run type-check
+      
+    - name: �🔍 Linting
+      run: npm run lint
+      
+    - name: 🎨 Check formatting
+      run: npm run format:check
+      continue-on-error: true
       
     - name: 🧪 Ejecutar tests unitarios
-      run: npm test -- --coverage --watchAll=false --testTimeout=10000
+      run: npm run test:coverage
       env:
         CI: true
         
@@ -83,7 +90,7 @@ jobs:
         cache: 'npm'
         
     - name: 🔧 Instalar dependencias
-      run: npm ci
+      run: npm ci --legacy-peer-deps
       
     - name: 🏗️ Build para producción
       run: npm run build
@@ -120,7 +127,7 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         
     - name: 🔧 Instalar dependencias
-      run: npm ci
+      run: npm ci --legacy-peer-deps
       
     - name: 🔍 Audit de dependencias
       run: npm audit --audit-level=high

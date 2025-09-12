@@ -7,7 +7,7 @@ import reportWebVitals from './reportWebVitals';
 // Importar filtro de consola para desarrollo
 import './shared/utils/consoleFilter';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
     <App />
