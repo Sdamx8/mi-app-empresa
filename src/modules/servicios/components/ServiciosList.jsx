@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useMemo } from 'react';
 import { getServicios, updateServicio, addServicio, deleteServicio } from '../services/serviciosService';
-// import ServicioCard from './ServicioCard';
 import FiltrosServicios from './FiltrosServicios';
 import ServicioFormModal from './ServicioFormModal';
 import ServicioDetailModal from './ServicioDetailModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import { motion } from 'framer-motion';
+import './CatalogServicios.css';
 
 
 const ServiciosList = () => {
@@ -20,13 +19,13 @@ const ServiciosList = () => {
   const [detailData, setDetailData] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteData, setDeleteData] = useState(null);
+  const [ordenamiento, setOrdenamiento] = useState({ campo: '', direccion: '' });
 
   const fetchServicios = () => {
     setLoading(true);
     getServicios(filtros)
       .then(data => {
-        // Ordenar por título alfabéticamente
-        setServicios(data.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '')));
+        setServicios(data);
       })
       .catch(setError)
       .finally(() => setLoading(false));
@@ -36,6 +35,38 @@ const ServiciosList = () => {
     fetchServicios();
     // eslint-disable-next-line
   }, [filtros]);
+
+  // Función para manejar ordenamiento
+  const handleOrdenar = (campo) => {
+    setOrdenamiento(prev => ({
+      campo: campo,
+      direccion: prev.campo === campo && prev.direccion === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Aplicar ordenamiento a los servicios
+  const serviciosOrdenados = useMemo(() => {
+    if (!ordenamiento.campo) return servicios;
+    
+    return [...servicios].sort((a, b) => {
+      let valorA = a[ordenamiento.campo];
+      let valorB = b[ordenamiento.campo];
+      
+      // Manejar valores null/undefined
+      if (valorA === null || valorA === undefined) valorA = '';
+      if (valorB === null || valorB === undefined) valorB = '';
+      
+      // Convertir a string para comparación
+      valorA = valorA.toString().toLowerCase();
+      valorB = valorB.toString().toLowerCase();
+      
+      if (ordenamiento.direccion === 'asc') {
+        return valorA.localeCompare(valorB);
+      } else {
+        return valorB.localeCompare(valorA);
+      }
+    });
+  }, [servicios, ordenamiento]);
 
   // Acciones
   const handleVer = (servicio) => {
@@ -63,70 +94,212 @@ const ServiciosList = () => {
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <FiltrosServicios onChange={setFiltros} />
-        <button
+    <div className="catalogo-servicios">
+      {/* Header Section */}
+      <div className="header-section">
+        <h1 className="page-title">Catálogo de Servicios</h1>
+        <motion.button
+          className="add-service-button"
           onClick={() => { setShowModal(true); setModalData(null); }}
-          style={{ background: '#5DADE2', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 20px', fontWeight: 600, fontSize: 15, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,123,255,0.10)', marginLeft: 16 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          + Agregar servicio
-        </button>
+          <span>📝</span> Agregar Servicio
+        </motion.button>
       </div>
+
+      {/* Filters Section */}
+      <div className="filters-section">
+        <FiltrosServicios onChange={setFiltros} />
+      </div>
+
+      {/* Results Section */}
+      <div className="results-section">
+        <div className="results-header">
+          <div className="results-count">
+            📊 {serviciosOrdenados.length} servicio(s) encontrado(s)
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-message">
+            <span>🔄</span>
+            Cargando servicios...
+          </div>
+        )}
+        
+        {/* Error State */}
+        {error && (
+          <div className="error-message">
+            <strong>Error:</strong> {error.message || error.toString()}
+          </div>
+        )}
+
+        {/* Services Table */}
+        {!loading && !error && (
+          <motion.div 
+            className="tabla-servicios"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <table className="servicios-table">
+              <thead>
+                <tr>
+                  <th 
+                    className={`sortable ${ordenamiento.campo === 'titulo' ? ordenamiento.direccion : ''}`}
+                    onClick={() => handleOrdenar('titulo')}
+                  >
+                    TÍTULO
+                    {ordenamiento.campo === 'titulo' && (
+                      <span className="sort-indicator">
+                        {ordenamiento.direccion === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
+                  <th 
+                    className={`sortable ${ordenamiento.campo === 'categoria' ? ordenamiento.direccion : ''}`}
+                    onClick={() => handleOrdenar('categoria')}
+                  >
+                    CATEGORÍA
+                    {ordenamiento.campo === 'categoria' && (
+                      <span className="sort-indicator">
+                        {ordenamiento.direccion === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
+                  <th 
+                    className={`sortable ${ordenamiento.campo === 'costo' ? ordenamiento.direccion : ''}`}
+                    onClick={() => handleOrdenar('costo')}
+                  >
+                    COSTO
+                    {ordenamiento.campo === 'costo' && (
+                      <span className="sort-indicator">
+                        {ordenamiento.direccion === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
+                  <th 
+                    className={`sortable ${ordenamiento.campo === 'tiempo_estimado' ? ordenamiento.direccion : ''}`}
+                    onClick={() => handleOrdenar('tiempo_estimado')}
+                  >
+                    TIEMPO ESTIMADO
+                    {ordenamiento.campo === 'tiempo_estimado' && (
+                      <span className="sort-indicator">
+                        {ordenamiento.direccion === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
+                  <th 
+                    className={`sortable ${ordenamiento.campo === 'id_servicio' ? ordenamiento.direccion : ''}`}
+                    onClick={() => handleOrdenar('id_servicio')}
+                  >
+                    ID
+                    {ordenamiento.campo === 'id_servicio' && (
+                      <span className="sort-indicator">
+                        {ordenamiento.direccion === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
+                  <th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {serviciosOrdenados.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="empty-row">
+                      <div className="empty-state">
+                        <span className="empty-state-icon">📋</span>
+                        <div>No hay servicios registrados.</div>
+                        <small>Haz clic en "Agregar Servicio" para comenzar.</small>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  serviciosOrdenados.map((servicio, index) => (
+                    <motion.tr 
+                      key={servicio.id_servicio || index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.02 }}
+                      whileHover={{ backgroundColor: '#f8f9fa' }}
+                    >
+                      <td className="titulo-cell">
+                        <strong>{servicio.titulo || 'Sin título'}</strong>
+                      </td>
+                      <td className="categoria-cell">
+                        <span className="categoria-badge">
+                          {servicio.categoria || 'Sin categoría'}
+                        </span>
+                      </td>
+                      <td className="costo-cell">
+                        <strong className="price-table">
+                          {typeof servicio.costo === 'number' ? 
+                            `$${Number(servicio.costo).toLocaleString('es-CO')}` : 
+                            'No definido'
+                          }
+                        </strong>
+                      </td>
+                      <td className="tiempo-cell">
+                        <span className="tiempo-badge">
+                          {servicio.tiempo_estimado ? 
+                            `${servicio.tiempo_estimado} h` : 
+                            'No definido'
+                          }
+                        </span>
+                      </td>
+                      <td className="id-cell">
+                        <code className="id-code">
+                          {servicio.id_servicio || 'Sin ID'}
+                        </code>
+                      </td>
+                      <td className="actions-cell">
+                        <div className="action-buttons">
+                          <motion.button 
+                            onClick={() => handleVer(servicio)} 
+                            className="btn-action-table btn-view"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Ver detalles"
+                          >
+                            👁️
+                          </motion.button>
+                          <motion.button 
+                            onClick={() => handleEditar(servicio)} 
+                            className="btn-action-table btn-edit"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Editar servicio"
+                          >
+                            ✏️
+                          </motion.button>
+                          <motion.button 
+                            onClick={() => handleEliminar(servicio)} 
+                            className="btn-action-table btn-delete"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Eliminar servicio"
+                          >
+                            🗑️
+                          </motion.button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Modales */}
       <ServicioFormModal open={showModal} onClose={() => setShowModal(false)} onSuccess={fetchServicios} initialData={modalData} />
       <ServicioDetailModal open={showDetail} servicio={detailData} onClose={() => setShowDetail(false)} />
       <ConfirmDeleteModal open={showDelete} servicio={deleteData} onClose={() => setShowDelete(false)} onConfirm={handleDeleteConfirm} />
-      {loading && <div style={{ color: '#5DADE2', margin: 24 }}>Cargando servicios...</div>}
-      {error && <div style={{ color: '#E74C3C', margin: 24 }}>Error: {error.message || error.toString()}</div>}
-      <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }} style={{ marginTop: 24 }}>
-        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, background: '#fff', borderRadius: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', fontFamily: 'Poppins, Roboto, sans-serif', fontSize: 15, overflow: 'hidden' }}>
-          <thead>
-            <tr style={{ background: '#F8F9FA', color: '#5DADE2' }}>
-              <th style={{ padding: '12px 8px', textAlign: 'left', cursor: 'pointer' }}>Título</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left' }}>Categoría</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left' }}>Costo</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left' }}>Tiempo estimado</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left' }}>ID</th>
-              <th style={{ padding: '12px 8px', textAlign: 'center' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && servicios.length === 0 && (
-              <tr><td colSpan={6} style={{ color: '#2C3E50', padding: 24, textAlign: 'center' }}>No hay servicios registrados.</td></tr>
-            )}
-            {servicios.map((servicio, idx) => (
-              <motion.tr key={servicio.id_servicio || idx} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: idx * 0.02 }} style={{ borderBottom: '1px solid #F0F0F0', cursor: 'pointer' }} whileHover={{ backgroundColor: '#f8f9fa' }}>
-                <td style={{ padding: '10px 8px', fontWeight: 600, color: '#34495E' }}>{servicio.titulo || '-'}</td>
-                <td style={{ padding: '10px 8px' }}>{servicio.categoria || '-'}</td>
-                <td style={{ padding: '10px 8px' }}>{typeof servicio.costo === 'number' ? `$${Number(servicio.costo).toLocaleString('es-CO')}` : '-'}</td>
-                <td style={{ padding: '10px 8px' }}>{servicio.tiempo_estimado ? `${servicio.tiempo_estimado} h` : '-'}</td>
-                <td style={{ padding: '10px 8px', color: '#888' }}>{servicio.id_servicio || '-'}</td>
-                <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                  <button onClick={() => handleVer(servicio)} style={btnActionStyle}>Ver</button>
-                  <button onClick={() => handleEditar(servicio)} style={{ ...btnActionStyle, background: '#F1C40F', color: '#2C3E50' }}>Editar</button>
-                  <button onClick={() => handleEliminar(servicio)} style={{ ...btnActionStyle, background: '#E74C3C' }}>Eliminar</button>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
     </div>
   );
 }
-
-const btnActionStyle = {
-  background: '#5DADE2',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  padding: '6px 14px',
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: 'pointer',
-  marginRight: 6,
-  boxShadow: '0 1px 2px rgba(0,123,255,0.08)',
-  transition: 'transform 0.2s',
-};
 
 export default ServiciosList;
