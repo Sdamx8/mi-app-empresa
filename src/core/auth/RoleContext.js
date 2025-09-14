@@ -15,12 +15,15 @@ export const useRole = () => {
 // Definición de permisos por tipo de empleado
 const ROLE_PERMISSIONS = {
   directivo: {
-    modules: ['perfil', 'crm', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
       canEditHistorial: true,
       canDeleteHistorial: true,
+      // Gestionar Remisiones (módulo unificado)
+      canViewGestionarRemisiones: true,
+      canManageGestionarRemisiones: true,
       // Reportes
       canViewReportes: true,
       canExportReportes: true,
@@ -47,12 +50,15 @@ const ROLE_PERMISSIONS = {
     }
   },
   administrativo: {
-    modules: ['perfil', 'crm', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
       canEditHistorial: true,
       canDeleteHistorial: true,
+      // Gestionar Remisiones (módulo unificado)
+      canViewGestionarRemisiones: true,
+      canManageGestionarRemisiones: true,
       // Reportes
       canViewReportes: true,
       canExportReportes: true,
@@ -239,6 +245,8 @@ export const RoleProvider = ({ children }) => {
     canViewHistorial: hasPermission('canViewHistorial'),
     canEditHistorial: hasPermission('canEditHistorial'),
     canDeleteHistorial: hasPermission('canDeleteHistorial'),
+    canViewGestionarRemisiones: hasPermission('canViewGestionarRemisiones'),
+    canManageGestionarRemisiones: hasPermission('canManageGestionarRemisiones'),
     canViewCRM: hasPermission('canViewCRM'),
     canManageCRM: hasPermission('canManageCRM'),
     canViewEmpleados: hasPermission('canViewEmpleados'),

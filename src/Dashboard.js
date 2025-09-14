@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import CRM from './modules/crm';
 import ServiciosPage from './modules/servicios';
-import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado';
-import IngresarTrabajo from './modules/ingresar-trabajo';
+import GestionarRemisiones from './modules/gestionar-remisiones'; // Nuevo módulo unificado
+import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado'; // Mantener para compatibilidad
+import IngresarTrabajo from './modules/ingresar-trabajo'; // Mantener para compatibilidad
 import HerramientaElectrica from './modules/herramientas-electricas';
 import HerramientaManual from './modules/herramientas-manuales';
 import Empleados from './modules/empleados';
@@ -199,7 +200,19 @@ const Dashboard = () => {
       case 'servicios':
         if (!safeHasModuleAccess('servicios')) return <AccessDenied module="Catálogo de servicios" />;
         return <ErrorBoundary><ServiciosPage /></ErrorBoundary>;
+      case 'gestionar_remisiones':
+        if (!safeHasModuleAccess('gestionar_remisiones')) return <AccessDenied module="Gestionar Remisiones" />;
+        return (
+          <ErrorBoundary>
+            <GestionarRemisiones 
+              canEdit={safeUserPermissions.canEditHistorial}
+              canDelete={safeUserPermissions.canDeleteHistorial}
+              userRole={userRole}
+            />
+          </ErrorBoundary>
+        );
       case 'historial_trabajos':
+        // Mantener para compatibilidad con enlaces directos
         if (!safeHasModuleAccess('historial_trabajos')) return <AccessDenied module="Historial de Trabajos" />;
         return (
           <ErrorBoundary>
@@ -211,6 +224,7 @@ const Dashboard = () => {
           </ErrorBoundary>
         );
       case 'ingresar_trabajo':
+        // Mantener para compatibilidad con enlaces directos
         if (!safeHasModuleAccess('ingresar_trabajo')) return <AccessDenied module="Ingresar Trabajo" />;
         return <ErrorBoundary><IngresarTrabajo /></ErrorBoundary>;
       case 'herramientas_electricas':
@@ -240,8 +254,10 @@ const Dashboard = () => {
       { key: 'crm', icon: '💼', label: 'CRM' }
     ],
     trabajo: [
-      { key: 'historial_trabajos', icon: '📊', label: 'Historial' },
-      { key: 'ingresar_trabajo', icon: '🔧', label: 'Ingresar Trabajo' }
+      { key: 'gestionar_remisiones', icon: '📋', label: 'Gestionar Remisiones', isNew: true }, // Nuevo módulo unificado
+      // Mantener módulos individuales para compatibilidad (ocultos del menú principal)
+      // { key: 'historial_trabajos', icon: '📊', label: 'Historial' },
+      // { key: 'ingresar_trabajo', icon: '🔧', label: 'Ingresar Trabajo' }
     ],
     recursos: [
       { key: 'herramientas_electricas', icon: '⚡', label: 'Herramientas' },
@@ -264,20 +280,20 @@ const Dashboard = () => {
       onClick={() => setActiveModule(moduleKey)}
       className={`nav-button ${activeModule === moduleKey ? 'active' : ''}`}
       style={{
-        backgroundColor: activeModule === moduleKey ? '#007bff' : '#6c757d',
-        color: 'white',
-        border: 'none',
+        backgroundColor: activeModule === moduleKey ? '#5DADE2' : 'rgba(255, 255, 255, 0.1)', // secondary color para activo, transparencia para inactivo
+        color: '#FFFFFF', // texto blanco según manual
+        border: activeModule === moduleKey ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
         padding: '0.75rem 1.25rem',
-        borderRadius: '8px',
+        borderRadius: '8px', // radio según manual
         cursor: 'pointer',
         fontSize: '0.9rem',
-        fontWeight: '500',
+        fontWeight: '500', // medium según manual
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
-        boxShadow: activeModule === moduleKey ? '0 2px 8px rgba(0,123,255,0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: activeModule === moduleKey ? '0 4px 6px rgba(0, 0, 0, 0.07)' : 'none', // sombra según manual
         transform: activeModule === moduleKey ? 'translateY(-1px)' : 'none',
-        transition: 'all 0.3s ease',
+        transition: 'all 300ms ease-in-out', // duración estándar según manual
         position: 'relative'
       }}
     >
@@ -292,11 +308,11 @@ const Dashboard = () => {
   );
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#F8F9FA' }}> {/* background token según manual */}
       {/* Notificación de éxito del nuevo módulo */}
-      {showSuccessNotification && safeHasModuleAccess('historial_trabajos') && (
+      {showSuccessNotification && safeHasModuleAccess('gestionar_remisiones') && (
         <SuccessNotification
-          message="El módulo 'Historial' ahora incluye funcionalidades de administración de remisiones. ¡Descúbrelas en la pestaña correspondiente!"
+          message="¡Nuevo módulo disponible! 'Gestionar Remisiones' unifica todas las funcionalidades de gestión de trabajos en un solo lugar. ¡Explóralo ahora!"
           onClose={() => setShowSuccessNotification(false)}
           duration={8000}
         />
@@ -333,13 +349,14 @@ const Dashboard = () => {
         <>
           {/* Header */}
           <header style={{
-        backgroundColor: '#fff',
+        backgroundColor: '#1E3C72', // primary color según manual
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        padding: '1rem',
+        padding: '1rem 2rem',
         marginBottom: '2rem',
         position: 'sticky',
         top: 0,
-        zIndex: 1000
+        zIndex: 1000,
+        color: '#FFFFFF' // texto blanco según manual
       }}>
         <div style={{
           maxWidth: '1400px',
@@ -359,7 +376,7 @@ const Dashboard = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            color: '#6c757d',
+            color: 'rgba(255, 255, 255, 0.8)', // texto blanco con transparencia
             fontSize: '0.9rem'
           }}>
             <NotificationCenter />
@@ -368,16 +385,17 @@ const Dashboard = () => {
               flexDirection: 'column',
               alignItems: 'flex-end'
             }}>
-              <span style={{ fontWeight: '600', color: '#495057' }}>
+              <span style={{ fontWeight: '600', color: '#FFFFFF' }}> {/* texto blanco según manual */}
                 {currentEmployee?.nombre_completo || currentEmployee?.nombre || 'Usuario'}
               </span>
               <span style={{
                 fontSize: '0.8rem',
-                padding: '2px 8px',
-                backgroundColor: userRole === 'directivo' ? '#28a745' : 
-                                userRole === 'administrativo' ? '#007bff' : '#6c757d',
+                padding: '4px 12px',
+                backgroundColor: userRole === 'directivo' ? '#27AE60' : // success color según manual
+                                userRole === 'administrativo' ? '#5DADE2' : '#6C757D', // secondary y muted según manual
                 color: 'white',
-                borderRadius: '12px'
+                borderRadius: '12px',
+                fontWeight: '600' // semibold según manual
               }}>
                 {safeGetRoleDisplayName()}
               </span>
@@ -412,30 +430,30 @@ const Dashboard = () => {
                 }
               }}
               style={{
-                backgroundColor: '#dc3545',
-                color: 'white',
+                backgroundColor: '#E74C3C', // danger color según manual
+                color: '#FFFFFF', // texto blanco según manual
                 border: 'none',
                 padding: '0.75rem 1.25rem',
-                borderRadius: '8px',
+                borderRadius: '8px', // radio según manual
                 cursor: 'pointer',
                 fontSize: '0.9rem',
-                fontWeight: '500',
+                fontWeight: '500', // medium según manual
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 marginLeft: '1rem',
-                boxShadow: '0 2px 8px rgba(220,53,69,0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)', // sombra sutil según manual
+                transition: 'all 300ms ease-in-out' // duración estándar según manual
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#c82333';
+                e.currentTarget.style.backgroundColor = '#C0392B'; // danger dark según manual
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)'; // sombra hover según manual
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc3545';
+                e.currentTarget.style.backgroundColor = '#E74C3C'; // danger según manual
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(220,53,69,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)'; // sombra sutil según manual
               }}
             >
               <span style={{ fontSize: '1.1rem' }}>🚪</span>

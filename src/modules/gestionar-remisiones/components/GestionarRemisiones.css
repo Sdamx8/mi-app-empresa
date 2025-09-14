@@ -1,0 +1,372 @@
+/**
+ * 🎨 GESTIONAR REMISIONES - ESTILOS
+ * ==================================
+ * Aplicación del Manual de Identidad Corporativa
+ * Colores, tipografía, espaciado y microinteracciones
+ */
+
+.gestionar-remisiones {
+  min-height: 100vh;
+  background: #F8F9FA; /* background token */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+/* ===== HEADER DEL MÓDULO ===== */
+.module-header {
+  background: #1E3C72; /* primary token */
+  color: #FFFFFF;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* header shadow según manual */
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.header-content {
+  max-width: 1400px; /* ancho máximo según manual */
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.header-title-section {
+  flex: 1;
+}
+
+.module-title {
+  font-size: 1.75rem; /* 28px - H1 según manual */
+  font-weight: 600; /* semibold según manual */
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.module-subtitle {
+  font-size: 1rem; /* 16px - body según manual */
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.user-name {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: #FFFFFF;
+}
+
+.user-role {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  color: #5DADE2; /* secondary token */
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem; /* 12px */
+  backdrop-filter: blur(10px);
+}
+
+/* Navegación breadcrumb */
+.breadcrumb-nav {
+  max-width: 1400px;
+  margin: 1rem auto 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem; /* 14px */
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem; /* 8px */
+  transition: all 300ms ease-in-out;
+}
+
+.breadcrumb-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.breadcrumb-current {
+  color: #5DADE2; /* secondary token */
+  font-weight: 500;
+}
+
+/* ===== CONTENIDO PRINCIPAL ===== */
+.module-content {
+  max-width: 1400px; /* ancho máximo según manual */
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: calc(100vh - 140px);
+}
+
+/* ===== DASHBOARD DE SUBMÓDULOS ===== */
+.submodules-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Sección de estadísticas */
+.stats-section {
+  background: #FFFFFF; /* surface token */
+  border-radius: 0.5rem; /* 8px según manual */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* sombra sutil según manual */
+  padding: 1.5rem;
+}
+
+.stats-title {
+  font-size: 1.375rem; /* 22px - H2 según manual */
+  font-weight: 600; /* semibold según manual */
+  color: #212529; /* text token */
+  margin: 0 0 1.5rem 0; /* 24px espaciado según manual */
+  line-height: 1.3;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #F8F9FA; /* background token */
+  border-radius: 0.5rem; /* 8px */
+  border: 1px solid #E9ECEF; /* border token */
+  transition: all 300ms ease-in-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1E3C72; /* primary token */
+  color: #FFFFFF;
+  border-radius: 50%;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #212529; /* text token */
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.875rem; /* 14px */
+  color: #6C757D; /* muted token */
+  margin-top: 0.25rem;
+}
+
+/* Sección de submódulos */
+.submodules-section {
+  background: #FFFFFF; /* surface token */
+  border-radius: 0.5rem; /* 8px según manual */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* sombra sutil según manual */
+  padding: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.375rem; /* 22px - H2 según manual */
+  font-weight: 600; /* semibold según manual */
+  color: #212529; /* text token */
+  margin: 0 0 1.5rem 0; /* 24px espaciado según manual */
+  line-height: 1.3;
+}
+
+.submodules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ===== TARJETAS DE SUBMÓDULOS ===== */
+.submodule-card {
+  background: #FFFFFF; /* surface token */
+  border: 2px solid #E9ECEF; /* border token */
+  border-left: 4px solid #5DADE2; /* secondary token por defecto */
+  border-radius: 0.5rem; /* 8px según manual */
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 300ms ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.submodule-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* hover effect según manual */
+  border-color: #1E3C72; /* primary token */
+}
+
+.submodule-card.active {
+  border-color: #1E3C72; /* primary token */
+  background: linear-gradient(135deg, #1E3C72 0%, #5DADE2 100%);
+  color: #FFFFFF;
+}
+
+.submodule-icon {
+  font-size: 2.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 60, 114, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.submodule-card.active .submodule-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.submodule-content {
+  flex: 1;
+}
+
+.submodule-title {
+  font-size: 1.125rem; /* 18px - H3 según manual */
+  font-weight: 600; /* semibold según manual */
+  color: #212529; /* text token */
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.submodule-card.active .submodule-title {
+  color: #FFFFFF;
+}
+
+.submodule-description {
+  font-size: 0.875rem; /* 14px */
+  color: #6C757D; /* muted token */
+  margin: 0;
+  line-height: 1.5;
+}
+
+.submodule-card.active .submodule-description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.submodule-arrow {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform 300ms ease-in-out;
+}
+
+.submodule-card:hover .submodule-arrow {
+  transform: translateX(4px);
+}
+
+/* ===== SUBMÓDULO ACTIVO ===== */
+.active-submodule {
+  background: #FFFFFF; /* surface token */
+  border-radius: 0.5rem; /* 8px según manual */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* sombra sutil según manual */
+  min-height: 500px;
+  overflow: hidden;
+}
+
+/* ===== COMPONENTE DE CARGA ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+  color: #6C757D; /* muted token */
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #E9ECEF; /* border token */
+  border-top: 4px solid #1E3C72; /* primary token */
+  border-radius: 50%;
+}
+
+.loading-message {
+  font-size: 1rem; /* 16px */
+  color: #6C757D; /* muted token */
+  margin: 0;
+  text-align: center;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .module-content {
+    padding: 1rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .user-details {
+    align-items: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .submodules-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .submodule-card {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  /* Desktop máximo según manual */
+  .module-content {
+    padding: 3rem;
+  }
+  
+  .module-title {
+    font-size: 2rem; /* Hasta 32px en desktop grande */
+  }
+}

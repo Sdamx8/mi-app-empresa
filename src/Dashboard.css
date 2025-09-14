@@ -69,19 +69,20 @@
   }
 }
 
-/* Estilos para el indicador de nuevo módulo */
+/* Estilos para el indicador de nuevo módulo según manual */
 .new-module-badge {
   position: absolute;
   top: -8px;
   right: -8px;
-  background-color: #28a745;
-  color: white;
+  background-color: #27AE60; /* success color según manual */
+  color: #FFFFFF; /* texto blanco según manual */
   font-size: 0.7rem;
   padding: 2px 6px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 600; /* semibold según manual */
   animation: pulse 2s infinite;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* sombra sutil según manual */
 }
 
 @keyframes bounceIn {
@@ -211,19 +212,24 @@
 .stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
 .stagger-animation > *:nth-child(6) { animation-delay: 0.6s; }
 
-/* Efectos hover mejorados */
+/* Efectos hover mejorados según manual de identidad */
 .nav-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 300ms ease-in-out; /* duración estándar según manual */
 }
 
 .nav-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.2) !important; /* hover sutil según manual */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important; /* sombra hover según manual */
 }
 
 .nav-button.active {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07) !important; /* sombra activa según manual */
+}
+
+.nav-button.active:hover {
+  background-color: #4A6FA5 !important; /* primary light según manual */
 }
 
 /* Estilos para cards y contenedores */
