@@ -1,0 +1,346 @@
+/* =======================================================
+   FORMULARIO REMISIÓN - MANUAL DE IDENTIDAD
+   ======================================================= */
+
+/* Modal Overlay */
+.formulario-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(44, 62, 80, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2rem;
+  overflow-y: auto;
+}
+
+.formulario-modal {
+  /* Modal según manual: fondo blanco, border-radius 16px */
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  padding: 20px; /* Espaciado interno 16-20px según manual */
+  min-width: 600px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #BDC3C7; /* Borde secundario según manual */
+  margin: 20px;
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #F8F9FA;
+}
+
+.modal-title {
+  /* H1 según manual: 20-24px, bold */
+  color: #2C3E50; /* Texto principal según manual */
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  font-weight: 700; /* Bold */
+  font-size: 24px;
+  margin: 0;
+  line-height: 1.5; /* Interlineado según manual */
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #95A5A6;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: rgba(231, 76, 60, 0.1);
+  color: #E74C3C;
+  transform: scale(1.1);
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  /* H2-H3 según manual: 16-18px, semibold */
+  font-size: 18px;
+  font-weight: 600; /* Semibold */
+  color: #2C3E50; /* Texto principal */
+  margin-bottom: 20px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #BDC3C7;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-grid.full-width {
+  grid-template-columns: 1fr;
+}
+
+.form-grid.two-columns {
+  grid-template-columns: 1fr 1fr;
+}
+
+.form-grid.three-columns {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  /* Labels según manual: 14px, semibold, encima del input */
+  color: #2C3E50; /* Texto principal según manual */
+  font-weight: 600; /* Semibold */
+  font-size: 14px; /* Texto general según manual */
+  margin-bottom: 6px;
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  line-height: 1.5; /* Interlineado según manual */
+  display: block;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #E74C3C;
+}
+
+/* Form Inputs */
+.form-input,
+.form-select,
+.form-textarea {
+  /* Inputs según manual */
+  border: 2px solid #BDC3C7; /* Borde gris secundario según manual */
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  font-size: 14px; /* Texto general: 14-16px según manual */
+  color: #2C3E50; /* Texto principal según manual */
+  background: #FFFFFF; /* Fondo blanco según manual */
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.5; /* Interlineado según manual */
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  /* Focus azul según manual */
+  border-color: #5DADE2; /* Primario según manual */
+  box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+  background: #F8F9FA;
+  color: #95A5A6;
+  cursor: not-allowed;
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Input con error */
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+  border-color: #E74C3C;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.error-message {
+  color: #E74C3C;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid #F8F9FA;
+  flex-wrap: wrap;
+}
+
+/* Botones según manual */
+.form-button {
+  border: none;
+  border-radius: 12px; /* Botones redondeados según manual */
+  padding: 14px 28px;
+  font-weight: 600; /* Semibold */
+  font-size: 14px; /* Botones: 14px según manual */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase; /* Uppercase según manual */
+  letter-spacing: 0.5px;
+  min-height: 40px; /* Altura mínima según manual */
+  line-height: 1.5; /* Interlineado según manual */
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.form-button.primary {
+  /* Botón primario según manual */
+  background: #5DADE2; /* Primario */
+  color: #FFFFFF; /* Blanco */
+  box-shadow: 0 4px 15px rgba(93, 173, 226, 0.3);
+}
+
+.form-button.primary:hover {
+  /* Hover con sombra ligera según manual */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(93, 173, 226, 0.4);
+  filter: brightness(1.1);
+}
+
+.form-button.secondary {
+  /* Botón secundario según manual */
+  background: #BDC3C7; /* Secundario */
+  color: #2C3E50; /* Texto principal */
+}
+
+.form-button.secondary:hover {
+  background: #95A5A6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(189, 195, 199, 0.4);
+}
+
+.form-button.success {
+  background: #27AE60;
+  color: #FFFFFF;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.form-button.success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+.form-button:disabled {
+  background: #95A5A6;
+  color: #BDC3C7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estado de carga */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 16px;
+}
+
+.loading-spinner {
+  color: #5DADE2;
+  font-size: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .formulario-modal {
+    min-width: auto;
+    width: 95%;
+    padding: 16px;
+    margin: 10px;
+  }
+  
+  .modal-title {
+    font-size: 20px; /* H1 responsivo según manual */
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-grid.two-columns,
+  .form-grid.three-columns {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .form-button {
+    padding: 12px 20px;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .formulario-modal {
+    width: 98%;
+    padding: 12px;
+    margin: 5px;
+  }
+  
+  .modal-header {
+    margin-bottom: 16px;
+  }
+  
+  .form-section {
+    margin-bottom: 20px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 10px 12px;
+  }
+}

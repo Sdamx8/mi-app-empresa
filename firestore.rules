@@ -25,22 +25,11 @@ service cloud.firestore {
     }
     
     // ===== REGLAS PARA REMISIONES =====
-    
+
     match /remisiones/{remisionId} {
-      // Lectura: técnicos, administrativos, directivos
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      
-      // Creación: administrativos, directivos
-      allow create: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
-      
-      // Actualización y eliminación: administrativos, directivos
-      // Bloqueada si estado es finalizado, facturado o cancelado
-      allow update, delete: if isAuth() && 
-        hasAnyRole(['administrativo', 'directivo']) &&
-        canModifyByStatus(resource.data);
-    }
-    
-    // ===== REGLAS PARA HISTORIAL DE REMISIONES =====
+      // Permitir acceso completo a usuarios autenticados (temporal para desarrollo)
+      allow read, write: if isAuth();
+    }    // ===== REGLAS PARA HISTORIAL DE REMISIONES =====
     
     match /remisiones/{remisionId}/historial/{historialId} {
       // Lectura: técnicos, administrativos, directivos
@@ -56,54 +45,51 @@ service cloud.firestore {
     // ===== REGLAS PARA EMPLEADOS =====
     
     match /empleados/{empleadoId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
     
     match /EMPLEADOS/{empleadoId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
+    }
+    
+    // ===== REGLAS PARA SERVICIOS =====
+    
+    match /servicios/{servicioId} {
+      allow read, write: if isAuth();
     }
     
     // ===== REGLAS PARA INFORMES TÉCNICOS =====
-    
+
     match /informesTecnicos/{informeId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
-    }
-    
-    // ===== REGLAS PARA HERRAMIENTAS =====
-    
+      allow read, write: if isAuth();
+    }    // ===== REGLAS PARA HERRAMIENTAS =====
+
     match /HERRAMIENTA_ELECTRICA/{herramientaId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
-    
+
     match /HERRAMIENTA_MANUAL/{herramientaId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
-    
-    // ===== REGLAS PARA ESTADÍSTICAS =====
-    
+
+    match /herramientas/{herramientaId} {
+      allow read, write: if isAuth();
+    }    // ===== REGLAS PARA ESTADÍSTICAS =====
+
     match /technicianStats/{statId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
-    
+
     // ===== REGLAS PARA HISTORIAL DE TRABAJOS (legacy) =====
-    
+
     match /historialTrabajos/{trabajoId} {
-      allow read: if isAuth() && hasAnyRole(['tecnico', 'administrativo', 'directivo']);
-      allow create, update, delete: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
     
     // ===== REGLA POR DEFECTO PARA OTRAS COLECCIONES =====
-    // Solo usuarios autenticados con rol administrativo o directivo
+    // Permitir acceso a usuarios autenticados (modo desarrollo)
     match /{document=**} {
-      allow read: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
-      allow write: if isAuth() && hasAnyRole(['administrativo', 'directivo']);
+      allow read, write: if isAuth();
     }
   }
 }
