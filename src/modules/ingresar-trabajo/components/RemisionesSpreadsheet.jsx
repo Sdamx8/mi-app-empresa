@@ -48,10 +48,10 @@ const UNE_OPTIONS = [
 // Estructura base de una fila de remisión (según estructura Firestore)
 const createEmptyRow = () => ({
   id: Date.now() + Math.random(), // Solo para React, se elimina al guardar
-  remision: 0, // number
-  movil: 0, // number 
+  remision: '', // string - permite formato libre como "1262" o "REM-1262"
+  movil: '', // string - permite formato libre como "7777" o "BO-0177"
   no_orden: '', // string
-  estado: 'PENDIENTE', // string
+  estado: 'GENERADO', // string - por defecto GENERADO
   servicio1: null, // string | null
   servicio2: null, // string | null
   servicio3: null, // string | null
@@ -94,13 +94,34 @@ const RemisionesSpreadsheet = () => {
 
   // Set genero field when user data is loaded
   useEffect(() => {
-    if (userData?.nombre_completo) {
+    console.log('🔍 DEBUG genero - userData:', userData);
+    console.log('🔍 DEBUG genero - user:', user);
+    console.log('🔍 DEBUG genero - userLoading:', userLoading);
+    
+    let generoValue = '';
+    
+    if (userData && userData.nombre_completo) {
+      // Opción 1: Usar nombre completo desde EMPLEADOS
+      generoValue = userData.nombre_completo;
+      console.log('✅ Genero desde EMPLEADOS:', generoValue);
+    } else if (!userLoading && user?.email) {
+      // Opción 2: Solo usar email si ya terminó de cargar y no hay userData
+      console.log('⚠️ No se encontró userData.nombre_completo, usando fallback');
+      generoValue = user.email.split('@')[0].replace(/[._-]/g, ' ').toUpperCase();
+      console.log('⚠️ Genero desde email (fallback):', generoValue);
+    } else if (!userLoading && !user) {
+      // Opción 3: Usuario por defecto
+      generoValue = 'Usuario Sistema';
+      console.log('ℹ️ Genero por defecto:', generoValue);
+    }
+    
+    if (generoValue) {
       setRows(prev => prev.map(row => ({
         ...row,
-        genero: userData.nombre_completo
+        genero: generoValue
       })));
     }
-  }, [userData]);
+  }, [userData, user, userLoading]);
 
   // Update cell value - Handling both direct calls and ServicioSelect calls
   const updateCell = useCallback((rowIndexOrField, fieldOrValue, value) => {
@@ -141,12 +162,18 @@ const RemisionesSpreadsheet = () => {
   // Add new row
   const addRow = useCallback(() => {
     const newRow = createEmptyRow();
-    // Copy genero from existing row if available
+    
+    // Aplicar la misma lógica de genero que en useEffect
     if (userData?.nombre_completo) {
       newRow.genero = userData.nombre_completo;
+    } else if (user?.email) {
+      newRow.genero = user.email.split('@')[0].replace(/[._-]/g, ' ').toUpperCase();
+    } else {
+      newRow.genero = 'Usuario Sistema';
     }
+    
     setRows(prev => [...prev, newRow]);
-  }, [userData]);
+  }, [userData, user]);
 
   // Remove row
   const removeRow = useCallback((index) => {
@@ -163,9 +190,16 @@ const RemisionesSpreadsheet = () => {
       
       // Reset to one empty row
       const newRow = createEmptyRow();
+      
+      // Aplicar la misma lógica de genero
       if (userData?.nombre_completo) {
         newRow.genero = userData.nombre_completo;
+      } else if (user?.email) {
+        newRow.genero = user.email.split('@')[0].replace(/[._-]/g, ' ').toUpperCase();
+      } else {
+        newRow.genero = 'Usuario Sistema';
       }
+      
       setRows([newRow]);
       
     } catch (error) {
@@ -294,22 +328,22 @@ const RemisionesSpreadsheet = () => {
                     {/* Remision */}
                     <td>
                       <input
-                        type="number"
+                        type="text"
                         value={row.remision}
-                        onChange={(e) => updateCell(rowIndex, 'remision', parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateCell(rowIndex, 'remision', e.target.value)}
                         className="cell-input"
-                        placeholder="1001"
+                        placeholder="1001 o REM-1001"
                       />
                     </td>
                     
                     {/* Movil */}
                     <td>
                       <input
-                        type="number"
+                        type="text"
                         value={row.movil}
-                        onChange={(e) => updateCell(rowIndex, 'movil', parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateCell(rowIndex, 'movil', e.target.value)}
                         className="cell-input"
-                        placeholder="7064"
+                        placeholder="7777 o BO-0177"
                       />
                     </td>
                     
@@ -391,12 +425,12 @@ const RemisionesSpreadsheet = () => {
                     </td>
                     
                     {/* Subtotal */}
-                    <td>
+                    <td className="subtotal-cell">
                       <input
                         type="number"
                         value={row.subtotal}
                         onChange={(e) => updateCell(rowIndex, 'subtotal', parseFloat(e.target.value) || 0)}
-                        className="cell-input cell-currency"
+                        className="cell-input cell-currency subtotal-input"
                         placeholder="0"
                       />
                       <span className="currency-display">{formatCurrency(row.subtotal)}</span>
@@ -467,7 +501,9 @@ const RemisionesSpreadsheet = () => {
                     
                     {/* Genero */}
                     <td>
-                      <span className="readonly-cell">{row.genero}</span>
+                      <div className="readonly-cell">
+                        <span className="genero-display">{row.genero || 'Cargando...'}</span>
+                      </div>
                     </td>
                     
                     {/* Actions */}

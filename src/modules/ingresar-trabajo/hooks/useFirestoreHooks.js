@@ -156,18 +156,52 @@ export const useCurrentUser = (userEmail) => {
     const loadUserData = async () => {
       try {
         setLoading(true);
+        console.log('🔍 useCurrentUser - Buscando contacto.correo:', userEmail);
+        
         const userQuery = query(
           collection(db, 'EMPLEADOS'),
-          where('email', '==', userEmail)
+          where('contacto.correo', '==', userEmail)
         );
         const userSnapshot = await getDocs(userQuery);
         
+        console.log('🔍 useCurrentUser - Documentos encontrados:', userSnapshot.docs.length);
+        
         if (!userSnapshot.empty) {
           const userData = userSnapshot.docs[0].data();
+          console.log('✅ useCurrentUser - Datos del usuario:', userData);
+          console.log('✅ useCurrentUser - nombre_completo:', userData.nombre_completo);
           setUserData(userData);
+        } else {
+          console.log('❌ useCurrentUser - No se encontró usuario con contacto.correo:', userEmail);
+          
+          // TEMPORAL: Crear usuario de prueba si no existe
+          console.log('🔧 Creando usuario temporal para pruebas...');
+          const tempUserData = {
+            nombre_completo: 'Usuario de Prueba Global Mobility Solutions',
+            contacto: {
+              correo: userEmail,
+              telefono: '',
+              direccion: ''
+            },
+            cargo: 'Administrativo',
+            tipo_empleado: 'administrativo',
+            estado: 'activo',
+            fecha_actualizacion: Timestamp.now()
+          };
+          
+          // Agregar documento temporal
+          try {
+            const { addDoc } = await import('firebase/firestore');
+            await addDoc(collection(db, 'EMPLEADOS'), tempUserData);
+            console.log('✅ Usuario temporal creado');
+            setUserData(tempUserData);
+          } catch (addErr) {
+            console.error('❌ Error creando usuario temporal:', addErr);
+            setUserData(null);
+          }
         }
       } catch (err) {
-        console.error('Error loading user data:', err);
+        console.error('❌ Error loading user data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -195,18 +229,18 @@ export const useRemisionSaver = () => {
       // Preparar datos para Firestore con tipos exactos de la estructura mostrada
       const firestoreData = {
         // Campos numéricos
-        remision: parseInt(remisionData.remision) || 0,
         subtotal: parseFloat(remisionData.subtotal) || 0,
         total: parseFloat(remisionData.total) || 0,
         
         // Campos de texto (strings) - todos como strings, no null
+        remision: String(remisionData.remision || ''), // String - permite formato libre
         autorizo: String(remisionData.autorizo || ''),
         carroceria: String(remisionData.carroceria || ''),
-        estado: String(remisionData.estado || 'PENDIENTE'),
+        estado: String(remisionData.estado || 'GENERADO'),
         genero: String(remisionData.genero || ''),
-        movil: String(remisionData.movil || ''), // String como en el ejemplo
+        movil: String(remisionData.movil || ''), // String - permite formato libre
         no_fact_elect: String(remisionData.no_fact_elect || ''),
-        no_id_bit: String(remisionData.no_id_bit || ''),
+        no_id_bit: parseInt(remisionData.no_id_bit) || 0, // Mantener como number
         no_orden: String(remisionData.no_orden || ''),
         une: String(remisionData.une || ''),
         
@@ -237,8 +271,8 @@ export const useRemisionSaver = () => {
           Timestamp.fromDate(new Date(remisionData.radicacion))
       };
 
-      // Usar el número de remisión como ID del documento
-      const documentId = String(firestoreData.remision);
+      // Usar la remisión como ID del documento (ya es string)
+      const documentId = firestoreData.remision || 'temp-' + Date.now();
       
       // Agregar metadatos
       firestoreData.created_at = Timestamp.now();
