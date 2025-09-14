@@ -1,0 +1,340 @@
+/**
+ * 🎨 CSS FORMULARIO REMISIÓN PLANO - ULTRA SIMPLE
+ * ===============================================
+ * Diseño completamente plano sin animaciones complejas
+ * Optimizado para desktop con CSS Grid
+ * Sin secciones colapsables ni Framer Motion
+ */
+
+/* === OVERLAY Y MODAL === */
+.overlay-plano {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-plano {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === HEADER === */
+.header-plano {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 30px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.titulo-plano {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.boton-cerrar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.boton-cerrar:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.boton-cerrar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === FORMULARIO === */
+.formulario-plano {
+  padding: 30px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* === SECCIONES PLANAS === */
+.seccion-plana {
+  margin-bottom: 30px;
+}
+
+.titulo-seccion {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* === GRIDS DE CAMPOS === */
+.campos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.campos-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.campos-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+}
+
+/* === CAMPOS === */
+.campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.campo-completo {
+  display: flex;
+  flex-direction: column;
+}
+
+.etiqueta {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.entrada {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1f2937;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.entrada:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.entrada.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.entrada::placeholder {
+  color: #9ca3af;
+}
+
+/* Textarea específico */
+textarea.entrada {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Select específico */
+select.entrada {
+  cursor: pointer;
+}
+
+/* === MENSAJES DE ERROR === */
+.error-mensaje {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* === CARGANDO === */
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-pequeño {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* === BOTONES DE ACCIÓN === */
+.botones-accion {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  padding-top: 30px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 30px;
+}
+
+.boton-cancelar {
+  padding: 10px 20px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.boton-cancelar:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.boton-guardar {
+  padding: 10px 20px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.boton-guardar:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.boton-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* === RESPONSIVE === */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .modal-plano {
+    max-width: 90vw;
+  }
+  
+  .campos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .campos-grid-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+  .overlay-plano {
+    padding: 10px;
+  }
+  
+  .modal-plano {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+  
+  .header-plano {
+    padding: 15px 20px;
+  }
+  
+  .formulario-plano {
+    padding: 20px;
+  }
+  
+  .campos-grid,
+  .campos-grid-2,
+  .campos-grid-5 {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .titulo-plano {
+    font-size: 18px;
+  }
+  
+  .titulo-seccion {
+    font-size: 15px;
+  }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+  .header-plano {
+    padding: 12px 15px;
+  }
+  
+  .formulario-plano {
+    padding: 15px;
+  }
+  
+  .botones-accion {
+    flex-direction: column-reverse;
+  }
+  
+  .boton-cancelar,
+  .boton-guardar {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* === ENFOQUE EN DESKTOP === */
+@media (min-width: 1200px) {
+  .campos-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .campos-grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

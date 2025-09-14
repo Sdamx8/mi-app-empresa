@@ -1,0 +1,420 @@
+/**
+ * 🎨 GLOBAL MOBILITY SOLUTIONS - ESTILOS HISTORIAL REMISIONES
+ * ===========================================================
+ * Diseño basado en el manual de identidad corporativa
+ * Usando tokens de diseño y paleta de colores oficial
+ */
+
+/* Variables CSS basadas en tokens de theme.js */
+:root {
+  --primary-color: #1E3C72;
+  --secondary-color: #5DADE2;
+  --success-color: #27AE60;
+  --warning-color: #F1C40F;
+  --danger-color: #E74C3C;
+  --info-color: #3498DB;
+  
+  --background-color: #F8F9FA;
+  --surface-color: #FFFFFF;
+  --text-color: #212529;
+  --muted-color: #6C757D;
+  --border-color: #E9ECEF;
+  --divider-color: #DEE2E6;
+  --disabled-color: #ADB5BD;
+  
+  --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+  --font-size-h2: 22px;
+  --font-size-h3: 18px;
+  --font-size-body: 16px;
+  --font-size-small: 14px;
+  
+  --border-radius: 8px;
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition-base: all 0.2s ease-in-out;
+}
+
+/* Overlay del modal */
+.modal-overlay-historial {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+/* Contenido principal del modal */
+.modal-content-historial {
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-medium);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-primary);
+  overflow: hidden;
+}
+
+/* Header del modal */
+.modal-header-historial {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--primary-color), #2B4C8C);
+  color: white;
+}
+
+.modal-header-historial h2 {
+  margin: 0;
+  font-size: var(--font-size-h2);
+  font-weight: 600;
+  color: white;
+}
+
+.btn-close-historial {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-base);
+}
+
+.btn-close-historial:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Cuerpo del modal con scroll */
+.modal-body-historial {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: var(--background-color);
+}
+
+/* Indicador de carga inicial */
+.loading-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--muted-color);
+}
+
+.loading-data p {
+  margin-top: 16px;
+  font-size: var(--font-size-body);
+}
+
+/* Secciones del formulario */
+.form-section-historial {
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.form-section-historial h3 {
+  background: linear-gradient(135deg, var(--primary-color), #2B4C8C);
+  color: white;
+  margin: 0;
+  padding: 16px 24px;
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Grid de campos del formulario */
+.form-grid-historial {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+}
+
+/* Grupos de campos individuales */
+.form-group-historial {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group-historial label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: var(--font-size-small);
+  margin-bottom: 4px;
+}
+
+/* Estilos para inputs */
+.form-group-historial input,
+.form-group-historial select {
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-body);
+  font-family: var(--font-primary);
+  color: var(--text-color);
+  background: var(--surface-color);
+  transition: var(--transition-base);
+  outline: none;
+}
+
+.form-group-historial input:focus,
+.form-group-historial select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+}
+
+.form-group-historial input:hover,
+.form-group-historial select:hover {
+  border-color: var(--secondary-color);
+}
+
+.form-group-historial input:disabled,
+.form-group-historial select:disabled {
+  background: var(--background-color);
+  color: var(--disabled-color);
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
+/* Estilos para campos con error */
+.form-group-historial input.error,
+.form-group-historial select.error {
+  border-color: var(--danger-color);
+  background: #FDF2F2;
+}
+
+.form-group-historial input.error:focus,
+.form-group-historial select.error:focus {
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+/* Texto de error */
+.error-text {
+  color: var(--danger-color);
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.error-text::before {
+  content: "⚠️";
+  font-size: 10px;
+}
+
+/* Footer del modal */
+.modal-footer-historial {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 24px 32px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-color);
+}
+
+/* Botones del footer */
+.btn-cancel-historial,
+.btn-save-historial {
+  padding: 12px 24px;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: var(--transition-base);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.btn-cancel-historial {
+  background: var(--surface-color);
+  color: var(--muted-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel-historial:hover {
+  background: var(--background-color);
+  color: var(--text-color);
+  border-color: var(--muted-color);
+}
+
+.btn-save-historial {
+  background: linear-gradient(135deg, var(--primary-color), #2B4C8C);
+  color: white;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-save-historial:hover {
+  background: linear-gradient(135deg, #2B4C8C, var(--primary-color));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn-save-historial:disabled,
+.btn-cancel-historial:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Spinner de carga */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .modal-content-historial {
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .modal-header-historial,
+  .modal-footer-historial {
+    padding: 16px 20px;
+  }
+  
+  .modal-body-historial {
+    padding: 20px;
+  }
+  
+  .form-grid-historial {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+  
+  .modal-footer-historial {
+    flex-direction: column;
+  }
+  
+  .btn-cancel-historial,
+  .btn-save-historial {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay-historial {
+    padding: 10px;
+  }
+  
+  .modal-header-historial h2 {
+    font-size: 18px;
+  }
+  
+  .form-section-historial h3 {
+    font-size: 16px;
+    padding: 12px 16px;
+  }
+  
+  .form-grid-historial {
+    padding: 16px;
+  }
+}
+
+/* Mejoras de accesibilidad */
+.form-group-historial input:focus-visible,
+.form-group-historial select:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Animaciones suaves para las secciones */
+.form-section-historial {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos especiales para campos monetarios */
+.form-group-historial input[type="number"] {
+  text-align: right;
+}
+
+.form-group-historial input[type="number"]:focus {
+  text-align: left;
+}
+
+/* Placeholder mejorados */
+.form-group-historial input::placeholder,
+.form-group-historial select option[value=""] {
+  color: var(--muted-color);
+  opacity: 0.7;
+}
+
+/* Hover effects mejorados */
+.form-section-historial:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: var(--transition-base);
+}
+
+/* Estados de validación visual */
+.form-group-historial.valid input,
+.form-group-historial.valid select {
+  border-color: var(--success-color);
+}
+
+.form-group-historial.valid input:focus,
+.form-group-historial.valid select:focus {
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
