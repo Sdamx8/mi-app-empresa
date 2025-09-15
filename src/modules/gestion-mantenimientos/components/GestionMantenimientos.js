@@ -189,7 +189,8 @@ const GestionMantenimientos = () => {
         const data = doc.data();
         const movil = data.movil;
         
-        if (!movil) return;
+        // Validar que móvil sea una cadena válida
+        if (!movil || typeof movil !== 'string' || movil.trim() === '') return;
         
         // Inicializar datos del móvil si no existe
         if (!movilesDatos[movil]) {
@@ -290,7 +291,7 @@ const GestionMantenimientos = () => {
     if (busquedaMovil) {
       const busqueda = busquedaMovil.toLowerCase();
       filtrados = filtrados.filter(movil => 
-        movil.movil.toLowerCase().includes(busqueda)
+        movil.movil && typeof movil.movil === 'string' && movil.movil.toLowerCase().includes(busqueda)
       );
     }
     
@@ -532,7 +533,7 @@ const GestionMantenimientos = () => {
             <tbody>
               {movilesFiltrados.map((movil, index) => (
                 <motion.tr
-                  key={movil.movil}
+                  key={movil.movil || `movil-${index}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.02 }}

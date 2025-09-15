@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { addServicio, updateServicio } from '../services/serviciosService';
 import { motion } from 'framer-motion';
 
-const categorias = ['Instalación', 'Mantenimiento', 'Reparación', 'Otro'];
+const categorias = ['Aislamiento', 'Instalación', 'Mantenimiento', 'Reparación', 'Reparación especial', 'Otro'];
 
 const initialState = {
   id_servicio: '',
@@ -16,9 +16,28 @@ const initialState = {
 };
 
 const ServicioFormModal = ({ open, onClose, onSuccess, initialData }) => {
-  const [form, setForm] = useState(initialData || initialState);
+  const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Initialize form with service data when editing
+  useEffect(() => {
+    if (initialData) {
+      // Map Firestore field names to form field names
+      setForm({
+        id_servicio: initialData.id_servicio || '',
+        titulo: initialData.titulo || initialData.título || '',
+        descripcion_actividad: initialData.descripcion_actividad || '',
+        categoria: initialData.categoria || initialData.categoría || '',
+        costo: initialData.costo || '',
+        materiales_suministrados: initialData.materiales_suministrados || '',
+        recurso_humano_requerido: initialData.recurso_humano_requerido || '',
+        tiempo_estimado: initialData.tiempo_estimado || '',
+      });
+    } else {
+      setForm(initialState);
+    }
+  }, [initialData]);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -44,17 +63,30 @@ const ServicioFormModal = ({ open, onClose, onSuccess, initialData }) => {
     const usuario = getUsuario();
     try {
       if (initialData) {
-        await updateServicio(form, usuario);
+        // For updates, include the Firestore document ID
+        const updateData = {
+          ...form,
+          id: initialData.id // Include the Firestore document ID
+        };
+        await updateServicio(updateData, usuario);
       } else {
         await addServicio(form, usuario);
       }
       onSuccess && onSuccess();
       onClose();
     } catch (err) {
-      setError(err.message || 'Error al guardar');
+      console.error('Error al guardar servicio:', err);
+      setError(err.message || 'Error al guardar el servicio');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    setForm(initialState);
+    setError(null);
+    setLoading(false);
+    onClose();
   };
 
   if (!open) return null;
@@ -96,6 +128,21 @@ const ServicioFormModal = ({ open, onClose, onSuccess, initialData }) => {
         }}>
           {initialData ? 'Editar servicio' : 'Agregar servicio'}
         </h2>
+        
+        {error && (
+          <div style={{
+            background: '#E74C3C',
+            color: '#FFFFFF',
+            padding: '12px 16px',
+            borderRadius: 8,
+            marginBottom: 16,
+            fontSize: 14,
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div style={{ gridColumn: '1 / -1' }}>
@@ -261,7 +308,7 @@ const ServicioFormModal = ({ open, onClose, onSuccess, initialData }) => {
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
             <button 
               type="button" 
-              onClick={onClose} 
+              onClick={handleClose} 
               style={{ 
                 background: '#BDC3C7', /* Secundario según manual */
                 color: '#2C3E50', /* Texto principal según manual */

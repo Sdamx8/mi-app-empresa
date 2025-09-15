@@ -1,5 +1,5 @@
 // serviciosService.js - CRUD para la colección 'servicios' en Firestore
-import { collection, getDocs, query, where, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, updateDoc, doc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../core/config/firebaseConfig';
 
 export async function getServicios(filtros = {}) {
@@ -56,19 +56,20 @@ export async function deleteServicio(id) {
 export async function addServicio(data, usuario = null) {
   if (!data.id_servicio || !data.titulo) throw new Error('ID y título requeridos');
   const now = serverTimestamp();
+  const nowDate = new Date();
   const docData = {
     ...data,
     // Usar los nombres correctos de los campos como están en Firestore
     título: data.titulo,
     categoría: data.categoria,
-    costo: Number(data.costo),
-    tiempo_estimado: Number(data.tiempo_estimado),
+    costo: Number(data.costo) || 0,
+    tiempo_estimado: Number(data.tiempo_estimado) || 0,
     fechaActualizacion: now,
     actualizadoPorScript: false,
     historial: [
       {
         accion: 'creado',
-        fecha: now,
+        fecha: nowDate,
         usuario: usuario || 'sistema'
       }
     ]
@@ -77,7 +78,9 @@ export async function addServicio(data, usuario = null) {
   delete docData.titulo;
   delete docData.categoria;
   
-  await addDoc(collection(db, 'servicios'), docData);
+  // Use the id_servicio as the document ID in Firestore
+  const docRef = doc(db, 'servicios', data.id_servicio);
+  await setDoc(docRef, docData);
 }
 
 
@@ -85,6 +88,7 @@ export async function updateServicio(data, usuario = null) {
   if (!data.id) throw new Error('ID de documento requerido');
   const docRef = doc(db, 'servicios', data.id);
   const now = serverTimestamp();
+  const nowDate = new Date();
   // Mantener historial anterior y agregar nueva entrada
   const prevHistorial = Array.isArray(data.historial) ? data.historial : [];
   const docData = {
@@ -92,22 +96,23 @@ export async function updateServicio(data, usuario = null) {
     // Usar los nombres correctos de los campos como están en Firestore
     título: data.titulo,
     categoría: data.categoria,
-    costo: Number(data.costo),
-    tiempo_estimado: Number(data.tiempo_estimado),
+    costo: Number(data.costo) || 0,
+    tiempo_estimado: Number(data.tiempo_estimado) || 0,
     fechaActualizacion: now,
     actualizadoPorScript: false,
     historial: [
       ...prevHistorial,
       {
         accion: 'editado',
-        fecha: now,
+        fecha: nowDate,
         usuario: usuario || 'sistema'
       }
     ]
   };
-  // Remover campos duplicados
+  // Remover campos duplicados y el ID (no debe actualizarse)
   delete docData.titulo;
   delete docData.categoria;
+  delete docData.id;
   
   await updateDoc(docRef, docData);
 }
