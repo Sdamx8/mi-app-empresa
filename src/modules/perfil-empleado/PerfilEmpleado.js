@@ -22,6 +22,24 @@ const MODULES_CONFIG = {
     requiredPermissions: ['view_crm'],
     allowedRoles: ['directivo', 'administrativo']
   },
+  gestionar_remisiones: {
+    id: 'gestionar_remisiones',
+    label: 'Gestionar Remisiones',
+    icon: '📋',
+    description: 'Módulo completo para gestión de remisiones - Consultar móvil, ingresar trabajo y administrar',
+    color: THEME_COLORS.primary,
+    requiredPermissions: ['view_historial', 'create_trabajo'],
+    allowedRoles: ['directivo', 'administrativo', 'tecnico']
+  },
+  gestion_mantenimientos: {
+    id: 'gestion_mantenimientos',
+    label: 'Gestión de Mantenimientos',
+    icon: '🔧',
+    description: 'Seguimiento de mantenimientos preventivos de claraboyas por UNE',
+    color: THEME_COLORS.warning,
+    requiredPermissions: ['view_historial'],
+    allowedRoles: ['directivo', 'administrativo', 'tecnico']
+  },
   historial_trabajos: {
     id: 'historial_trabajos',
     label: 'Buscar Historial',

@@ -27,8 +27,11 @@ service cloud.firestore {
     // ===== REGLAS PARA REMISIONES =====
 
     match /remisiones/{remisionId} {
-      // Permitir acceso completo a usuarios autenticados (temporal para desarrollo)
-      allow read, write: if isAuth();
+      // Permitir lectura sin autenticación para consultas de móvil (módulo consultar móvil)
+      allow read: if true;
+      
+      // Permitir escritura solo a usuarios autenticados
+      allow write: if isAuth();
     }    // ===== REGLAS PARA HISTORIAL DE REMISIONES =====
     
     match /remisiones/{remisionId}/historial/{historialId} {

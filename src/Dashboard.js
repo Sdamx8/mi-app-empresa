@@ -8,6 +8,7 @@ import HerramientaElectrica from './modules/herramientas-electricas';
 import HerramientaManual from './modules/herramientas-manuales';
 import Empleados from './modules/empleados';
 import PerfilEmpleado from './modules/perfil-empleado';
+import { GestionMantenimientos } from './modules/gestion-mantenimientos'; // Nuevo módulo de mantenimientos
 import CorporateLogo from './shared/components/CorporateLogo';
 import ErrorBoundary from './shared/components/ErrorBoundary'; // Error Boundary corregido
 import SuccessNotification from './shared/components/SuccessNotification';
@@ -242,6 +243,9 @@ const Dashboard = () => {
       case 'financiero':
         if (!safeHasModuleAccess('financiero')) return <AccessDenied module="Módulo Financiero" />;
         return <ErrorBoundary><Financiero /></ErrorBoundary>;
+      case 'gestion_mantenimientos':
+        if (!safeHasModuleAccess('gestion_mantenimientos')) return <AccessDenied module="Gestión de Mantenimientos" />;
+        return <ErrorBoundary><GestionMantenimientos /></ErrorBoundary>;
       default:
         return <ErrorBoundary><PerfilEmpleado onModulo={setActiveModule} /></ErrorBoundary>;
     }

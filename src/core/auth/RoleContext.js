@@ -15,7 +15,7 @@ export const useRole = () => {
 // Definición de permisos por tipo de empleado
 const ROLE_PERMISSIONS = {
   directivo: {
-    modules: ['perfil', 'crm', 'gestionar_remisiones', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -50,7 +50,7 @@ const ROLE_PERMISSIONS = {
     }
   },
   administrativo: {
-    modules: ['perfil', 'crm', 'gestionar_remisiones', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -85,7 +85,7 @@ const ROLE_PERMISSIONS = {
     }
   },
   tecnico: {
-    modules: ['perfil', 'historial_trabajos'],
+    modules: ['perfil', 'gestion_mantenimientos', 'historial_trabajos'],
     permissions: {
       // Historial (solo ver, sin editar/eliminar)
       canViewHistorial: true,

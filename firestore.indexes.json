@@ -23,6 +23,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "remisiones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "movil",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha_remision",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
