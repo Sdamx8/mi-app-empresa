@@ -31,7 +31,6 @@ const NavigationBar = ({
       'empleados': 'Empleados',
       'herramientas-electricas': 'Herramientas Eléctricas',
       'herramientas-manuales': 'Herramientas Manuales',
-      'informes-tecnicos': 'Informes Técnicos',
       'perfil-empleado': 'Perfil Empleado',
       'crm': 'CRM',
       'financiero': 'Financiero'

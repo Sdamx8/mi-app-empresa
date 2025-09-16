@@ -13,7 +13,7 @@ import CorporateLogo from './shared/components/CorporateLogo';
 import ErrorBoundary from './shared/components/ErrorBoundary'; // Error Boundary corregido
 import SuccessNotification from './shared/components/SuccessNotification';
 import NotificationCenter from './shared/components/NotificationCenter';
-import InformesTecnicosPage from './modules/informes-tecnicos/InformesTecnicosPage';
+import InformesTecnicos from './pages/InformesTecnicos';
 import Financiero from './modules/financiero/Financiero';
 import { useAuth } from './core/auth/AuthContext';
 import { useRole } from './core/auth/RoleContext';
@@ -148,11 +148,7 @@ const Dashboard = () => {
         const path = (window.location.pathname || '').toLowerCase();
         const hash = (window.location.hash || '').toLowerCase();
 
-        // Detectar módulo Informes Técnicos por pathname o hash
-        if (path.includes('informes-tecnicos') || hash.includes('informes-tecnicos') || hash.includes('informes_tecnicos')) {
-          setActiveModule('informes_tecnicos');
-          return;
-        }
+
       } catch (e) {
         console.warn('No se pudo aplicar navegación desde URL:', e);
       }
@@ -160,11 +156,7 @@ const Dashboard = () => {
 
     const handleCustomNavigation = (event) => {
       try {
-        const detail = event.detail || {};
-        const mod = (detail.module || '').toLowerCase();
-        if (mod.includes('informes')) {
-          setActiveModule('informes_tecnicos');
-        }
+        // Manejo de navegación personalizada sin informes técnicos
       } catch (e) {
         console.warn('Error manejando navigation-change:', e);
       }
@@ -237,9 +229,10 @@ const Dashboard = () => {
       case 'empleados':
         if (!safeHasModuleAccess('empleados')) return <AccessDenied module="Gestión de Empleados" />;
         return <ErrorBoundary><Empleados /></ErrorBoundary>;
+
       case 'informes_tecnicos':
         if (!safeHasModuleAccess('informes_tecnicos')) return <AccessDenied module="Informes Técnicos" />;
-        return <ErrorBoundary><InformesTecnicosPage /></ErrorBoundary>;
+        return <ErrorBoundary><InformesTecnicos /></ErrorBoundary>;
       case 'financiero':
         if (!safeHasModuleAccess('financiero')) return <AccessDenied module="Módulo Financiero" />;
         return <ErrorBoundary><Financiero /></ErrorBoundary>;
@@ -270,7 +263,7 @@ const Dashboard = () => {
       { key: 'servicios', icon: '🛠️', label: 'Catálogo de servicios', isNew: true }
     ],
     gestion: [
-      { key: 'informes_tecnicos', icon: '📄', label: 'Informes Técnicos' },
+      { key: 'informes_tecnicos', icon: '📋', label: 'Informes Técnicos' },
       { key: 'financiero', icon: '💰', label: 'Financiero' }
     ]
   };

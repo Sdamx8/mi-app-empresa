@@ -10,8 +10,7 @@ import './components/IngresarTrabajo.css'; // CSS del manual de identidad
 import { 
   obtenerOpcionesIntegracion, 
   generarPDFDirecto,
-  validarRemisionParaInforme,
-  redirigirAInformesTecnicos
+  validarRemisionParaInforme
 } from '../../shared/services/integracionModulos';
 import { remisionesService } from './services/remisionesService';
 import { db } from '../../core/config/firebaseConfig';
@@ -113,17 +112,8 @@ const IngresarTrabajo = () => {
       });
       
       // Ejecutar redirección tras breve pausa
-      setTimeout(async () => {
-        try {
-          await redirigirAInformesTecnicos(numeroRemision);
-        } catch (error) {
-          console.error('❌ Error en redirección:', error);
-          // Mostrar las opciones de integración como fallback
-          mostrarOpcionesIntegracion(numeroRemision);
-        }
-      }, 1500);
-      
-      return; // Salir temprano para evitar mostrar opciones normales
+      // Mostrar las opciones de integración
+      mostrarOpcionesIntegracion(numeroRemision);
     }
     
     // Mostrar notificación de éxito normal
@@ -445,15 +435,7 @@ const IngresarTrabajo = () => {
                         <td style={{ textAlign: 'right' }}><strong style={{ color: '#27AE60' }}>{formatearMoneda(r.total)}</strong></td>
                         <td style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                            <motion.button
-                              className="btn-action"
-                              onClick={() => redirigirAInformesTecnicos(r.remision)}
-                              title="Crear/Completar Informe Técnico"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              📝
-                            </motion.button>
+
                             <motion.button
                               className="btn-action btn-edit"
                               onClick={() => handleEditarRemision(r)}

@@ -65,7 +65,9 @@ service cloud.firestore {
 
     match /informesTecnicos/{informeId} {
       allow read, write: if isAuth();
-    }    // ===== REGLAS PARA HERRAMIENTAS =====
+    }
+
+    // ===== REGLAS PARA HERRAMIENTAS =====
 
     match /HERRAMIENTA_ELECTRICA/{herramientaId} {
       allow read, write: if isAuth();

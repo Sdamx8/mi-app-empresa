@@ -14,9 +14,6 @@ export const LazyComponents = {
   ),
   HerramientaManual: React.lazy(() => 
     import('../modules/herramientas-manuales/HerramientaManual')
-  ),
-  InformesTecnicos: React.lazy(() => 
-    import('../modules/informes-tecnicos/InformesTecnicos')
   )
 };
 

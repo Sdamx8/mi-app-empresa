@@ -36,7 +36,6 @@ export async function migrarDocumentosUsuario() {
     // Colecciones a migrar
     const colecciones = [
       'empleados',
-      'informesTecnicos', 
       'historialTrabajos',
       'technicianStats'
     ];
@@ -103,7 +102,7 @@ export async function verificarMigracion() {
 
     console.log(`🔍 Verificando migración para usuario: ${currentUser.uid}`);
 
-    const colecciones = ['empleados', 'informesTecnicos', 'historialTrabajos', 'technicianStats'];
+    const colecciones = ['empleados', 'historialTrabajos', 'technicianStats'];
     
     for (const coleccionNombre of colecciones) {
       const coleccionRef = collection(db, coleccionNombre);

@@ -85,15 +85,8 @@ const FormularioRemision = memo(({ isOpen, onClose, onSave, initialData = null }
       // Cerrar modal inmediatamente para esta acción
       onClose();
       
-      // Intentar redirección directa como fallback
-      try {
-        const { redirigirAInformesTecnicos } = await import('../../../shared/services/integracionModulos');
-        setTimeout(() => {
-          redirigirAInformesTecnicos(result.numeroRemision);
-        }, 500); // Dar tiempo para que se procese el guardado
-      } catch (error) {
-        console.error('❌ Error en redirección directa:', error);
-      }
+      // Módulo de informes técnicos eliminado - no se puede redirigir
+      console.log('✓ Remisión guardada exitosamente:', result.numeroRemision);
     } else {
       console.error('Error al guardar para crear informe:', result.error);
     }
