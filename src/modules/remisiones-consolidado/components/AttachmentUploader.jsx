@@ -288,10 +288,7 @@ const AttachmentUploader = ({ remisionId, remision, onUpdate = () => {} }) => {
 
       showNotification('Generando PDF consolidado...', 'info');
 
-      const result = await downloadConsolidatedPDF(files, remision, {
-        includeCover: true,
-        fileName: `${remision.no_orden || 'REMISION'}-${remision.movil || 'MOVIL'}.pdf`
-      });
+      const result = await downloadConsolidatedPDF(files, remision);
 
       if (result.success) {
         showNotification(`PDF consolidado descargado: ${result.fileName}`, 'success');

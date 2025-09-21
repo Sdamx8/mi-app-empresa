@@ -288,8 +288,8 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
       showNotification('Generando PDF consolidado...', 'info');
 
       const result = await downloadConsolidatedPDF(attachments, remision, {
-        includeCover: true,
-        fileName: `${remision.no_orden || 'REMISION'}-${remision.movil || 'MOVIL'}.pdf`
+        includeCover: false // Sin página de portada, solo los documentos unidos
+        // El nombre se genera automáticamente en el servicio con formato: orden_movil.pdf
       });
 
       if (result.success) {

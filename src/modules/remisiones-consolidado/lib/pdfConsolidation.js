@@ -185,7 +185,7 @@ export const consolidatePDFs = async (attachments, remision, options = {}) => {
     console.log('Iniciando consolidación de PDFs...', { attachments, remision });
     
     const {
-      includeCover = true,
+      includeCover = false, // Cambiado a false por defecto - no incluir portada
       fileName = null,
       orderSequence = ['orden_trabajo', 'remision_escaneada', 'informe_tecnico']
     } = options;
@@ -254,8 +254,10 @@ export const consolidatePDFs = async (attachments, remision, options = {}) => {
       throw new Error('No se pudo generar el PDF consolidado - no hay páginas válidas');
     }
     
-    // Generar nombre del archivo
-    const finalFileName = fileName || `${remision.no_orden || 'REMISION'}-${remision.movil || 'MOVIL'}.pdf`;
+    // Generar nombre del archivo con formato: no_orden_movil.pdf
+    const ordenNumber = (remision.no_orden || 'ORDEN').replace(/[^a-zA-Z0-9]/g, '');
+    const movilNumber = (remision.movil || 'MOVIL').replace(/[^a-zA-Z0-9-]/g, '');
+    const finalFileName = fileName || `${ordenNumber}_${movilNumber}.pdf`;
     
     // Guardar PDF consolidado
     const pdfBytes = await mergedPdf.save();
