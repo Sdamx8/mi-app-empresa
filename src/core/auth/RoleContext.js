@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { getEmployeeByEmail } from '../../modules/empleados/services/employeeService';
+import { SUPER_ADMIN } from '../../shared/constants';
 
 const RoleContext = createContext();
 
@@ -15,7 +16,7 @@ export const useRole = () => {
 // Definición de permisos por tipo de empleado
 const ROLE_PERMISSIONS = {
   directivo: {
-    modules: ['perfil', 'crm', 'gestionar_remisiones', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'remisiones_consolidado', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -50,7 +51,7 @@ const ROLE_PERMISSIONS = {
     }
   },
   administrativo: {
-    modules: ['perfil', 'crm', 'gestionar_remisiones', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'remisiones_consolidado', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
@@ -215,10 +216,18 @@ export const RoleProvider = ({ children }) => {
   }, [userRole]);
 
   const hasPermission = (permission) => {
+    // Super admin tiene todos los permisos
+    if (user?.email === SUPER_ADMIN.EMAIL) {
+      return true;
+    }
     return permissions[permission] || false;
   };
 
   const hasModuleAccess = (moduleId) => {
+    // Super admin tiene acceso a todos los módulos
+    if (user?.email === SUPER_ADMIN.EMAIL) {
+      return true;
+    }
     return availableModules.includes(moduleId);
   };
 

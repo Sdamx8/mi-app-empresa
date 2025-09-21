@@ -55,7 +55,7 @@ const ServicioSelect = ({
       <option value="">{placeholder}</option>
       {servicios.map((servicio) => (
         <option 
-          key={servicio.value} 
+          key={servicio.key || servicio.id_servicio || servicio.value} 
           value={servicio.value}
           title={`${servicio.label} ${showCost && servicio.costo ? `- ${formatCurrency(servicio.costo)}` : ''}`}
         >

@@ -1,0 +1,485 @@
+/**
+ * 🎨 REMISIONES SPREADSHEET STYLES
+ * ===============================
+ * Estilos tipo Google Sheets con identidad corporativa
+ * Paleta: Global Mobility Solutions Manual de Marca
+ */
+
+.remisiones-spreadsheet {
+  padding: 0;
+  min-height: 100vh;
+  background: var(--color-background, #F8F9FA);
+  font-family: var(--font-primary, 'Inter', sans-serif);
+}
+
+/* ===== HEADER ===== */
+.spreadsheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  background: var(--color-surface, #FFFFFF);
+  border-bottom: 1px solid var(--color-border, #E9ECEF);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content h1 {
+  margin: 0 0 8px 0;
+  font-size: var(--font-h1, 28px);
+  font-weight: 600;
+  color: var(--color-text, #212529);
+  line-height: 1.2;
+}
+
+.header-content p {
+  margin: 0;
+  font-size: var(--font-body, 16px);
+  color: var(--color-muted, #6C757D);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary {
+  background: var(--color-primary, #1E3C72);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #174066;
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+}
+
+.btn-secondary {
+  background: var(--color-secondary, #5DADE2);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #4A9BD1;
+  box-shadow: 0 4px 12px rgba(93, 173, 226, 0.3);
+}
+
+/* ===== SPREADSHEET CONTAINER ===== */
+.spreadsheet-container {
+  background: var(--color-surface, #FFFFFF);
+  border-radius: 8px;
+  margin: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.spreadsheet-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 180px);
+}
+
+/* ===== TABLE STYLES ===== */
+.spreadsheet-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.spreadsheet-table thead {
+  background: var(--color-primary, #1E3C72);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.spreadsheet-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.spreadsheet-table th:last-child {
+  border-right: none;
+}
+
+.row-number-header {
+  width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  text-align: center !important;
+}
+
+/* ===== TABLE BODY ===== */
+.spreadsheet-table tbody tr {
+  background: white;
+  transition: background-color 0.15s ease;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) {
+  background: #FAFBFC;
+}
+
+.spreadsheet-table tbody tr:hover {
+  background: #F1F8FF;
+  box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+}
+
+.spreadsheet-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border, #E9ECEF);
+  border-right: 1px solid var(--color-border, #E9ECEF);
+  vertical-align: middle;
+  position: relative;
+}
+
+.spreadsheet-table td:last-child {
+  border-right: none;
+}
+
+.row-number {
+  width: 50px;
+  text-align: center;
+  background: #F8F9FA;
+  font-weight: 600;
+  color: var(--color-muted, #6C757D);
+  font-size: 12px;
+}
+
+/* ===== CELL INPUTS ===== */
+.cell-input,
+.cell-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+  background: transparent;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+
+/* ===== SERVICIO SELECT SPECIFIC ===== */
+.servicio-select {
+  min-width: 200px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.servicio-select option {
+  padding: 4px 8px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cell-input:focus,
+.cell-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1E3C72);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+}
+
+.cell-input:hover:not(:focus),
+.cell-select:hover:not(:focus) {
+  background: rgba(93, 173, 226, 0.05);
+  border-color: rgba(93, 173, 226, 0.3);
+}
+
+.cell-date {
+  min-width: 130px;
+}
+
+.cell-currency {
+  text-align: right;
+}
+
+/* ===== CURRENCY DISPLAY ===== */
+.currency-display {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--color-muted, #6C757D);
+  font-weight: 500;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.total-display {
+  position: static;
+  transform: none;
+  font-weight: 600;
+  color: var(--color-success, #27AE60);
+  font-size: 14px;
+  background: #F0FDF4;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #BBFABB;
+  text-align: center;
+}
+
+/* ===== SUBTOTAL CELL IMPROVEMENTS ===== */
+.subtotal-cell {
+  position: relative;
+}
+
+.subtotal-input {
+  padding-right: 100px; /* Espacio para el currency display */
+}
+
+/* ===== READONLY CELL (GENERO) ===== */
+.readonly-cell {
+  color: var(--color-text, #212529);
+  font-weight: 500;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8F9FA;
+  border-radius: 6px;
+  border: 1px solid #DEE2E6;
+}
+
+.readonly-cell::before {
+  content: '👤';
+  font-size: 14px;
+}
+
+.genero-display {
+  font-size: 13px;
+  color: var(--color-primary, #1E3C72);
+  font-weight: 600;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.actions-cell {
+  width: 80px;
+  text-align: center;
+}
+
+.btn-delete-row {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.btn-delete-row:hover:not(:disabled) {
+  background: var(--color-danger, #E74C3C);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.btn-delete-row:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ===== LOADING ===== */
+.spreadsheet-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--color-muted, #6C757D);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border, #E9ECEF);
+  border-top: 3px solid var(--color-primary, #1E3C72);
+  border-radius: 50%;
+  margin-bottom: 16px;
+}
+
+/* ===== NOTIFICATIONS ===== */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-width: 400px;
+}
+
+.notification-success {
+  background: var(--color-success, #27AE60);
+  color: white;
+}
+
+.notification-error {
+  background: var(--color-danger, #E74C3C);
+  color: white;
+}
+
+.notification-info {
+  background: var(--color-info, #3498DB);
+  color: white;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .spreadsheet-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .spreadsheet-container {
+    margin: 16px;
+  }
+  
+  .spreadsheet-table th,
+  .spreadsheet-table td {
+    padding: 8px 6px;
+    font-size: 13px;
+  }
+  
+  .cell-input,
+  .cell-select {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .spreadsheet-header {
+    padding: 16px 20px;
+  }
+  
+  .header-content h1 {
+    font-size: 24px;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .spreadsheet-container {
+    margin: 12px;
+  }
+  
+  .spreadsheet-scroll {
+    max-height: calc(100vh - 220px);
+  }
+}
+
+/* ===== CSS VARIABLES FALLBACKS ===== */
+:root {
+  --color-primary: #1E3C72;
+  --color-secondary: #5DADE2;
+  --color-background: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-text: #212529;
+  --color-muted: #6C757D;
+  --color-border: #E9ECEF;
+  --color-success: #27AE60;
+  --color-warning: #F1C40F;
+  --color-danger: #E74C3C;
+  --color-info: #3498DB;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-h1: 28px;
+  --font-h2: 22px;
+  --font-body: 16px;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cell-input:focus {
+  animation: fadeIn 0.2s ease;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .spreadsheet-header,
+  .actions-cell,
+  .btn-delete-row {
+    display: none !important;
+  }
+  
+  .spreadsheet-table {
+    font-size: 10px;
+  }
+  
+  .spreadsheet-table th,
+  .spreadsheet-table td {
+    padding: 4px 6px;
+  }
+}

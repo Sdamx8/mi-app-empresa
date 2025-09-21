@@ -45,14 +45,16 @@ export const useServicios = () => {
         // Datos originales para otros usos
         setServicios(serviciosData);
         
-        // Datos formateados para los selects (usando título como label Y value)
-        const serviciosForSelectData = serviciosData.map(servicio => {
+        // Datos formateados para los selects (usando ID único como key y título como label)
+        const serviciosForSelectData = serviciosData.map((servicio, index) => {
           const titulo = servicio.título || servicio.titulo || 'Servicio sin nombre';
+          const uniqueId = servicio.id_servicio || servicio.id || `servicio_${index}`;
           return {
             value: titulo, // Guardar el título completo como valor (según estructura Firestore)
             label: titulo, // Mostrar el título en el dropdown
             costo: servicio.costo || 0,
-            id_servicio: servicio.id_servicio || servicio.id, // Mantener ID para referencia
+            id_servicio: uniqueId, // Usar ID único para evitar duplicados
+            key: uniqueId, // Key único para React
             // Mantener referencia completa para cálculos
             fullData: servicio
           };

@@ -4,6 +4,7 @@ import ServiciosPage from './modules/servicios';
 import GestionarRemisiones from './modules/gestionar-remisiones'; // Nuevo módulo unificado
 import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado'; // Mantener para compatibilidad
 import IngresarTrabajo from './modules/ingresar-trabajo'; // Mantener para compatibilidad
+import RemisionesConsolidado from './modules/remisiones-consolidado/components/RemisionesSpreadsheet'; // Nuevo módulo consolidado
 import HerramientaElectrica from './modules/herramientas-electricas';
 import HerramientaManual from './modules/herramientas-manuales';
 import Empleados from './modules/empleados';
@@ -204,6 +205,17 @@ const Dashboard = () => {
             />
           </ErrorBoundary>
         );
+      case 'remisiones_consolidado':
+        if (!safeHasModuleAccess('remisiones_consolidado')) return <AccessDenied module="Remisiones Consolidado" />;
+        return (
+          <ErrorBoundary>
+            <RemisionesConsolidado 
+              canEdit={safeUserPermissions.canEditHistorial}
+              canDelete={safeUserPermissions.canDeleteHistorial}
+              userRole={userRole}
+            />
+          </ErrorBoundary>
+        );
       case 'historial_trabajos':
         // Mantener para compatibilidad con enlaces directos
         if (!safeHasModuleAccess('historial_trabajos')) return <AccessDenied module="Historial de Trabajos" />;
@@ -252,6 +264,7 @@ const Dashboard = () => {
     ],
     trabajo: [
       { key: 'gestionar_remisiones', icon: '📋', label: 'Gestionar Remisiones', isNew: true }, // Nuevo módulo unificado
+      { key: 'remisiones_consolidado', icon: '📄', label: 'Remisiones Consolidado', isNew: true }, // Módulo consolidado independiente
       // Mantener módulos individuales para compatibilidad (ocultos del menú principal)
       // { key: 'historial_trabajos', icon: '📊', label: 'Historial' },
       // { key: 'ingresar_trabajo', icon: '🔧', label: 'Ingresar Trabajo' }
