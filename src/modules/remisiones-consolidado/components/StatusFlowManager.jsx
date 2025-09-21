@@ -329,8 +329,8 @@ const StatusFlowManager = ({
 
       {/* Modal de confirmación */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Cambiar Estado</h3>
             
             <div className="status-change-preview">

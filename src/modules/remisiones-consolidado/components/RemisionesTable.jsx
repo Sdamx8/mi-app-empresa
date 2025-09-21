@@ -517,8 +517,8 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
 
       {/* Modal cambiar estado */}
       {showEstadoModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Cambiar Estado de Remisión</h3>
             <p>Remisión: {selectedRemision?.remision} - Móvil: {selectedRemision?.movil}</p>
             
@@ -568,8 +568,8 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
 
       {/* Modal confirmación eliminar */}
       {showDeleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Confirmar Eliminación</h3>
             <p>¿Está seguro de que desea eliminar la remisión:</p>
             <p><strong>{selectedRemision?.remision} - Móvil: {selectedRemision?.movil}</strong></p>
