@@ -1,39 +1,15 @@
 {
   "indexes": [
     {
-      "collectionGroup": "remisiones",
+      "collectionGroup": "historial_remisiones",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "fecha_remision",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "remisiones",
-      "queryScope": "COLLECTION", 
-      "fields": [
-        {
-          "fieldPath": "estado",
+          "fieldPath": "remision_id",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "fecha_remision",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "remisiones",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "movil",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fecha_remision",
+          "fieldPath": "fecha",
           "order": "DESCENDING"
         }
       ]

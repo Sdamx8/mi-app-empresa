@@ -4,7 +4,7 @@ import ServiciosPage from './modules/servicios';
 import GestionarRemisiones from './modules/gestionar-remisiones'; // Nuevo módulo unificado
 import HistorialTrabajosOptimizado from './modules/historial-trabajos/components/HistorialTrabajosOptimizado'; // Mantener para compatibilidad
 import IngresarTrabajo from './modules/ingresar-trabajo'; // Mantener para compatibilidad
-import RemisionesConsolidado from './modules/remisiones-consolidado/components/RemisionesSpreadsheet'; // Nuevo módulo consolidado
+import RemisionesConsolidado from './modules/remisiones-consolidado/components/EnhancedRemisionesConsolidado'; // Módulo consolidado mejorado
 import HerramientaElectrica from './modules/herramientas-electricas';
 import HerramientaManual from './modules/herramientas-manuales';
 import Empleados from './modules/empleados';
