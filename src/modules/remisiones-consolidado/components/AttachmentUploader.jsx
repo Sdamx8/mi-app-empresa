@@ -333,44 +333,22 @@ const AttachmentUploader = ({ remisionId, remision, onUpdate = () => {} }) => {
         <h4>{title}</h4>
         <p className="upload-description">{description}</p>
         
-        {hasFile ? (
-          // Archivo ya subido
-          <div className="file-uploaded">
-            <div className="file-info">
-              <div className="file-icon">
+        {/* Área de contenido flex */}
+        <div className="file-content-area">
+          {hasFile ? (
+            // Vista previa del archivo
+            <div className="file-preview-display">
+              <div className="file-icon-large">
                 {hasFile.type?.includes('pdf') ? '📄' : '🖼️'}
               </div>
-              <div className="file-details">
-                <span className="file-name">{hasFile.name}</span>
+              <div className="file-info-grid">
+                <span className="file-name-display">{hasFile.name}</span>
                 {hasFile.size && (
-                  <span className="file-size">{formatFileSize(hasFile.size)}</span>
+                  <span className="file-size-display">{formatFileSize(hasFile.size)}</span>
                 )}
               </div>
             </div>
-            
-            <div className="file-actions">
-              {hasFile.url && (
-                <a
-                  href={hasFile.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-view"
-                  title="Ver archivo"
-                >
-                  👁️
-                </a>
-              )}
-              <button
-                onClick={() => handleFileDelete(type)}
-                disabled={isUploading}
-                className="btn-delete"
-                title="Eliminar archivo"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-        ) : (
+          ) : (
           // Área de subida
           <div
             className={`upload-area ${isDragOver ? 'drag-over' : ''} ${isUploading ? 'uploading' : ''}`}
@@ -398,6 +376,40 @@ const AttachmentUploader = ({ remisionId, remision, onUpdate = () => {} }) => {
           </div>
         )}
         
+        </div>
+        
+        {/* Botones de acción */}
+        <div className="card-actions">
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={isUploading}
+            className="btn-upload"
+          >
+            📎 Subir
+          </button>
+          
+          {hasFile?.url && (
+            <a
+              href={hasFile.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-view-card"
+            >
+              👁️ Ver
+            </a>
+          )}
+          
+          {hasFile && (
+            <button
+              onClick={() => handleFileDelete(type)}
+              disabled={isUploading}
+              className="btn-delete-card"
+            >
+              🗑️ Eliminar
+            </button>
+          )}
+        </div>
+        
         <input
           ref={inputRef}
           type="file"
@@ -421,7 +433,7 @@ const AttachmentUploader = ({ remisionId, remision, onUpdate = () => {} }) => {
         </div>
       )}
       
-      <div className="upload-sections">
+      <div className="upload-sections-grid">
         {renderUploadArea(
           'orden_trabajo',
           '1. Orden de Trabajo (PDF)',

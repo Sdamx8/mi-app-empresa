@@ -93,19 +93,25 @@ const RemisionDetail = ({ remisionId, onBack }) => {
     }
   };
 
+  // Helper para validación segura de campos
+  const validateStringField = (value) => {
+    const stringValue = String(value || "").trim();
+    return stringValue.length > 0 ? stringValue : null;
+  };
+
   // Validaciones
   const validateForm = (data) => {
     const errors = {};
     
-    if (!data.remision?.trim()) {
+    if (!validateStringField(data.remision)) {
       errors.remision = 'La remisión es obligatoria';
     }
     
-    if (!data.movil?.trim()) {
+    if (!validateStringField(data.movil)) {
       errors.movil = 'El móvil es obligatorio';
     }
     
-    if (!data.no_orden?.trim()) {
+    if (!validateStringField(data.no_orden)) {
       errors.no_orden = 'El número de orden es obligatorio';
     }
     

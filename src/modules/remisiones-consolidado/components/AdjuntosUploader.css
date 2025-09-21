@@ -16,7 +16,29 @@
   border: 1px solid #e9ecef;
 }
 
-/* ===== SECCIONES DE SUBIDA ===== */
+/* ===== SECCIONES DE SUBIDA - GRID RESPONSIVE ===== */
+.upload-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+/* Tablets: 2 columnas */
+@media (min-width: 640px) {
+  .upload-sections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: 3 columnas */
+@media (min-width: 1024px) {
+  .upload-sections-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mantener compatibilidad con el selector anterior */
 .upload-sections {
   display: grid;
   gap: 24px;
@@ -25,9 +47,19 @@
 
 .upload-section {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .upload-section h4 {
@@ -47,11 +79,17 @@
 .upload-area {
   border: 2px dashed #dee2e6;
   border-radius: 8px;
-  padding: 40px 20px;
+  padding: 30px 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   background: #fafbfc;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  margin-bottom: 16px;
 }
 
 .upload-area:hover {
@@ -167,6 +205,124 @@
   font-family: monospace;
 }
 
+/* ===== ÁREA DE CONTENIDO DE ARCHIVO ===== */
+.file-content-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #f8f9fa;
+  margin-bottom: 16px;
+}
+
+.file-preview-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.file-icon-large {
+  font-size: 48px;
+  opacity: 0.8;
+}
+
+.file-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name-display {
+  font-weight: 500;
+  color: #212529;
+  font-size: 14px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size-display {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+/* ===== ACCIONES DE TARJETA ===== */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.btn-upload,
+.btn-view-card,
+.btn-delete-card {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.btn-upload {
+  background: #0d6efd;
+  color: white;
+}
+
+.btn-upload:hover:not(:disabled) {
+  background: #0b5ed7;
+  transform: translateY(-1px);
+}
+
+.btn-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-view-card {
+  background: #28a745;
+  color: white;
+}
+
+.btn-view-card:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  color: white;
+}
+
+.btn-delete-card {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-delete-card:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.btn-delete-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mantener compatibilidad con estilos anteriores */
 .file-actions {
   display: flex;
   gap: 8px;
@@ -436,5 +592,30 @@
     width: 36px;
     height: 36px;
     font-size: 16px;
+  }
+
+  /* Ajustes para tarjetas en móvil */
+  .upload-section {
+    min-height: 250px;
+  }
+
+  .file-content-area {
+    min-height: 120px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-upload,
+  .btn-view-card,
+  .btn-delete-card {
+    flex: none;
+    width: 100%;
+  }
+
+  .file-icon-large {
+    font-size: 36px;
   }
 }

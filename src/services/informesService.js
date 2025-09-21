@@ -24,11 +24,12 @@ export const buscarRemision = async (numeroRemision) => {
   try {
     console.log(`🔍 Buscando remisión: ${numeroRemision}`);
     
-    if (!numeroRemision || numeroRemision.trim() === '') {
+    const safeNumeroRemision = String(numeroRemision || "").trim();
+    if (!safeNumeroRemision) {
       throw new Error('Número de remisión requerido');
     }
 
-    const numeroLimpio = numeroRemision.toString().trim();
+    const numeroLimpio = safeNumeroRemision;
     const remisionesRef = collection(db, 'remisiones');
     
     // Estrategia 1: Búsqueda como string

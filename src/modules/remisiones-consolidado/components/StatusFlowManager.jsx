@@ -165,7 +165,8 @@ const StatusFlowManager = ({
     if (!selectedStatus) return;
 
     // Validar justificación si es requerida
-    if (ESTADOS_CON_JUSTIFICACION.includes(selectedStatus) && !justification.trim()) {
+    const safeJustification = String(justification || "").trim();
+    if (ESTADOS_CON_JUSTIFICACION.includes(selectedStatus) && !safeJustification) {
       showNotification('Se requiere justificación para este estado', 'error');
       return;
     }
@@ -180,7 +181,7 @@ const StatusFlowManager = ({
 
       // Agregar justificación si es necesaria
       if (ESTADOS_CON_JUSTIFICACION.includes(selectedStatus)) {
-        updateData.justificacion_estado = justification.trim();
+        updateData.justificacion_estado = safeJustification;
       }
 
       // Agregar timestamps específicos
