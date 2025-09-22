@@ -91,6 +91,18 @@ service cloud.firestore {
       allow read, write: if isAuth();
     }
     
+    // ===== REGLAS PARA NOTICIAS CORPORATIVAS =====
+    
+    match /noticias/{noticiaId} {
+      // Lectura: todos los usuarios autenticados
+      allow read: if isAuth();
+      
+      // Escritura: solo davian.ayala7@gmail.com con rol directivo
+      allow write: if isAuth() && 
+                     request.auth.token.email == 'davian.ayala7@gmail.com' && 
+                     hasRole('directivo');
+    }
+    
     // ===== REGLA POR DEFECTO PARA OTRAS COLECCIONES =====
     // Permitir acceso a usuarios autenticados (modo desarrollo)
     match /{document=**} {

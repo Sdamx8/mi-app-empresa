@@ -1,0 +1,301 @@
+/* NoticiasCompensar.css - Estilos para el componente de noticias corporativas */
+
+.noticias-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.noticias-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.noticias-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noticias-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  height: 24px;
+  width: 24px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  margin-right: 8px;
+}
+
+.noticia-content {
+  margin-bottom: 16px;
+}
+
+.noticia-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.noticia-image-container {
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.noticia-image {
+  width: 100%;
+  max-height: 384px; /* 96 * 4 = 384px */
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.noticia-image:hover {
+  transform: scale(1.02);
+}
+
+.pdf-preview {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.pdf-icon {
+  font-size: 24px;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.pdf-title {
+  font-size: 14px;
+  color: #b91c1c;
+  margin-bottom: 8px;
+}
+
+.pdf-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #b91c1c;
+  background: #fee2e2;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.pdf-link:hover {
+  background: #fecaca;
+}
+
+.no-noticias {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.no-noticias-icon {
+  font-size: 32px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.no-noticias-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.no-noticias-subtext {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.admin-panel {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+  margin-top: 16px;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.admin-icon {
+  color: #2563eb;
+  margin-right: 8px;
+}
+
+.admin-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e40af;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.file-input {
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.file-input::-webkit-file-upload-button {
+  margin-right: 16px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 0;
+  font-size: 12px;
+  font-weight: 500;
+  background: #dbeafe;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+  background: #bfdbfe;
+}
+
+.file-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.uploading-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #2563eb;
+}
+
+.uploading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  border: 1px solid #e5e7eb;
+  border-top: 1px solid #2563eb;
+  margin-right: 8px;
+}
+
+.admin-note {
+  font-size: 12px;
+  color: #2563eb;
+  margin-top: 8px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .noticias-container {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .noticias-header {
+    font-size: 16px;
+  }
+  
+  .noticia-title {
+    font-size: 14px;
+  }
+  
+  .admin-panel {
+    padding: 12px;
+  }
+  
+  .form-input {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Estados de hover y focus mejorados */
+.form-input:hover {
+  border-color: #93c5fd;
+}
+
+.pdf-preview:hover {
+  background: #fef7f7;
+  border-color: #f8b4b4;
+}
+
+/* Animaciones suaves */
+.noticias-container * {
+  transition: all 0.2s ease;
+}
+
+/* Accesibilidad mejorada */
+.file-input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.pdf-link:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}

@@ -74,35 +74,79 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
     }).format(amount);
   };
 
-  // Configuración de columnas para la tabla
+  // Configuración de columnas para la tabla - ORDEN REQUERIDO
   const columns = useMemo(() => [
+    // 1. ACCIONES - Primera columna
+    {
+      id: 'acciones',
+      header: 'ACCIONES',
+      size: 150,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEditRemision(row.original)}
+            className="btn-action btn-secondary"
+            title="Editar"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => onViewRemision(row.original)}
+            className="btn-action btn-primary"
+            title="Ver detalles"
+          >
+            👁️
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => handleDeleteRemision(row.original)}
+              className="btn-action btn-danger"
+              title="Eliminar remisión"
+            >
+              🗑️
+            </button>
+          )}
+          <button
+            onClick={() => handleDownloadPDF(row.original)}
+            className="btn-action btn-success"
+            title="Descargar PDF consolidado"
+          >
+            📄
+          </button>
+        </div>
+      ),
+    },
+    // 2. REMISIÓN
     {
       accessorKey: 'remision',
-      header: 'Remisión',
+      header: 'REMISIÓN',
       size: 100,
       cell: ({ getValue }) => (
         <span className="font-mono text-sm">{getValue()}</span>
       ),
     },
+    // 3. MÓVIL
     {
       accessorKey: 'movil', 
-      header: 'Móvil',
+      header: 'MÓVIL',
       size: 100,
       cell: ({ getValue }) => (
         <span className="font-mono text-sm font-medium">{getValue()}</span>
       ),
     },
+    // 4. NO. ORDEN
     {
       accessorKey: 'no_orden',
-      header: 'No. Orden',
+      header: 'NO. ORDEN',
       size: 120,
       cell: ({ getValue }) => (
         <span className="font-mono text-sm">{getValue()}</span>
       ),
     },
+    // 5. ESTADO - Con botones funcionales
     {
       accessorKey: 'estado',
-      header: 'Estado',
+      header: 'ESTADO',
       size: 120,
       cell: ({ getValue, row }) => {
         const estado = getValue();
@@ -134,29 +178,33 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         );
       },
     },
+    // 6. FECHA REMISIÓN
     {
       accessorKey: 'fecha_remision',
-      header: 'Fecha Remisión',
+      header: 'FECHA REMISIÓN',
       size: 120,
       cell: ({ getValue }) => formatDate(getValue()),
     },
+    // 7. FECHA MÁXIMO
     {
       accessorKey: 'fecha_maximo',
-      header: 'Fecha Máximo',
+      header: 'FECHA MÁXIMO',
       size: 120, 
       cell: ({ getValue }) => formatDate(getValue()),
     },
+    // 8. SERVICIO 1
     {
       accessorKey: 'servicio1',
-      header: 'Servicio 1',
+      header: 'SERVICIO 1',
       size: 150,
       cell: ({ getValue }) => (
         <span className="text-sm truncate">{getValue() || '-'}</span>
       ),
     },
+    // 9. TOTAL
     {
       accessorKey: 'total',
-      header: 'Total',
+      header: 'TOTAL',
       size: 120,
       cell: ({ getValue }) => (
         <span className="font-semibold text-green-600">
@@ -164,6 +212,7 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         </span>
       ),
     },
+    // 10. UNE
     {
       accessorKey: 'une',
       header: 'UNE',
@@ -172,51 +221,13 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         <span className="text-sm font-medium">{getValue() || '-'}</span>
       ),
     },
+    // 11. TÉCNICO
     {
       accessorKey: 'tecnico1',
-      header: 'Técnico',
+      header: 'TÉCNICO',
       size: 150,
       cell: ({ getValue }) => (
         <span className="text-sm">{getValue() || '-'}</span>
-      ),
-    },
-    {
-      id: 'acciones',
-      header: 'Acciones',
-      size: 150,
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onViewRemision(row.original)}
-            className="btn-action btn-primary"
-            title="Ver detalles"
-          >
-            👁️
-          </button>
-          <button
-            onClick={() => onEditRemision(row.original)}
-            className="btn-action btn-secondary"
-            title="Editar"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => handleDownloadPDF(row.original)}
-            className="btn-action btn-success"
-            title="Descargar PDF consolidado"
-          >
-            📄
-          </button>
-          {isAdmin && (
-            <button
-              onClick={() => handleDeleteRemision(row.original)}
-              className="btn-action btn-danger"
-              title="Eliminar remisión"
-            >
-              🗑️
-            </button>
-          )}
-        </div>
       ),
     },
   ], [isAdmin, onViewRemision, onEditRemision]);
