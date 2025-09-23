@@ -51,7 +51,7 @@ const ROLE_PERMISSIONS = {
     }
   },
   administrativo: {
-    modules: ['perfil', 'crm', 'gestionar_remisiones', 'remisiones_consolidado', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'informes_tecnicos', 'reportes_informes', 'financiero'],
+    modules: ['perfil', 'crm', 'gestionar_remisiones', 'remisiones_consolidado', 'gestion_mantenimientos', 'historial_trabajos', 'administrar_remisiones', 'ingresar_trabajo', 'herramientas_electricas', 'herramientas_manuales', 'empleados', 'servicios', 'informes_tecnicos', 'reportes_informes', 'financiero'],
     permissions: {
       // Historial
       canViewHistorial: true,
