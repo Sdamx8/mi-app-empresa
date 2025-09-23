@@ -142,11 +142,11 @@ const createCoverPage = async (remision) => {
     
     // Información de la remisión
     const info = [
-      `Remisión: ${remision.remision || 'N/A'}`,
-      `Móvil: ${remision.movil || 'N/A'}`,
-      `No. Orden: ${remision.no_orden || 'N/A'}`,
-      `Estado: ${remision.estado || 'N/A'}`,
-      `UNE: ${remision.une || 'N/A'}`,
+      `Remisión: ${remision.remision ? String(remision.remision) : 'N/A'}`,
+      `Móvil: ${remision.movil ? String(remision.movil) : 'N/A'}`,
+      `No. Orden: ${remision.no_orden ? String(remision.no_orden) : 'N/A'}`,
+      `Estado: ${remision.estado ? String(remision.estado) : 'N/A'}`,
+      `UNE: ${remision.une ? String(remision.une) : 'N/A'}`,
       `Fecha: ${remision.fecha_remision ? new Date(remision.fecha_remision).toLocaleDateString('es-CO') : 'N/A'}`,
       `Total: ${remision.total ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(remision.total) : 'N/A'}`
     ];
@@ -254,10 +254,17 @@ export const consolidatePDFs = async (attachments, remision, options = {}) => {
       throw new Error('No se pudo generar el PDF consolidado - no hay páginas válidas');
     }
     
-    // Generar nombre del archivo con formato: no_orden_movil.pdf
-    const ordenNumber = (remision.no_orden || 'ORDEN').replace(/[^a-zA-Z0-9]/g, '');
-    const movilNumber = (remision.movil || 'MOVIL').replace(/[^a-zA-Z0-9-]/g, '');
-    const finalFileName = fileName || `${ordenNumber}_${movilNumber}.pdf`;
+    // Generar nombre del archivo con nueva lógica de negocio
+    const noOrden = remision.no_orden ? String(remision.no_orden) : "ORDEN";
+    const movil = remision.movil ? String(remision.movil) : "MOVIL";
+    
+    const hasPrefix = noOrden.startsWith("BO-");
+    
+    const generatedFileName = hasPrefix
+      ? `${noOrden}_${movil}.pdf`
+      : `${noOrden}_Z70-${movil}.pdf`;
+    
+    const finalFileName = fileName || generatedFileName;
     
     // Guardar PDF consolidado
     const pdfBytes = await mergedPdf.save();

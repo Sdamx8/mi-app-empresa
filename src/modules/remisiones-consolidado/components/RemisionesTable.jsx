@@ -221,13 +221,15 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         <span className="text-sm font-medium">{getValue() || '-'}</span>
       ),
     },
-    // 11. TÉCNICO
+    // 11. NO. ID BIT
     {
-      accessorKey: 'tecnico1',
-      header: 'TÉCNICO',
+      accessorKey: 'no_id_bit',
+      header: 'NO. ID BIT',
       size: 150,
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue() || '-'}</span>
+      cell: ({ row }) => (
+        <div style={{ textAlign: 'center' }}>
+          {row.original.no_id_bit || '-'}
+        </div>
       ),
     },
   ], [isAdmin, onViewRemision, onEditRemision]);
