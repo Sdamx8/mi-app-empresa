@@ -1,16 +1,17 @@
 /**
  * 🚀 GLOBAL MOBILITY SOLUTIONS - CONSULTAR MÓVIL
  * ================================================
- * Componente básico para consultar remisiones por móvil
- * Muestra resultados en formato card con alertas de 6 meses
+ * Componente para consultar remisiones por móvil en tiempo real
+ * Utiliza onSnapshot para actualizaciones automáticas
+ * Soporta prefijos BO- y Z70-
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from "react";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../../core/config/firebaseConfig";
 import { motion } from 'framer-motion';
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useRole } from '../../../core/auth/RoleContext';
-import { useRemisiones } from '../hooks/useRemisiones';
-import { ESTADOS_REMISION_PROCESO } from '../../../shared/constants';
 import NavigationBar from '../../../shared/components/NavigationBar';
 import './ConsultarMovil.css';
 
@@ -19,219 +20,169 @@ const ConsultarMovil = () => {
   const { user } = useAuth();
   const { userRole } = useRole();
 
-  // Estados locales
-  const [busquedaMovil, setBusquedaMovil] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Estados principales
+  const [busquedaMovil, setBusquedaMovil] = useState("");
   const [remisiones, setRemisiones] = useState([]);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Estados para navegación
   const [navigationHistory, setNavigationHistory] = useState(['consultar-movil']);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
 
-  // Hook para gestión de remisiones
-  const { fetchRemisionesByMovil } = useRemisiones();
+  // 🔎 Normalizar móvil (eliminar prefijos BO- y Z70- para consultar en Firestore)
+  const normalizarMovil = (valor) => {
+    if (!valor) return null;
+    // Convertir siempre a string y limpiar
+    const valorStr = String(valor).trim();
+    // Quitar prefijos Z70- o BO- (case insensitive)
+    const limpio = valorStr.replace(/^(BO-|Z70-)/i, "");
+    // Si después de limpiar queda vacío, retornar null
+    if (!limpio) return null;
+    // Retornar como string para hacer comparaciones flexibles
+    return limpio;
+  };
 
-  // Función para buscar remisiones por móvil
-  const buscarPorMovil = useCallback(async () => {
-    if (!busquedaMovil.trim()) {
-      setError('Por favor ingrese un número de móvil');
-      return;
-    }
+  // 🔎 Formatear móvil para mostrar con prefijo correcto
+  const formatearMovil = (movil) => {
+    if (!movil) return "N/A";
+    const movilStr = String(movil);
+    // Si ya tiene prefijo BO-, dejarlo igual
+    if (movilStr.toUpperCase().startsWith("BO-")) return movilStr;
+    // Si no tiene prefijo, agregar Z70-
+    return `Z70-${movilStr}`;
+  };
 
-    const input = busquedaMovil.trim();
-    let valorBusqueda;
+  // Formatear técnicos (tecnico1, tecnico2, tecnico3)
+  const formatearTecnicos = (remision) => {
+    const tecnicos = [remision.tecnico1, remision.tecnico2, remision.tecnico3]
+      .filter(Boolean);
+    return tecnicos.length > 0 ? tecnicos.join(', ') : 'No asignado';
+  };
 
-    // Verificar si es un móvil con prefijo BO-
-    if (input.toUpperCase().startsWith('BO-')) {
-      // Para móviles BO-, validar que el sufijo no esté vacío
-      const suffix = input.substring(3).trim(); // Después de "BO-" o "bo-"
-      if (!suffix) {
-        setError('Por favor ingrese un móvil BO- completo (ej: BO-1234)');
-        return;
-      }
-      const prefix = 'BO-';
-      valorBusqueda = prefix + suffix;
-    } else {
-      // Para móviles numéricos, validar y convertir
-      const numeroMovil = parseInt(input);
-      if (isNaN(numeroMovil)) {
-        setError('Por favor ingrese un número de móvil válido (ej: 7361) o un móvil BO- (ej: BO-1234)');
-        return;
-      }
-      valorBusqueda = numeroMovil;
-    }
+  // 🔎 Validar periodicidad de 6 meses
+  const verificarAlerta6Meses = (fechaRemision) => {
+    if (!fechaRemision) return false;
+    const fecha = fechaRemision.toDate ? fechaRemision.toDate() : new Date(fechaRemision);
+    const hoy = new Date();
+    const seisMesesDespues = new Date(fecha);
+    seisMesesDespues.setMonth(seisMesesDespues.getMonth() + 6);
+    return hoy >= seisMesesDespues;
+  };
 
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Pasar el valor procesado (número o string BO-)
-      const resultados = await fetchRemisionesByMovil(valorBusqueda);
-      setRemisiones(resultados || []);
-      
-      if (!resultados || resultados.length === 0) {
-        setError(`No se encontraron trabajos para el móvil ${valorBusqueda}`);
-      } else {
-        console.log(`✅ Encontradas ${resultados.length} remisiones para móvil ${valorBusqueda}`);
-      }
-    } catch (err) {
-      console.error('Error al buscar remisiones:', err);
-      
-      // Manejo específico de errores en componente ConsultarMovil
-      let errorMessage = 'Error al buscar trabajos';
-      
-      if (err.message.includes('inválido')) {
-        errorMessage = 'Por favor, ingrese un número de móvil válido (ej: 7361) o un móvil BO- (ej: BO-1234)';
-      } else if (err.message.includes('configuración adicional') || err.message.includes('index')) {
-        errorMessage = 'La búsqueda por móvil requiere configuración adicional. Contacte al administrador.';
-      } else if (err.message.includes('permisos')) {
-        errorMessage = 'No tiene permisos para realizar esta búsqueda';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      setRemisiones([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [busquedaMovil, fetchRemisionesByMovil]);
-
-  // Función para manejar Enter en el input
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      buscarPorMovil();
-    }
-  }, [buscarPorMovil]);
-
-  // Formatear fecha - maneja objetos Timestamp de Firestore correctamente
-  const formatearFecha = useCallback((fecha) => {
+  // Formatear fecha
+  const formatearFecha = (fecha) => {
     if (!fecha) return 'N/A';
     
     try {
-      let fechaObj;
+      const fechaObj = fecha.toDate ? fecha.toDate() : new Date(fecha);
+      if (isNaN(fechaObj.getTime())) return 'Fecha inválida';
       
-      // Si es un Timestamp de Firestore (tiene seconds y nanoseconds)
-      if (fecha && typeof fecha === 'object' && fecha.seconds !== undefined) {
-        fechaObj = new Date(fecha.seconds * 1000);
-      }
-      // Si ya es un objeto Date
-      else if (fecha instanceof Date) {
-        fechaObj = fecha;
-      }
-      // Si es una cadena o número
-      else {
-        fechaObj = new Date(fecha);
-      }
-      
-      // Verificar si la fecha es válida
-      if (isNaN(fechaObj.getTime())) {
-        return 'Fecha inválida';
-      }
-      
-      // Usar la fecha tal como viene de Firestore sin ajustes de zona horaria
-      const year = fechaObj.getFullYear();
-      const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
-      const day = String(fechaObj.getDate()).padStart(2, '0');
-      
-      return `${day}/${month}/${year}`;
-    } catch (error) {
-      console.error('Error al formatear fecha:', error, fecha);
-      // Proporcionar información más detallada sobre el error de fecha
-      console.warn('FECHA PROBLEMATICA:', {
-        fecha: fecha,
-        tipo: typeof fecha,
-        esObjeto: fecha instanceof Date,
-        tieneSeconds: fecha && fecha.seconds
+      return fechaObj.toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       });
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
       return 'Fecha inválida';
     }
-  }, []);
+  };
 
-  // Función para formatear número de móvil con prefijo
-  const formatearMovil = useCallback((movil) => {
-    if (!movil) return 'N/A';
-    
-    const movilStr = movil.toString();
-    
-    // Si ya tiene prefijo BO-, no agregar Z70-
-    if (movilStr.startsWith('BO-')) {
-      return movilStr;
+  // 📡 Consulta en tiempo real con normalización flexible
+  useEffect(() => {
+    const movilNormalizado = normalizarMovil(busquedaMovil);
+    if (!movilNormalizado) {
+      setRemisiones([]);
+      setError("");
+      return;
     }
-    
-    // Agregar prefijo Z70- si no lo tiene
-    return `Z70-${movilStr}`;
-  }, []);
 
-  // Función para verificar alerta de 6 meses
-  const verificarAlerta6Meses = useCallback((fechaRemision) => {
-    if (!fechaRemision) return { mostrarAlerta: false, tipo: 'sin-fecha' };
-    
-    try {
-      let fechaObj;
-      
-      if (fechaRemision && typeof fechaRemision === 'object' && fechaRemision.seconds !== undefined) {
-        fechaObj = new Date(fechaRemision.seconds * 1000);
-      } else {
-        fechaObj = new Date(fechaRemision);
-      }
-      
-      if (isNaN(fechaObj.getTime())) {
-        return { mostrarAlerta: false, tipo: 'fecha-invalida' };
-      }
-      
-      const ahora = new Date();
-      const diferenciaMeses = (ahora.getFullYear() - fechaObj.getFullYear()) * 12 + 
-                             (ahora.getMonth() - fechaObj.getMonth());
-      
-      if (diferenciaMeses >= 6) {
-        return { 
-          mostrarAlerta: true, 
-          tipo: 'mas-6-meses', 
-          meses: diferenciaMeses,
-          color: '#27AE60', // Verde para más de 6 meses
-          mensaje: `✅ ${diferenciaMeses} meses sin trabajo`
-        };
-      } else {
-        return { 
-          mostrarAlerta: true, 
-          tipo: 'menos-6-meses', 
-          meses: diferenciaMeses,
-          color: '#E74C3C', // Rojo para menos de 6 meses
-          mensaje: `⚠️ Solo ${diferenciaMeses} meses sin trabajo`
-        };
-      }
-    } catch (error) {
-      console.error('Error al verificar alerta:', error);
-      // Logging detallado para debugging de alertas
-      console.warn('ERROR EN CALCULO DE ALERTA:', {
-        fechaRemision: fechaRemision,
-        tipoFecha: typeof fechaRemision,
-        error: error.message
-      });
-      return { mostrarAlerta: false, tipo: 'error' };
-    }
-  }, []);
+    setLoading(true);
+    setError("");
 
-  // Obtener información del estado
-  const getEstadoInfo = useCallback((estado) => {
-    return Object.values(ESTADOS_REMISION_PROCESO).find(e => e.value === estado) || 
-           { value: estado, label: estado, color: '#6c757d', description: 'Estado desconocido' };
-  }, []);
+    // Intentar consultas específicas primero (más eficiente)
+    const consultas = [
+      // Búsqueda como número
+      query(collection(db, "remisiones"), where("movil", "==", Number(movilNormalizado))),
+      // Búsqueda como string sin prefijo
+      query(collection(db, "remisiones"), where("movil", "==", movilNormalizado)),
+      // Búsqueda como string con prefijo Z70-
+      query(collection(db, "remisiones"), where("movil", "==", `Z70-${movilNormalizado}`)),
+      // Búsqueda como string con prefijo BO-
+      query(collection(db, "remisiones"), where("movil", "==", `BO-${movilNormalizado}`))
+    ];
+
+    const resultadosCombinados = new Map(); // Usar Map para evitar duplicados
+
+    let consultasCompletadas = 0;
+    const totalConsultas = consultas.length;
+
+    consultas.forEach((q, index) => {
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          // Agregar resultados al Map para evitar duplicados
+          snapshot.docs.forEach(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            resultadosCombinados.set(doc.id, data);
+          });
+
+          consultasCompletadas++;
+          
+          // Cuando todas las consultas estén completas
+          if (consultasCompletadas === totalConsultas) {
+            const resultadosFinales = Array.from(resultadosCombinados.values());
+            setRemisiones(resultadosFinales);
+            setLoading(false);
+
+            if (!resultadosFinales.length) {
+              setError("No se encontró ninguna remisión para este móvil.");
+            }
+          }
+        },
+        (err) => {
+          console.error(`Error en consulta ${index}:`, err);
+          consultasCompletadas++;
+          
+          if (consultasCompletadas === totalConsultas) {
+            const resultadosFinales = Array.from(resultadosCombinados.values());
+            if (!resultadosFinales.length) {
+              setError("Error al cargar los datos.");
+            }
+            setLoading(false);
+          }
+        }
+      );
+
+      // Guardar las funciones de unsubscribe para limpiar después
+      if (!window.consultaMovilUnsubscribers) {
+        window.consultaMovilUnsubscribers = [];
+      }
+      window.consultaMovilUnsubscribers.push(unsubscribe);
+    });
+
+    // Función de limpieza
+    return () => {
+      if (window.consultaMovilUnsubscribers) {
+        window.consultaMovilUnsubscribers.forEach(unsub => unsub());
+        window.consultaMovilUnsubscribers = [];
+      }
+    };
+  }, [busquedaMovil]);
 
   // Funciones de navegación
-  const handleNavigateBack = useCallback(() => {
+  const handleNavigateBack = () => {
     if (currentHistoryIndex > 0) {
       setCurrentHistoryIndex(prev => prev - 1);
     }
-  }, [currentHistoryIndex]);
+  };
 
-  const handleNavigateForward = useCallback(() => {
+  const handleNavigateForward = () => {
     if (currentHistoryIndex < navigationHistory.length - 1) {
       setCurrentHistoryIndex(prev => prev + 1);
     }
-  }, [currentHistoryIndex, navigationHistory.length]);
+  };
 
   return (
     <div className="consultar-movil">
@@ -253,9 +204,7 @@ const ConsultarMovil = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="page-title">
-          🔍 Consultar Móvil
-        </h1>
+        <h1 className="page-title">🔧 Consultar Móvil</h1>
         <div className="user-info">
           <span className="user-role-badge">{userRole?.toUpperCase()}</span>
           <span className="user-email">{user?.email}</span>
@@ -272,31 +221,19 @@ const ConsultarMovil = () => {
         <div className="search-container">
           <div className="search-group">
             <label>Número de Móvil</label>
-            <div className="search-input-container">
-              <input
-                type="text"
-                placeholder="Ej: 7399, 4133, BO-1234, etc."
-                value={busquedaMovil}
-                onChange={(e) => setBusquedaMovil(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="search-input"
-              />
-              <motion.button
-                className="btn-search-movil"
-                onClick={buscarPorMovil}
-                disabled={loading || !busquedaMovil.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {loading ? '🔄' : '🔍'} Buscar
-              </motion.button>
-            </div>
+            <input
+              type="text"
+              placeholder="Ingrese móvil (ej: 7354, Z70-7354, BO-7354)"
+              value={busquedaMovil}
+              onChange={(e) => setBusquedaMovil(e.target.value)}
+              className="search-input"
+            />
           </div>
         </div>
         
         <div className="search-info">
-          <p>💡 <strong>Instrucciones:</strong> Ingrese el número del móvil (ej: 7361) o móviles con prefijo BO- (ej: BO-1234). 
-             Los resultados mostrarán el móvil tal como está guardado en la base de datos.</p>
+          <p>💡 <strong>Búsqueda en tiempo real:</strong> Los resultados se actualizan automáticamente. 
+             Soporta formatos: 7354, Z70-7354, BO-7354</p>
         </div>
       </motion.div>
 
@@ -307,147 +244,87 @@ const ConsultarMovil = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        {error && (
-          <motion.div 
-            className="error-message"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            ❌ {error}
-          </motion.div>
-        )}
-
-        {loading && (
-          <motion.div 
-            className="loading-message"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            🔄 Buscando trabajos...
-          </motion.div>
-        )}
-
-        {!loading && !error && remisiones.length === 0 && busquedaMovil && (
-          <motion.div 
-            className="no-results"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            📭 No se encontraron trabajos para el móvil {formatearMovil(busquedaMovil)}
-          </motion.div>
-        )}
+        {loading && <p className="loading-message">⏳ Cargando datos...</p>}
+        {error && <p className="error-message" style={{ color: "red" }}>{error}</p>}
 
         {!loading && !error && remisiones.length > 0 && (
-          <>
-            <div className="results-header">
-              <span className="results-count">
-                📊 {remisiones.length} trabajo(s) encontrado(s) para el móvil {formatearMovil(busquedaMovil)}
-              </span>
-            </div>
+          <div className="remisiones-cards-grid">
+            {remisiones.map((remision, index) => {
+              const disponible = verificarAlerta6Meses(remision.fecha_remision);
+              return (
+                <motion.div 
+                  key={remision.id} 
+                  className="remision-card-busqueda"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, boxShadow: '0 8px 25px rgba(0,0,0,0.15)' }}
+                >
+                  {/* Header del card */}
+                  <div className="card-header">
+                    <div className="remision-info">
+                      <div className="remision-number">
+                        <strong>Remisión #{remision.remision}</strong>
+                      </div>
+                      <div className="movil-display">
+                        🚐 {formatearMovil(remision.movil)}
+                      </div>
+                    </div>
+                  </div>
 
-            <div className="remisiones-cards-grid">
-              {remisiones.map((remision, index) => {
-                const estadoInfo = getEstadoInfo(remision.estado);
-                const alertaInfo = verificarAlerta6Meses(remision.fecha_remision);
-                
-                return (
-                  <motion.div
-                    key={remision.id}
-                    className="remision-card-busqueda"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02, boxShadow: '0 8px 25px rgba(0,0,0,0.15)' }}
-                  >
+                  {/* Contenido del card */}
+                  <div className="card-content">
+                    <div className="info-row">
+                      <span className="label">📋 No. Orden:</span>
+                      <span className="value">{remision.no_orden || 'N/A'}</span>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">📅 Fecha Remisión:</span>
+                      <span className="value fecha-destacada">
+                        {formatearFecha(remision.fecha_remision)}
+                      </span>
+                    </div>
+                    
+                    <div className="info-row">
+                      <span className="label">👤 Técnico(s):</span>
+                      <span className="value">{formatearTecnicos(remision)}</span>
+                    </div>
+
+                    <div className="info-row servicios-row">
+                      <span className="label">🔧 Servicios:</span>
+                      <div className="servicios-list">
+                        {[remision.servicio1, remision.servicio2, remision.servicio3, remision.servicio4, remision.servicio5]
+                          .filter(Boolean)
+                          .map((servicio, idx) => (
+                            <div key={idx} className="servicio-item">
+                              • {servicio}
+                            </div>
+                          ))
+                        }
+                        {![remision.servicio1, remision.servicio2, remision.servicio3, remision.servicio4, remision.servicio5]
+                          .filter(Boolean).length && (
+                          <div className="servicio-item no-servicios">
+                            No hay servicios registrados
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Alerta de 6 meses */}
-                    {alertaInfo.mostrarAlerta && (
-                      <div 
-                        className="alerta-6-meses"
-                        style={{ backgroundColor: alertaInfo.color }}
-                      >
-                        {alertaInfo.mensaje}
-                      </div>
-                    )}
-
-                    {/* Header del card */}
-                    <div className="card-header">
-                      <div className="remision-info">
-                        <div className="remision-number">
-                          <strong>#{remision.remision || 'N/A'}</strong>
-                        </div>
-                        <div className="movil-display">
-                          🚐 {formatearMovil(remision.movil)}
-                        </div>
-                      </div>
-                      <div 
-                        className="estado-badge"
-                        style={{ backgroundColor: estadoInfo.color }}
-                        title={estadoInfo.description}
-                      >
-                        {estadoInfo.label}
-                      </div>
+                    <div className="info-row">
+                      <span className="label">⏰ Estado de Mantenimiento:</span>
+                      <span className="value" style={{ color: disponible ? "green" : "orange" }}>
+                        {disponible
+                          ? "✅ Disponible para nuevo mantenimiento"
+                          : "⏳ Aún no cumple los 6 meses"}
+                      </span>
                     </div>
-
-                    {/* Contenido del card */}
-                    <div className="card-content">
-                      <div className="info-row">
-                        <span className="label">📅 Fecha de Remisión:</span>
-                        <span className="value fecha-destacada">
-                          {formatearFecha(remision.fecha_remision)}
-                        </span>
-                      </div>
-                      
-                      <div className="info-row">
-                        <span className="label">👤 Técnico:</span>
-                        <span className="value">{remision.tecnico1 || remision.genero || 'No asignado'}</span>
-                      </div>
-                      
-                      <div className="info-row">
-                        <span className="label">📍 UNE:</span>
-                        <span className="value une-destacada">{remision.une || 'N/A'}</span>
-                      </div>
-                      
-                      <div className="info-row">
-                        <span className="label">✅ Autorizó:</span>
-                        <span className="value">{remision.autorizo || 'N/A'}</span>
-                      </div>
-                      
-                      <div className="info-row servicios-row">
-                        <span className="label">🔧 Servicios:</span>
-                        <div className="servicios-list">
-                          {[remision.servicio1, remision.servicio2, remision.servicio3, remision.servicio4, remision.servicio5]
-                            .filter(Boolean)
-                            .map((servicio, idx) => (
-                              <div key={idx} className="servicio-item">
-                                • {servicio}
-                              </div>
-                            ))
-                          }
-                          {![remision.servicio1, remision.servicio2, remision.servicio3, remision.servicio4, remision.servicio5]
-                            .filter(Boolean).length && (
-                            <div className="servicio-item">No hay servicios registrados</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer del card */}
-                    <div className="card-footer">
-                      <div className="total-info">
-                        <span className="total-label">💰 Total:</span>
-                        <span className="total-value">
-                          {remision.total ? 
-                            `$${parseFloat(remision.total).toLocaleString('es-CO')}` : 
-                            'N/A'
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </motion.div>
     </div>

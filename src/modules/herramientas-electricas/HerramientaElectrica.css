@@ -1,0 +1,467 @@
+/* HerramientaElectrica.css - Estilos complementarios para Tailwind CSS */
+
+/* ========== VARIABLES GLOBALES ========== */
+:root {
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1d4ed8;
+  --success-green: #10b981;
+  --warning-yellow: #f59e0b;
+  --danger-red: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-600: #4b5563;
+  --gray-900: #111827;
+}
+
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.herramientas-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* ========== HEADER MEJORADO ========== */
+.herramientas-header {
+  background: linear-gradient(135deg, white 0%, #f8fafc 100%);
+  border-left: 4px solid var(--primary-blue);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.herramientas-title {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ========== ESTADÍSTICAS CARDS ========== */
+.stats-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card.total { border-left-color: var(--primary-blue); }
+.stats-card.operativas { border-left-color: var(--success-green); }
+.stats-card.reparacion { border-left-color: var(--warning-yellow); }
+.stats-card.baja { border-left-color: var(--danger-red); }
+.stats-card.mantenimiento { border-left-color: #8b5cf6; }
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  border-radius: 50%;
+  transform: translate(25%, -25%);
+  opacity: 0.5;
+}
+
+/* ========== FORMULARIO MEJORADO ========== */
+.form-container {
+  background: linear-gradient(135deg, white 0%, #fefefe 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-blue) 0%, #3b82f6 50%, var(--primary-blue) 100%);
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-input, .form-select, .form-textarea {
+  transition: all 0.3s ease;
+  border: 2px solid #e5e7eb;
+  background: white;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: #fefefe;
+}
+
+.form-input:hover, .form-select:hover, .form-textarea:hover {
+  border-color: #d1d5db;
+  background: #fefefe;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--gray-900);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+/* ========== BOTONES MEJORADOS ========== */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.5);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: white;
+  border: 2px solid #e5e7eb;
+  color: var(--gray-600);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+  background: #f8fafc;
+}
+
+/* ========== ESTADOS/BADGES ========== */
+.estado-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.estado-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+  transition: left 0.6s ease;
+}
+
+.estado-badge:hover::before {
+  left: 100%;
+}
+
+/* ========== CARDS DE HERRAMIENTAS ========== */
+.tool-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.tool-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-blue);
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-blue) 0%, #3b82f6 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tool-card:hover::before {
+  opacity: 1;
+}
+
+.tool-image-container {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.tool-image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(37, 99, 235, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tool-card:hover .tool-image-container::after {
+  opacity: 1;
+}
+
+.tool-image {
+  transition: transform 0.3s ease;
+}
+
+.tool-card:hover .tool-image {
+  transform: scale(1.1);
+}
+
+/* ========== TABLA MEJORADA ========== */
+.tools-table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.table-header th {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-900);
+  padding: 16px 24px;
+}
+
+.table-row {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table-row:hover {
+  background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+  transform: scale(1.001);
+}
+
+.table-cell {
+  padding: 16px 24px;
+  color: var(--gray-900);
+}
+
+/* ========== FILTROS ========== */
+.filters-container {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  position: relative;
+}
+
+.search-input {
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ========== MENSAJES ========== */
+.message-container {
+  border-radius: 8px;
+  border-left: 4px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.message-success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-left-color: var(--success-green);
+}
+
+.message-error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%);
+  border-left-color: var(--danger-red);
+}
+
+.message-info {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-left-color: var(--primary-blue);
+}
+
+/* ========== LOADING ========== */
+.loading-spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid var(--primary-blue);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ========== IMAGEN PREVIEW ========== */
+.image-preview {
+  border-radius: 8px;
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.image-preview:hover {
+  transform: scale(1.05);
+}
+
+/* ========== BOTONES DE ACCIÓN ========== */
+.action-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-edit { 
+  background: #dbeafe; 
+  color: #1d4ed8; 
+}
+.action-edit:hover { 
+  background: #bfdbfe; 
+  border-color: #3b82f6; 
+}
+
+.action-qr { 
+  background: #dcfce7; 
+  color: #16a34a; 
+}
+.action-qr:hover { 
+  background: #bbf7d0; 
+  border-color: #22c55e; 
+}
+
+.action-delete { 
+  background: #fee2e2; 
+  color: #dc2626; 
+}
+.action-delete:hover { 
+  background: #fecaca; 
+  border-color: #ef4444; 
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .herramientas-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tool-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .herramientas-title {
+    font-size: 24px;
+  }
+}
+
+/* ========== ANIMACIONES ADICIONALES ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+/* ========== UTILIDADES PERSONALIZADAS ========== */
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.border-gradient {
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, var(--primary-blue), #3b82f6) border-box;
+  border: 2px solid transparent;
+}
+
+.shadow-custom {
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1),
+              0 10px 10px -5px rgba(37, 99, 235, 0.04);
+}

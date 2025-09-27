@@ -346,6 +346,13 @@
   margin-bottom: 0;
 }
 
+.servicio-item.no-servicios {
+  color: var(--color-gray);
+  font-style: italic;
+  text-align: center;
+  padding-left: 0;
+}
+
 /* Footer del card */
 .card-footer {
   background: linear-gradient(135deg, #F8F9FA, #E9ECEF);

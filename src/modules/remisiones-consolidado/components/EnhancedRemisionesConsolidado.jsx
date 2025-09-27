@@ -11,6 +11,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../../core/auth/AuthContext';
+import { FilterPersistenceProvider } from '../context/FilterPersistenceContext';
 import RemisionesSpreadsheet from './RemisionesSpreadsheet';
 import RemisionesTable from './RemisionesTable';
 import RemisionDetail from './RemisionDetail';
@@ -239,4 +240,13 @@ const EnhancedRemisionesConsolidado = () => {
   );
 };
 
-export default EnhancedRemisionesConsolidado;
+// Componente envuelto con el proveedor de contexto de filtros
+const EnhancedRemisionesConsolidadoWithFilters = () => {
+  return (
+    <FilterPersistenceProvider>
+      <EnhancedRemisionesConsolidado />
+    </FilterPersistenceProvider>
+  );
+};
+
+export default EnhancedRemisionesConsolidadoWithFilters;

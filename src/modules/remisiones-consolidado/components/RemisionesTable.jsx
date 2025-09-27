@@ -3,9 +3,10 @@
  * ====================================== 
  * Tabla avanzada con TanStack Table para visualización y administración completa de remisiones
  * Incluye filtros, ordenamiento, paginación, contadores de estado y administración en tiempo real
+ * Con persistencia de filtros mediante localStorage
  * 
  * @author: Global Mobility Solutions
- * @version: 1.0.0
+ * @version: 2.0.0 - Filter Persistence
  * @date: September 2025
  */
 
@@ -21,7 +22,10 @@ import {
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useRealTimeRemisiones, useFilteredRemisiones, ESTADOS_REMISION, ESTADOS_CON_JUSTIFICACION } from '../hooks/useRealTimeRemisiones';
 import { downloadConsolidatedPDF, validateAttachmentsForConsolidation } from '../lib/pdfConsolidation';
+import { useRemisionesTableState, FILTER_STATES } from '../hooks/useTableState';
 import './RemisionesTable.css';
+import './FilterPersistence.css';
+import './QuickFilters.css';
 
 const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} }) => {
   const { user } = useAuth();
@@ -35,21 +39,36 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
     changeEstado 
   } = useRealTimeRemisiones();
 
-  // Estados locales para filtros y UI
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [sorting, setSorting] = useState([{ id: 'fecha_remision', desc: true }]);
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 20,
-  });
+  // Hook personalizado para persistencia de estado de tabla
+  const [tableState, setTableState, updateTableState, resetTableState] = useRemisionesTableState();
   
-  // Estados para modales/acciones
+  // Estados para modales/acciones (mantener locales)
   const [selectedRemision, setSelectedRemision] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEstadoModal, setShowEstadoModal] = useState(false);
   const [estadoForm, setEstadoForm] = useState({ estado: '', justificacion: '' });
   const [notification, setNotification] = useState(null);
+
+  // Handlers para actualizar el estado de la tabla
+  const handleSearchChange = (e) => {
+    updateTableState({ search: e.target.value, page: 1 });
+  };
+
+  const handlePageChange = (newPage) => {
+    updateTableState({ page: newPage });
+  };
+
+  const handleSortChange = (sortConfig) => {
+    updateTableState({ sort: sortConfig });
+  };
+
+  const handleFilterChange = (estado) => {
+    updateTableState({ filter: estado, page: 1 });
+  };
+
+  const clearAllFilters = () => {
+    resetTableState();
+  };
 
   // Verificar si es usuario administrador
   const isAdmin = user?.email === 'davian.ayala7@gmail.com';
@@ -234,23 +253,34 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
     },
   ], [isAdmin, onViewRemision, onEditRemision]);
 
+  // Aplicar filtrado al dataset según especificación
+  const filteredData = useMemo(() => {
+    return remisiones
+      .filter((remision) =>
+        tableState.filter === FILTER_STATES.ALL ? true : remision.estado === tableState.filter
+      )
+      .filter((remision) =>
+        tableState.search === '' ? true :
+        Object.values(remision)
+          .join(" ")
+          .toLowerCase()
+          .includes(tableState.search.toLowerCase())
+      );
+  }, [remisiones, tableState.filter, tableState.search]);
+
   // Configurar tabla con TanStack Table
   const table = useReactTable({
-    data: remisiones,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
-    state: {
-      globalFilter,
-      columnFilters,
-      sorting,
-      pagination,
+    initialState: {
+      pagination: {
+        pageIndex: tableState.page - 1, // TanStack usa 0-indexing
+        pageSize: 10,
+      },
+      sorting: tableState.sort ? [tableState.sort] : [],
     },
   });
 
@@ -405,21 +435,76 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         </div>
       </div>
 
+      {/* Filtros rápidos por estado */}
+      <div className="quick-filters">
+        <div className="quick-filters-title">
+          🔍 Filtros rápidos:
+        </div>
+        <div className="filter-buttons">
+          {Object.entries({
+            [FILTER_STATES.ALL]: 'Todos',
+            [FILTER_STATES.GENERADO]: 'Generados', 
+            [FILTER_STATES.PENDIENTE]: 'Pendientes',
+            [FILTER_STATES.PROFORMA]: 'Proformas',
+            [FILTER_STATES.RADICADO]: 'Radicados',
+            [FILTER_STATES.FACTURADO]: 'Facturados',
+            [FILTER_STATES.CANCELADO]: 'Cancelados'
+          }).map(([state, label]) => (
+            <button
+              key={state}
+              className={`filter-btn ${tableState.filter === state ? 'active' : ''}`}
+              data-state={state}
+              onClick={() => handleFilterChange(state)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Controles superiores */}
       <div className="table-controls">
         <div className="search-container">
           <input
             type="text"
             placeholder="Buscar en todas las columnas..."
-            value={globalFilter ?? ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={tableState.search}
+            onChange={handleSearchChange}
             className="search-input"
           />
         </div>
         
         <div className="table-info">
-          Mostrando {table.getRowModel().rows.length} de {remisiones.length} remisiones
+          <span className="filter-status">
+            {tableState.filter !== FILTER_STATES.ALL && (
+              <span className="active-filter">
+                Filtrado por: <strong>{tableState.filter}</strong>
+              </span>
+            )}
+            {tableState.search && (
+              <span className="active-search">
+                Búsqueda: <strong>"{tableState.search}"</strong>
+              </span>
+            )}
+          </span>
+          <button 
+            className="clear-filters-btn"
+            onClick={clearAllFilters}
+            disabled={tableState.filter === FILTER_STATES.ALL && !tableState.search}
+          >
+            🗑️ Limpiar filtros
+          </button>
         </div>
+      </div>
+
+      {/* Información de resultados */}
+      <div className="results-info">
+        <span className="results-count">
+          Mostrando {table.getRowModel().rows.length} de {filteredData.length} remisiones
+          {filteredData.length < remisiones.length && (
+            <small> (filtrado de {remisiones.length} total)</small>
+          )}
+        </span>
       </div>
 
       {/* Tabla principal */}
