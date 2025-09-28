@@ -1,0 +1,111 @@
+/* ServiceAutocomplete Styles - Integrado con RemisionesSpreadsheet */
+
+.service-autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+
+.service-autocomplete-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background-color: #ffffff;
+  color: #2d3748;
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.service-autocomplete-input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  background-color: #f7fafc;
+}
+
+.service-autocomplete-input::placeholder {
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.service-autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 2px;
+  overflow: hidden;
+}
+
+.service-autocomplete-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.service-autocomplete-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #2d3748;
+  border-bottom: 1px solid #f7fafc;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.service-autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.service-autocomplete-item:hover {
+  background-color: #f7fafc;
+  color: #1a202c;
+}
+
+.service-autocomplete-no-results {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #718096;
+  font-style: italic;
+}
+
+/* Scroll personalizado para la lista */
+.service-autocomplete-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.service-autocomplete-list::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 2px;
+}
+
+.service-autocomplete-list::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 2px;
+}
+
+.service-autocomplete-list::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .service-autocomplete-input {
+    font-size: 16px; /* Evitar zoom en iOS */
+  }
+  
+  .service-autocomplete-item {
+    padding: 12px;
+    font-size: 14px;
+  }
+}

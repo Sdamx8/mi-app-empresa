@@ -483,3 +483,78 @@
     padding: 4px 6px;
   }
 }
+
+/* ===== 🆕 DYNAMIC SERVICES STYLES ===== */
+.services-header {
+  min-width: 280px;
+  max-width: 350px;
+}
+
+.services-cell {
+  min-width: 280px;
+  max-width: 350px;
+  padding: 12px;
+  vertical-align: top;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.services-cell .dynamic-services-container {
+  max-height: 200px;
+  overflow-y: visible;
+}
+
+/* Estilos específicos para servicios en tabla */
+.services-cell .service-item {
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.services-cell .service-item:last-child {
+  margin-bottom: 0;
+}
+
+.services-cell .service-header {
+  margin-bottom: 4px;
+}
+
+.services-cell .service-label {
+  font-size: 10px;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.services-cell .service-input {
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+}
+
+.services-cell .add-service-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+  min-width: auto;
+}
+
+.services-cell .remove-service-btn {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+/* Responsive para columna de servicios */
+@media (max-width: 768px) {
+  .services-header,
+  .services-cell {
+    min-width: 250px;
+    max-width: 300px;
+  }
+  
+  .services-cell .dynamic-services {
+    max-height: 200px;
+  }
+}

@@ -19,7 +19,7 @@ import {
   useRemisionSaver,
   useCalculateTotals
 } from '../../ingresar-trabajo/hooks/useFirestoreHooks';
-import ServicioSelect from '../../ingresar-trabajo/components/ServicioSelect';
+import DynamicServices from './DynamicServices';
 import './RemisionesSpreadsheet.css';
 import '../styles/RemisionesConsolidado.css';
 
@@ -52,11 +52,7 @@ const createEmptyRow = () => ({
   movil: '', // string - permite formato libre como "7777" o "BO-0177"
   no_orden: '', // string
   estado: 'GENERADO', // string - por defecto GENERADO
-  servicio1: '', // string - vacío por defecto para evitar warnings de React
-  servicio2: '', // string - vacío por defecto para evitar warnings de React
-  servicio3: '', // string - vacío por defecto para evitar warnings de React
-  servicio4: '', // string - vacío por defecto para evitar warnings de React
-  servicio5: '', // string - vacío por defecto para evitar warnings de React
+  servicios: [''], // array - servicios dinámicos, por defecto un servicio vacío
   fecha_remision: new Date(), // timestamp
   fecha_maximo: new Date(), // timestamp
   fecha_bit_prof: new Date(), // timestamp
@@ -123,28 +119,14 @@ const RemisionesSpreadsheet = () => {
     }
   }, [userData, user, userLoading]);
 
-  // Update cell value - Handling both direct calls and ServicioSelect calls
-  const updateCell = useCallback((rowIndexOrField, fieldOrValue, value) => {
-    let rowIndex, field, newValue;
-    
-    // Handle calls from ServicioSelect (field, value) vs direct calls (rowIndex, field, value)
-    if (typeof rowIndexOrField === 'string') {
-      // Called from ServicioSelect: updateCell(field, value)
-      // We need to find which row we're updating - this will be handled by a closure
-      return;
-    } else {
-      // Direct call: updateCell(rowIndex, field, value)
-      rowIndex = rowIndexOrField;
-      field = fieldOrValue;
-      newValue = value;
-    }
-    
+  // Update cell value - Handling servicios dinámicos
+  const updateCell = useCallback((rowIndex, field, value) => {
     setRows(prev => {
       const newRows = [...prev];
-      newRows[rowIndex] = { ...newRows[rowIndex], [field]: newValue };
+      newRows[rowIndex] = { ...newRows[rowIndex], [field]: value };
       
       // Recalculate totals if it's a service or subtotal change
-      if (field.startsWith('servicio') || field === 'subtotal') {
+      if (field === 'servicios' || field === 'subtotal') {
         const { subtotal, total } = calculateRowTotals(newRows[rowIndex]);
         newRows[rowIndex].subtotal = subtotal;
         newRows[rowIndex].total = total;
@@ -154,9 +136,9 @@ const RemisionesSpreadsheet = () => {
     });
   }, [calculateRowTotals]);
 
-  // Create a specific handler for ServicioSelect
-  const handleServicioChange = useCallback((rowIndex, field, value) => {
-    updateCell(rowIndex, field, value);
+  // Manejar cambio de servicios dinámicos
+  const handleServicesChange = useCallback((rowIndex, newServices) => {
+    updateCell(rowIndex, 'servicios', newServices);
   }, [updateCell]);
 
   // Add new row
@@ -189,7 +171,12 @@ const RemisionesSpreadsheet = () => {
         row.remision && 
         row.movil && 
         row.no_orden && 
-        row.servicio1
+        row.servicios && 
+        row.servicios.some(s => {
+          if (typeof s === 'string') return s.trim() !== '';
+          if (typeof s === 'object' && s !== null) return s.título && s.título.trim() !== '';
+          return false;
+        })
       );
 
       if (validRows.length === 0) {
@@ -197,14 +184,29 @@ const RemisionesSpreadsheet = () => {
         return;
       }
 
-      const remisionesData = validRows.map(row => ({
-        ...row,
-        estado: 'IMPRESO', // Cambiar el estado por defecto a IMPRESO
-        genero: user?.email || 'usuario@email.com',
-        fecha_creacion: new Date(),
-        // Eliminar propiedades de React
-        id: undefined
-      }));
+      const remisionesData = validRows.map(row => {
+        const data = {
+          ...row,
+          estado: 'IMPRESO', // Cambiar el estado por defecto a IMPRESO
+          genero: user?.email || 'usuario@email.com',
+          fecha_creacion: new Date(),
+          // Procesar servicios: mantener estructura con id y título
+          servicios: (row.servicios || [])
+            .filter(s => {
+              if (typeof s === 'string') return s.trim() !== '';
+              if (typeof s === 'object' && s !== null) return s.título && s.título.trim() !== '';
+              return false;
+            })
+            .map(s => {
+              if (typeof s === 'string') return { título: s };
+              return { id_servicio: s.id_servicio, título: s.título };
+            }),
+          // Eliminar propiedades de React
+          id: undefined
+        };
+
+        return data;
+      });
 
       await saveMultipleRemisiones(remisionesData);
       showNotification(`${validRows.length} remisiones guardadas exitosamente`, 'success');
@@ -301,11 +303,7 @@ const RemisionesSpreadsheet = () => {
                 <th>Móvil</th>
                 <th>N° Orden</th>
                 <th>Estado</th>
-                <th>Servicio 1</th>
-                <th>Servicio 2</th>
-                <th>Servicio 3</th>
-                <th>Servicio 4</th>
-                <th>Servicio 5</th>
+                <th className="services-header">Servicios</th>
                 <th>Fecha Remisión</th>
                 <th>Fecha Máximo</th>
                 <th>Fecha BIT Prof</th>
@@ -386,19 +384,13 @@ const RemisionesSpreadsheet = () => {
                       </select>
                     </td>
                     
-                    {/* Servicios 1-5 */}
-                    {[1, 2, 3, 4, 5].map(num => (
-                      <td key={`servicio${num}`}>
-                        <ServicioSelect
-                          value={row[`servicio${num}`]}
-                          onChange={(field, value) => handleServicioChange(rowIndex, field, value)}
-                          servicios={serviciosForSelect}
-                          name={`servicio${num}`}
-                          placeholder={`-- Servicio ${num} --`}
-                          showCost={false} // Solo mostrar títulos, no costos
-                        />
-                      </td>
-                    ))}
+                    {/* Servicios Dinámicos */}
+                    <td className="services-cell">
+                      <DynamicServices
+                        services={row.servicios || ['']}
+                        onChange={(services) => handleServicesChange(rowIndex, services)}
+                      />
+                    </td>
                     
                     {/* Fechas */}
                     {['fecha_remision', 'fecha_maximo', 'fecha_bit_prof', 'radicacion'].map(field => (
