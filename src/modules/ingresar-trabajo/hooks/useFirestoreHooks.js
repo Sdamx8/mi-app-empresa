@@ -324,9 +324,23 @@ export const useRemisionSaver = () => {
       const results = [];
       
       for (const remision of remisionesArray) {
-        // Validar datos requeridos
-        if (!remision.remision || !remision.movil) {
-          throw new Error('Remisión y móvil son campos obligatorios');
+        // Función helper para normalizar strings
+        const normalizeString = (value) => {
+          if (value === undefined || value === null) return "";
+          return String(value).trim();
+        };
+
+        // 1. Validar que móvil siempre esté presente
+        if (!normalizeString(remision.movil)) {
+          throw new Error("El campo 'móvil' es obligatorio para guardar la remisión.");
+        }
+
+        // 2. Validar que exista al menos remisión O no_orden
+        const hasRemision = normalizeString(remision.remision) !== '';
+        const hasOrden = normalizeString(remision.no_orden) !== '';
+
+        if (!hasRemision && !hasOrden) {
+          throw new Error("Debe existir al menos un número de remisión o un número de orden de trabajo.");
         }
 
         const result = await saveRemision(remision, userEmail);
