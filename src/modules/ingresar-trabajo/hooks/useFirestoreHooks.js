@@ -258,23 +258,41 @@ export const useRemisionSaver = () => {
         tecnico2: String(remisionData.tecnico2 || ''),
         tecnico3: String(remisionData.tecnico3 || ''),
         
-        // Fechas como Timestamps
-        fecha_remision: remisionData.fecha_remision instanceof Date ? 
-          Timestamp.fromDate(remisionData.fecha_remision) : 
-          Timestamp.fromDate(new Date(remisionData.fecha_remision)),
-        fecha_maximo: remisionData.fecha_maximo instanceof Date ? 
-          Timestamp.fromDate(remisionData.fecha_maximo) : 
-          Timestamp.fromDate(new Date(remisionData.fecha_maximo)),
-        fecha_bit_prof: remisionData.fecha_bit_prof instanceof Date ? 
-          Timestamp.fromDate(remisionData.fecha_bit_prof) : 
-          Timestamp.fromDate(new Date(remisionData.fecha_bit_prof)),
-        radicacion: remisionData.radicacion instanceof Date ? 
-          Timestamp.fromDate(remisionData.radicacion) : 
-          Timestamp.fromDate(new Date(remisionData.radicacion))
+        // Helper function para fechas seguras
+        ...(function() {
+          const convertToTimestamp = (dateValue) => {
+            if (!dateValue || dateValue === '') return null;
+            try {
+              if (dateValue instanceof Date) {
+                return isNaN(dateValue.getTime()) ? null : Timestamp.fromDate(dateValue);
+              }
+              const parsedDate = new Date(dateValue);
+              return isNaN(parsedDate.getTime()) ? null : Timestamp.fromDate(parsedDate);
+            } catch (error) {
+              console.warn('Error parsing date:', dateValue, error);
+              return null;
+            }
+          };
+          
+          const result = {};
+          const fecha_remision = convertToTimestamp(remisionData.fecha_remision);
+          const fecha_maximo = convertToTimestamp(remisionData.fecha_maximo);
+          const fecha_bit_prof = convertToTimestamp(remisionData.fecha_bit_prof);
+          const radicacion = convertToTimestamp(remisionData.radicacion);
+          
+          if (fecha_remision !== null) result.fecha_remision = fecha_remision;
+          if (fecha_maximo !== null) result.fecha_maximo = fecha_maximo;
+          if (fecha_bit_prof !== null) result.fecha_bit_prof = fecha_bit_prof;
+          if (radicacion !== null) result.radicacion = radicacion;
+          
+          return result;
+        })()
       };
 
-      // Usar la remisión como ID del documento (ya es string)
-      const documentId = firestoreData.remision || 'temp-' + Date.now();
+      // Usar la remisión como ID del documento o generar uno para órdenes de trabajo
+      const documentId = firestoreData.remision && firestoreData.remision.trim() !== '' 
+        ? firestoreData.remision 
+        : 'orden-' + Date.now();
       
       // Agregar metadatos
       firestoreData.created_at = Timestamp.now();

@@ -1,7 +1,39 @@
 /**
  * 📊 REMISIONES CONSOLIDADO SPREADSHEET - Google Sheets Style Interface
  * =====================================================================
- * Interfaz tipo hoja de cálculo para ingreso masivo de remisiones con estado IMPRESO
+ * Interfaz tipo hoja de cálculo para ingreso masi  // Save all rows to Firestore - Función mejorada con nuevas validaciones
+  const handleSaveRemisiones = useCallback(async () => {
+    if (isSaving) return;
+    
+    try {
+      setIsSaving(true);
+
+      // Validación flexible: móvil siempre obligatorio + (remisión O no_orden)
+      const validRows = [];
+      const invalidRows = [];
+      
+      rows.forEach(row => {
+        const movilValid = normalizeString(row.movil) !== '';
+        const hasRemision = normalizeString(row.remision) !== '';
+        const hasOrden = normalizeString(row.no_orden) !== '';
+        
+        if (!movilValid) {
+          invalidRows.push('Falta móvil');
+        } else if (!hasRemision && !hasOrden) {
+          invalidRows.push('Debe existir al menos un número de remisión o número de orden de trabajo');
+        } else {
+          validRows.push(row);
+        }
+      });
+
+      if (validRows.length === 0) {
+        if (invalidRows.length > 0) {
+          showNotification(`❌ Error: ${invalidRows[0]}`, 'error');
+        } else {
+          showNotification('❌ Debes ingresar al menos: Móvil + (Remisión ó N° Orden)', 'error');
+        }
+        return;
+      } estado IMPRESO
  * 
  * @author: Global Mobility Solutions
  * @version: 2.0.0
@@ -76,6 +108,7 @@ const RemisionesSpreadsheet = () => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [editingCell, setEditingCell] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { user } = useAuth();
   
@@ -87,6 +120,37 @@ const RemisionesSpreadsheet = () => {
   const { calculateRowTotals } = useCalculateTotals(getCostoByTitulo);
   
   const loading = serviciosLoading || empleadosLoading || userLoading;
+
+  // Show notification function - needs to be defined early
+  const showNotification = useCallback((message, type = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  }, []);
+
+  // Función para normalizar strings y evitar errores .trim()
+  const normalizeString = useCallback((value) => {
+    if (value === undefined || value === null) return "";
+    return String(value).trim();
+  }, []);
+
+  // Helper function to validate dates
+  const isValidDate = useCallback((dateString) => {
+    if (!dateString || normalizeString(dateString) === '') return false;
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date.getTime());
+  }, [normalizeString]);
+
+  // Función para normalizar fechas
+  const normalizeDate = useCallback((value) => {
+    if (!value) return null; 
+    if (value instanceof Date) return value; 
+    if (typeof value === "string") {
+      const trimmed = normalizeString(value);
+      if (trimmed === '') return null;
+      return new Date(trimmed);
+    }
+    return null;
+  }, [normalizeString]);
 
   // Set genero field when user data is loaded
   useEffect(() => {
@@ -141,6 +205,11 @@ const RemisionesSpreadsheet = () => {
     updateCell(rowIndex, 'servicios', newServices);
   }, [updateCell]);
 
+  // Manejar cambio de subtotal automático desde servicios
+  const handleSubtotalChange = useCallback((rowIndex, newSubtotal) => {
+    updateCell(rowIndex, 'subtotal', newSubtotal);
+  }, [updateCell]);
+
   // Add new row
   const addRow = useCallback(() => {
     const newRow = createEmptyRow();
@@ -164,64 +233,141 @@ const RemisionesSpreadsheet = () => {
     }
   }, [rows.length]);
 
-  // Save all rows to Firestore
-  const saveAllRows = useCallback(async () => {
+  // Save all rows to Firestore - Función mejorada con nuevas validaciones
+  const handleSaveRemisiones = useCallback(async () => {
+    if (isSaving) return;
+    
     try {
-      const validRows = rows.filter(row => 
-        row.remision && 
-        row.movil && 
-        row.no_orden && 
-        row.servicios && 
-        row.servicios.some(s => {
-          if (typeof s === 'string') return s.trim() !== '';
-          if (typeof s === 'object' && s !== null) return s.título && s.título.trim() !== '';
-          return false;
-        })
-      );
+      setIsSaving(true);
+
+      // Validación flexible: móvil siempre obligatorio + (remisión O no_orden)
+      const validRows = rows.filter(row => {
+        const movilValid = normalizeString(row.movil) !== '';
+        const hasRemision = normalizeString(row.remision) !== '';
+        const hasOrden = normalizeString(row.no_orden) !== '';
+        
+        return movilValid && (hasRemision || hasOrden);
+      });
 
       if (validRows.length === 0) {
-        showNotification('Por favor complete al menos una remisión con datos válidos', 'error');
+        showNotification('❌ Debes ingresar al menos: Móvil + (Remisión ó N° Orden)', 'error');
         return;
       }
 
+      // Contar remisiones incompletas (solo tienen móvil + orden, sin remisión)
+      const incompleteRows = validRows.filter(row => 
+        normalizeString(row.remision) === '' && normalizeString(row.no_orden) !== ''
+      );
+
       const remisionesData = validRows.map(row => {
+        // Determinar si es remisión u orden de trabajo
+        const hasRemision = normalizeString(row.remision) !== '';
+        const estado = hasRemision ? 'GENERADO' : 'ORDEN_CREADA';
+
         const data = {
-          ...row,
-          estado: 'IMPRESO', // Cambiar el estado por defecto a IMPRESO
-          genero: user?.email || 'usuario@email.com',
-          fecha_creacion: new Date(),
-          // Procesar servicios: mantener estructura con id y título
-          servicios: (row.servicios || [])
-            .filter(s => {
-              if (typeof s === 'string') return s.trim() !== '';
-              if (typeof s === 'object' && s !== null) return s.título && s.título.trim() !== '';
-              return false;
-            })
-            .map(s => {
-              if (typeof s === 'string') return { título: s };
-              return { id_servicio: s.id_servicio, título: s.título };
-            }),
-          // Eliminar propiedades de React
-          id: undefined
+          // Campos obligatorios
+          movil: normalizeString(row.movil),
+          estado: estado,
+
+          // Campos principales con normalización
+          ...(hasRemision && { remision: normalizeString(row.remision) }),
+          ...(normalizeString(row.no_orden) !== '' && { no_orden: normalizeString(row.no_orden) }),
+          ...(normalizeString(row.carroceria) !== '' && { carroceria: normalizeString(row.carroceria) }),
+          ...(normalizeString(row.genero) !== '' && { genero: normalizeString(row.genero) }),
+          ...(normalizeString(row.descripcion) !== '' && { descripcion: normalizeString(row.descripcion) }),
+          ...(normalizeString(row.une) !== '' && { une: normalizeString(row.une) }),
+          ...(normalizeString(row.autorizo) !== '' && { autorizo: normalizeString(row.autorizo) }),
+          ...(normalizeString(row.no_fact_elect) !== '' && { no_fact_elect: normalizeString(row.no_fact_elect) }),
+
+          // Campos numéricos
+          ...(row.subtotal && !isNaN(parseFloat(row.subtotal)) && { subtotal: parseFloat(row.subtotal) }),
+          ...(row.total && !isNaN(parseFloat(row.total)) && { total: parseFloat(row.total) }),
+          ...(row.no_id_bit && !isNaN(parseInt(row.no_id_bit)) && { no_id_bit: parseInt(row.no_id_bit) }),
+
+          // Técnicos
+          ...(normalizeString(row.tecnico1) !== '' && { tecnico1: normalizeString(row.tecnico1) }),
+          ...(normalizeString(row.tecnico2) !== '' && { tecnico2: normalizeString(row.tecnico2) }),
+          ...(normalizeString(row.tecnico3) !== '' && { tecnico3: normalizeString(row.tecnico3) }),
+
+          // Campos de fecha - usar normalizeDate para manejar fechas correctamente
+          fecha_remision: normalizeDate(row.fecha_remision),
+          fecha_maximo: normalizeDate(row.fecha_maximo),
+          fecha_bit_prof: normalizeDate(row.fecha_bit_prof),
+          ...(row.radicacion && { radicacion: normalizeDate(row.radicacion) }),
+
+          // Metadatos
+          created_at: new Date(),
+          updated_at: new Date()
         };
+
+        // Procesar servicios dinámicos a campos individuales
+        if (row.servicios && Array.isArray(row.servicios)) {
+          row.servicios.forEach((servicio, index) => {
+            if (servicio && index < 10) { // Máximo 10 servicios
+              const servicioData = typeof servicio === 'object' ? servicio : { título: servicio };
+              if (servicioData.título && servicioData.título.trim() !== '') {
+                data[`servicio${index + 1}`] = servicioData.título.trim();
+                // Si tiene costo, agregarlo también
+                if (servicioData.costo && !isNaN(parseFloat(servicioData.costo))) {
+                  data[`costo_servicio${index + 1}`] = parseFloat(servicioData.costo);
+                }
+              }
+            }
+          });
+        }
+
+        // Remover propiedades de React
+        delete data.id;
 
         return data;
       });
 
+      // Guardar en Firestore
       await saveMultipleRemisiones(remisionesData);
-      showNotification(`${validRows.length} remisiones guardadas exitosamente`, 'success');
+      
+      // Determinar el tipo de mensaje según lo guardado
+      const remisionesCount = remisionesData.filter(d => d.estado === 'GENERADO').length;
+      const ordenesCount = remisionesData.filter(d => d.estado === 'ORDEN_CREADA').length;
+      
+      let message = '';
+      let type = 'success';
+      
+      if (incompleteRows.length > 0) {
+        // Hay remisiones incompletas
+        if (remisionesCount > 0 && ordenesCount > 0) {
+          message = `✅ ${remisionesCount} remisión(es) y ${ordenesCount} orden(es) guardadas. ⚠️ ${incompleteRows.length} orden(es) incompleta(s) - completar desde vista consolidada`;
+        } else if (remisionesCount > 0) {
+          message = `✅ ${remisionesCount} remisión(es) guardadas correctamente`;
+        } else {
+          message = `✅ ${ordenesCount} orden(es) guardadas. ⚠️ ${incompleteRows.length} incompleta(s) - completar datos desde vista consolidada`;
+        }
+        type = 'warning';
+      } else {
+        // Todas completas
+        if (remisionesCount > 0 && ordenesCount > 0) {
+          message = `✅ ${remisionesCount} remisión(es) y ${ordenesCount} orden(es) de trabajo guardadas correctamente`;
+        } else if (remisionesCount > 0) {
+          message = `✅ ${remisionesCount} remisión(es) guardadas correctamente`;
+        } else {
+          message = `✅ ${ordenesCount} orden(es) de trabajo creadas correctamente`;
+        }
+      }
+
+      showNotification(message, type);
+      
+      // Limpiar la tabla después de guardar exitosamente
+      setRows([createEmptyRow()]);
       
     } catch (error) {
-      console.error('Error saving rows:', error);
-      showNotification(error.message || 'Error al guardar remisiones', 'error');
+      console.error('Error saving remisiones:', error);
+      showNotification('❌ Error al guardar las remisiones: ' + error.message, 'error');
+    } finally {
+      setIsSaving(false);
     }
-  }, [rows, user?.email, saveMultipleRemisiones]);
+  }, [rows, user, isSaving, saveMultipleRemisiones, showNotification, normalizeDate, normalizeString]);
 
-  // Show notification
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 5000);
-  };
+  // Alias para compatibilidad con el botón existente
+  const saveAllRows = handleSaveRemisiones;
 
   // Format date for display
   const formatDate = (date) => {
@@ -283,11 +429,11 @@ const RemisionesSpreadsheet = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={saveAllRows}
+            onClick={handleSaveRemisiones}
             className="btn btn-primary"
-            disabled={saving || rows.length === 0}
+            disabled={isSaving || rows.length === 0}
           >
-            {saving ? '💾 Guardando...' : '💾 Guardar Remisiones'}
+            {isSaving ? '💾 Guardando...' : '💾 Guardar Remisiones'}
           </motion.button>
         </div>
       </div>
@@ -389,6 +535,7 @@ const RemisionesSpreadsheet = () => {
                       <DynamicServices
                         services={row.servicios || ['']}
                         onChange={(services) => handleServicesChange(rowIndex, services)}
+                        onSubtotalChange={(subtotal) => handleSubtotalChange(rowIndex, subtotal)}
                       />
                     </td>
                     

@@ -33,13 +33,12 @@ const ServiceAutocomplete = ({ value, onChange }) => {
       return services
         .filter((s) =>
           (s?.título || "").toLowerCase().includes(query.toLowerCase())
-        )
-        .slice(0, 6); // Máximo 6 resultados
+        );
     },
     [services]
   );
 
-  // 🔹 Filtrar en base al input
+  // 🔹 Filtrar en base al input (sin límite máximo)
   useEffect(() => {
     const trimmedInput = inputValue.trim();
     if (trimmedInput === "") {
@@ -47,7 +46,7 @@ const ServiceAutocomplete = ({ value, onChange }) => {
       setIsDropdownVisible(false);
     } else {
       const results = filterServices(trimmedInput);
-      setFiltered(results);
+      setFiltered(results); // Sin límite máximo
       setIsDropdownVisible(true);
     }
   }, [inputValue, filterServices]);
@@ -62,18 +61,19 @@ const ServiceAutocomplete = ({ value, onChange }) => {
   const handleServiceSelect = (service) => {
     const serviceData = {
       id_servicio: service.id,
-      título: service.título
+      título: service.título,
+      costo: service.costo || 0
     };
     
     setInputValue(service.título);
     setIsDropdownVisible(false);
     setFiltered([]);
-    onChange(serviceData); // Enviar tanto id como título
+    onChange(serviceData); // Enviar id, título y costo
   };
 
   // 🔹 Manejar blur del input
   const handleInputBlur = () => {
-    // Delay para permitir clicks en la lista
+    // Delay más corto para permitir clicks en la lista
     setTimeout(() => {
       setIsDropdownVisible(false);
     }, 150);
@@ -109,7 +109,25 @@ const ServiceAutocomplete = ({ value, onChange }) => {
                   onMouseDown={(e) => e.preventDefault()} // Prevenir blur
                   onClick={() => handleServiceSelect(service)}
                 >
-                  {service.título}
+                  <div className="service-item-content">
+                    <span 
+                      className="service-title" 
+                      title={service.título}
+                      style={{
+                        whiteSpace: 'normal',
+                        wordWrap: 'break-word',
+                        maxWidth: '280px',
+                        lineHeight: '1.3'
+                      }}
+                    >
+                      {service.título}
+                    </span>
+                    {service.costo && !isNaN(service.costo) && (
+                      <span className="service-cost">
+                        ${new Intl.NumberFormat('es-CO').format(Number(service.costo))}
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
