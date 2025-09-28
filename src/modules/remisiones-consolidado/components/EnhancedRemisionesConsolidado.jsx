@@ -101,11 +101,11 @@ const EnhancedRemisionesConsolidado = () => {
 
         {/* Estadísticas rápidas */}
         <div className="quick-stats">
-          <div className="stat-card pendientes">
-            <div className="stat-icon">🔴</div>
+          <div className="stat-card impresos">
+            <div className="stat-icon">�️</div>
             <div className="stat-content">
-              <span className="stat-number">{contadores.PENDIENTE || 0}</span>
-              <span className="stat-label">Pendientes</span>
+              <span className="stat-number">{contadores.IMPRESO || 0}</span>
+              <span className="stat-label">Impresos</span>
             </div>
           </div>
           
@@ -188,7 +188,7 @@ const EnhancedRemisionesConsolidado = () => {
           <div className="info-card">
             <h4>🔄 Estados de Remisión</h4>
             <p>
-              <strong>GENERADO</strong> → <strong>PENDIENTE</strong> → <strong>PROFORMA</strong> → <strong>RADICADO</strong> → <strong>FACTURADO</strong>
+              <strong>GENERADO</strong> → <strong>IMPRESO</strong> → <strong>PROFORMA</strong> → <strong>RADICADO</strong> → <strong>FACTURADO</strong>
             </p>
             <p>Estados especiales: CANCELADO, CORTESIA, GARANTIA, SIN_VINCULAR</p>
           </div>

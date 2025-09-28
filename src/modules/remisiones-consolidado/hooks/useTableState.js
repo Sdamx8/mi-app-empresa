@@ -58,7 +58,7 @@ export const useTableState = (key, defaultState) => {
 export const FILTER_STATES = {
   ALL: 'ALL',
   GENERADO: 'GENERADO',
-  PENDIENTE: 'PENDIENTE',
+  IMPRESO: 'IMPRESO',
   PROFORMA: 'PROFORMA',
   RADICADO: 'RADICADO',
   FACTURADO: 'FACTURADO',

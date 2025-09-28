@@ -1,11 +1,10 @@
 /**
  * 📊 REMISIONES CONSOLIDADO SPREADSHEET - Google Sheets Style Interface
  * =====================================================================
- * Interfaz tipo hoja de cálculo para ingreso masivo de remisiones con funcionalidad
- * de adjuntos, informes técnicos y generación de PDF consolidado
+ * Interfaz tipo hoja de cálculo para ingreso masivo de remisiones con estado IMPRESO
  * 
  * @author: Global Mobility Solutions
- * @version: 1.0.0
+ * @version: 2.0.0
  * @date: September 2025
  */
 
@@ -21,11 +20,6 @@ import {
   useCalculateTotals
 } from '../../ingresar-trabajo/hooks/useFirestoreHooks';
 import ServicioSelect from '../../ingresar-trabajo/components/ServicioSelect';
-import AdjuntosUploader from './AdjuntosUploader';
-import ModalInformeTecnico from './ModalInformeTecnico';
-import { useRemisionesConsolidado } from '../hooks/useRemisionesConsolidado';
-import { useInformeConsolidado } from '../hooks/useInformeConsolidado';
-import { generateConsolidatedPDF } from '../lib/pdfMerge';
 import './RemisionesSpreadsheet.css';
 import '../styles/RemisionesConsolidado.css';
 
@@ -35,7 +29,7 @@ const ESTADOS_REMISION = [
   'GARANTIA', 
   'CORTESIA',
   'GENERADO',
-  'PENDIENTE',
+  'IMPRESO',
   'PROFORMA',
   'RADICADO',
   'SIN_VINCULAR'
@@ -78,15 +72,6 @@ const createEmptyRow = () => ({
   tecnico2: '', // string - vacío por defecto para evitar warnings de React
   tecnico3: '', // string - vacío por defecto para evitar warnings de React
   genero: '', // string
-  // Nuevos campos para consolidado
-  adjuntos: {
-    orden_url: null,
-    remision_url: null
-  },
-  informe_status: 'pendiente', // 'pendiente', 'creado', 'consolidado'
-  consolidado_url: null,
-  consolidado_creado_en: null,
-  consolidado_creado_por: null
 });
 
 const RemisionesSpreadsheet = () => {
@@ -95,8 +80,6 @@ const RemisionesSpreadsheet = () => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [editingCell, setEditingCell] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [modalInforme, setModalInforme] = useState({ open: false, rowIndex: null });
-  const [generatingPDF, setGeneratingPDF] = useState({});
   
   const { user } = useAuth();
   
@@ -106,15 +89,6 @@ const RemisionesSpreadsheet = () => {
   const { userData, loading: userLoading } = useCurrentUser(user?.email);
   const { saveMultipleRemisiones, saving, error: saveError } = useRemisionSaver();
   const { calculateRowTotals } = useCalculateTotals(getCostoByTitulo);
-  const { 
-    saveRemisionConsolidado, 
-    uploadAdjuntos, 
-    checkRemisionExists 
-  } = useRemisionesConsolidado();
-
-  const {
-    createInformeTecnico
-  } = useInformeConsolidado();
   
   const loading = serviciosLoading || empleadosLoading || userLoading;
 
@@ -208,137 +182,38 @@ const RemisionesSpreadsheet = () => {
     }
   }, [rows.length]);
 
-  // Save all rows to Firestore - Enhanced for consolidado
+  // Save all rows to Firestore
   const saveAllRows = useCallback(async () => {
     try {
-      const savedRemisiones = await saveRemisionConsolidado(rows, user?.email);
-      showNotification('Remisiones guardadas exitosamente', 'success');
-      
-      // Update rows with saved IDs for further operations
-      setRows(prev => prev.map((row, index) => ({
+      const validRows = rows.filter(row => 
+        row.remision && 
+        row.movil && 
+        row.no_orden && 
+        row.servicio1
+      );
+
+      if (validRows.length === 0) {
+        showNotification('Por favor complete al menos una remisión con datos válidos', 'error');
+        return;
+      }
+
+      const remisionesData = validRows.map(row => ({
         ...row,
-        firestoreId: savedRemisiones[index]?.id || row.firestoreId
-      })));
+        estado: 'IMPRESO', // Cambiar el estado por defecto a IMPRESO
+        genero: user?.email || 'usuario@email.com',
+        fecha_creacion: new Date(),
+        // Eliminar propiedades de React
+        id: undefined
+      }));
+
+      await saveMultipleRemisiones(remisionesData);
+      showNotification(`${validRows.length} remisiones guardadas exitosamente`, 'success');
       
     } catch (error) {
       console.error('Error saving rows:', error);
       showNotification(error.message || 'Error al guardar remisiones', 'error');
     }
-  }, [rows, user?.email, saveRemisionConsolidado]);
-
-  // Handle file uploads for adjuntos
-  const handleAdjuntosUpload = useCallback(async (rowIndex, files) => {
-    try {
-      const row = rows[rowIndex];
-      if (!row.firestoreId) {
-        showNotification('Debe guardar la remisión antes de subir adjuntos', 'error');
-        return;
-      }
-
-      const urls = await uploadAdjuntos(row.firestoreId, files);
-      
-      setRows(prev => {
-        const newRows = [...prev];
-        newRows[rowIndex] = {
-          ...newRows[rowIndex],
-          adjuntos: {
-            ...newRows[rowIndex].adjuntos,
-            ...urls
-          }
-        };
-        return newRows;
-      });
-
-      showNotification('Adjuntos subidos exitosamente', 'success');
-    } catch (error) {
-      console.error('Error uploading adjuntos:', error);
-      showNotification('Error al subir adjuntos', 'error');
-    }
-  }, [rows, uploadAdjuntos]);
-
-  // Open informe modal
-  const openInformeModal = useCallback((rowIndex) => {
-    const row = rows[rowIndex];
-    if (!row.firestoreId) {
-      showNotification('Debe guardar la remisión antes de crear el informe', 'error');
-      return;
-    }
-    setModalInforme({ open: true, rowIndex });
-  }, [rows]);
-
-  // Handle informe creation
-  const handleInformeCreation = useCallback(async (informeData) => {
-    try {
-      const { rowIndex } = modalInforme;
-      const row = rows[rowIndex];
-      
-      const informeId = await createInformeTecnico(row.firestoreId, informeData, user?.email);
-      
-      setRows(prev => {
-        const newRows = [...prev];
-        newRows[rowIndex] = {
-          ...newRows[rowIndex],
-          informe_status: 'creado',
-          informeId: informeId
-        };
-        return newRows;
-      });
-
-      setModalInforme({ open: false, rowIndex: null });
-      showNotification('Informe técnico creado exitosamente', 'success');
-    } catch (error) {
-      console.error('Error creating informe:', error);
-      showNotification('Error al crear informe técnico', 'error');
-    }
-  }, [modalInforme, rows, createInformeTecnico, user?.email]);
-
-  // Generate consolidated PDF
-  const generateConsolidatedPDFForRow = useCallback(async (rowIndex) => {
-    try {
-      const row = rows[rowIndex];
-      
-      if (!row.firestoreId) {
-        showNotification('Debe guardar la remisión antes de generar el consolidado', 'error');
-        return;
-      }
-
-      if (!row.no_orden || !row.movil) {
-        showNotification('No. de Orden y Móvil son requeridos para generar el consolidado', 'error');
-        return;
-      }
-
-      setGeneratingPDF(prev => ({ ...prev, [rowIndex]: true }));
-
-      const consolidadoUrl = await generateConsolidatedPDF({
-        remisionId: row.firestoreId,
-        remisionData: row,
-        userEmail: user?.email
-      });
-
-      setRows(prev => {
-        const newRows = [...prev];
-        newRows[rowIndex] = {
-          ...newRows[rowIndex],
-          consolidado_url: consolidadoUrl,
-          consolidado_creado_en: new Date(),
-          consolidado_creado_por: user?.email,
-          informe_status: 'consolidado'
-        };
-        return newRows;
-      });
-
-      showNotification('PDF consolidado generado exitosamente', 'success');
-      
-      // Open download link
-      window.open(consolidadoUrl, '_blank');
-
-    } catch (error) {
-      console.error('Error generating consolidated PDF:', error);
-      showNotification('Error al generar PDF consolidado', 'error');
-    } finally {
-      setGeneratingPDF(prev => ({ ...prev, [rowIndex]: false }));
-    }
-  }, [rows, user?.email]);
+  }, [rows, user?.email, saveMultipleRemisiones]);
 
   // Show notification
   const showNotification = (message, type = 'info') => {
@@ -446,9 +321,6 @@ const RemisionesSpreadsheet = () => {
                 <th>Técnico 2</th>
                 <th>Técnico 3</th>
                 <th>Generó</th>
-                <th>Adjuntos</th>
-                <th>Informe</th>
-                <th>Consolidado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -646,71 +518,6 @@ const RemisionesSpreadsheet = () => {
                         <span className="genero-display">{row.genero || 'Cargando...'}</span>
                       </div>
                     </td>
-
-                    {/* Adjuntos Column */}
-                    <td className="adjuntos-cell">
-                      <AdjuntosUploader
-                        row={row}
-                        rowIndex={rowIndex}
-                        onUpload={handleAdjuntosUpload}
-                        disabled={!row.firestoreId}
-                      />
-                    </td>
-
-                    {/* Informe Column */}
-                    <td className="informe-cell">
-                      <div className="informe-actions">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => openInformeModal(rowIndex)}
-                          className={`btn-informe ${row.informe_status}`}
-                          disabled={!row.firestoreId}
-                          title={`Estado: ${row.informe_status}`}
-                        >
-                          {row.informe_status === 'pendiente' ? '📝 Crear' : 
-                           row.informe_status === 'creado' ? '✅ Creado' : '📋 Consolidado'}
-                        </motion.button>
-                      </div>
-                    </td>
-
-                    {/* Consolidado Column */}
-                    <td className="consolidado-cell">
-                      <div className="consolidado-actions">
-                        {row.consolidado_url ? (
-                          <div className="consolidado-ready">
-                            <a 
-                              href={row.consolidado_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="btn-download-consolidado"
-                            >
-                              📄 Descargar
-                            </a>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => generateConsolidatedPDFForRow(rowIndex)}
-                              className="btn-regenerate"
-                              disabled={generatingPDF[rowIndex]}
-                              title="Regenerar consolidado"
-                            >
-                              🔄
-                            </motion.button>
-                          </div>
-                        ) : (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => generateConsolidatedPDFForRow(rowIndex)}
-                            className="btn-generate-consolidado"
-                            disabled={!row.firestoreId || generatingPDF[rowIndex]}
-                          >
-                            {generatingPDF[rowIndex] ? '⏳ Generando...' : '📄 Generar PDF'}
-                          </motion.button>
-                        )}
-                      </div>
-                    </td>
                     
                     {/* Actions */}
                     <td className="actions-cell">
@@ -732,14 +539,6 @@ const RemisionesSpreadsheet = () => {
           </table>
         </div>
       </div>
-
-      {/* Modal Informe Técnico */}
-      <ModalInformeTecnico
-        isOpen={modalInforme.open}
-        onClose={() => setModalInforme({ open: false, rowIndex: null })}
-        onSave={handleInformeCreation}
-        remisionData={modalInforme.rowIndex !== null ? rows[modalInforme.rowIndex] : null}
-      />
 
       {/* Notification */}
       <AnimatePresence>

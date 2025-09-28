@@ -10,7 +10,7 @@
  * @date: September 2025
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -19,10 +19,12 @@ import {
   getSortedRowModel,
   flexRender,
 } from '@tanstack/react-table';
+import { writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useRealTimeRemisiones, useFilteredRemisiones, ESTADOS_REMISION, ESTADOS_CON_JUSTIFICACION } from '../hooks/useRealTimeRemisiones';
 import { downloadConsolidatedPDF, validateAttachmentsForConsolidation } from '../lib/pdfConsolidation';
 import { useRemisionesTableState, FILTER_STATES } from '../hooks/useTableState';
+import { db } from '../../../core/config/firebaseConfig';
 import './RemisionesTable.css';
 import './FilterPersistence.css';
 import './QuickFilters.css';
@@ -49,29 +51,145 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
   const [estadoForm, setEstadoForm] = useState({ estado: '', justificacion: '' });
   const [notification, setNotification] = useState(null);
 
+  // ✅ NUEVOS ESTADOS PARA SELECCIÓN MASIVA
+  const [selectedRemisiones, setSelectedRemisiones] = useState([]);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkEstado, setBulkEstado] = useState('');
+  const [bulkJustificacion, setBulkJustificacion] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+
   // Handlers para actualizar el estado de la tabla
-  const handleSearchChange = (e) => {
+  const handleSearchChange = useCallback((e) => {
     updateTableState({ search: e.target.value, page: 1 });
-  };
+  }, [updateTableState]);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     updateTableState({ page: newPage });
-  };
+  }, [updateTableState]);
 
-  const handleSortChange = (sortConfig) => {
+  const handleSortChange = useCallback((sortConfig) => {
     updateTableState({ sort: sortConfig });
-  };
+  }, [updateTableState]);
 
-  const handleFilterChange = (estado) => {
+  const handleFilterChange = useCallback((estado) => {
     updateTableState({ filter: estado, page: 1 });
-  };
-
-  const clearAllFilters = () => {
-    resetTableState();
-  };
+  }, [updateTableState]);
 
   // Verificar si es usuario administrador
   const isAdmin = user?.email === 'davian.ayala7@gmail.com';
+
+  // ✅ 1) CALCULAR filteredData PRIMERO (useMemo)
+  const filteredData = useMemo(() => {
+    if (!Array.isArray(remisiones)) return [];
+
+    let filtered = [...remisiones];
+
+    // Filtro por estado
+    if (tableState.filter && tableState.filter !== FILTER_STATES.ALL) {
+      filtered = filtered.filter(remision => remision.estado === tableState.filter);
+    }
+
+    // Filtro por búsqueda global
+    if (tableState.search) {
+      const searchTerm = tableState.search.toLowerCase();
+      filtered = filtered.filter(remision => 
+        Object.values(remision).some(value => 
+          String(value).toLowerCase().includes(searchTerm)
+        )
+      );
+    }
+
+    return filtered;
+  }, [remisiones, tableState.filter, tableState.search]);
+
+  // ✅ 2) HANDLERS QUE USAN filteredData (definidos DESPUÉS con useCallback)
+  const clearAllFilters = useCallback(() => {
+    resetTableState();
+  }, [resetTableState]);
+
+  const isRemisionSelectable = useCallback((remision) => {
+    // Solo permitir selección si no hay filtro o coincide con el filtro activo
+    if (tableState.filter === FILTER_STATES.ALL) return true;
+    return remision.estado === tableState.filter;
+  }, [tableState.filter]);
+
+  const toggleSelectRemision = useCallback((remisionId) => {
+    setSelectedRemisiones(prev => {
+      if (prev.includes(remisionId)) {
+        return prev.filter(id => id !== remisionId);
+      } else {
+        return [...prev, remisionId];
+      }
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    const selectableRemisiones = filteredData.filter(remision => isRemisionSelectable(remision));
+    
+    if (selectedRemisiones.length === selectableRemisiones.length && selectableRemisiones.length > 0) {
+      setSelectedRemisiones([]);
+    } else {
+      setSelectedRemisiones(selectableRemisiones.map(r => r.id));
+    }
+  }, [filteredData, selectedRemisiones.length, isRemisionSelectable]);
+
+  const handleBulkUpdate = useCallback(async () => {
+    if (selectedRemisiones.length === 0 || !bulkEstado) return;
+
+    setBulkLoading(true);
+    try {
+      const batch = writeBatch(db);
+
+      const updateData = { 
+        estado: bulkEstado,
+        fecha_actualizacion: serverTimestamp(),
+        actualizado_por: user?.email || 'usuario'
+      };
+
+      // Agregar justificación si es requerida
+      if (ESTADOS_CON_JUSTIFICACION.includes(bulkEstado)) {
+        updateData.justificacion_cambio = bulkJustificacion;
+      }
+
+      selectedRemisiones.forEach((remisionId) => {
+        const remisionRef = doc(db, 'remisiones', remisionId);
+        batch.update(remisionRef, updateData);
+      });
+
+      await batch.commit();
+
+      setNotification({
+        type: 'success',
+        message: `✅ Se actualizaron ${selectedRemisiones.length} remisiones a ${bulkEstado} correctamente`
+      });
+
+      // Limpiar selección y cerrar modal
+      setSelectedRemisiones([]);
+      setBulkEstado('');
+      setBulkJustificacion('');
+      setShowBulkModal(false);
+
+      // Ocultar notificación después de 5 segundos
+      setTimeout(() => setNotification(null), 5000);
+
+    } catch (error) {
+      console.error('Error en actualización masiva:', error);
+      setNotification({
+        type: 'error',
+        message: `❌ Error al actualizar remisiones: ${error.message}`
+      });
+      setTimeout(() => setNotification(null), 5000);
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [selectedRemisiones, bulkEstado, bulkJustificacion, user?.email]);
+
+  // ✅ Limpiar selecciones cuando cambian los filtros (evitar IDs inválidos)
+  useEffect(() => {
+    setSelectedRemisiones(prev => 
+      prev.filter(id => filteredData.some(r => r.id === id))
+    );
+  }, [filteredData]);
 
   // Función para formatear fechas
   const formatDate = (date) => {
@@ -95,7 +213,39 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
 
   // Configuración de columnas para la tabla - ORDEN REQUERIDO
   const columns = useMemo(() => [
-    // 1. ACCIONES - Primera columna
+    // 0. ✅ SELECCIÓN - Nueva columna de checkboxes
+    {
+      id: 'selection',
+      header: () => {
+        const selectableRemisiones = filteredData.filter(r => isRemisionSelectable(r));
+        const allSelected = selectableRemisiones.length > 0 && selectedRemisiones.length === selectableRemisiones.length;
+        
+        return (
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleSelectAll}
+            disabled={selectableRemisiones.length === 0}
+            className="checkbox-select-all"
+          />
+        );
+      },
+      size: 50,
+      cell: ({ row }) => {
+        const remision = row.original;
+        const isSelectable = isRemisionSelectable(remision);
+        return (
+          <input
+            type="checkbox"
+            checked={selectedRemisiones.includes(remision.id)}
+            onChange={() => toggleSelectRemision(remision.id)}
+            disabled={!isSelectable}
+            className={`checkbox-select ${!isSelectable ? 'disabled' : ''}`}
+          />
+        );
+      },
+    },
+    // 1. ACCIONES - Segunda columna
     {
       id: 'acciones',
       header: 'ACCIONES',
@@ -171,7 +321,7 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         const estado = getValue();
         const getEstadoClass = (estado) => {
           switch (estado) {
-            case 'PENDIENTE': return 'status-pendiente';
+            case 'IMPRESO': return 'status-impreso';
             case 'RADICADO': return 'status-radicado'; 
             case 'FACTURADO': return 'status-facturado';
             case 'CANCELADO': return 'status-cancelado';
@@ -251,22 +401,9 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
         </div>
       ),
     },
-  ], [isAdmin, onViewRemision, onEditRemision]);
+  ], [isAdmin, onViewRemision, onEditRemision, selectedRemisiones, filteredData, toggleSelectRemision, toggleSelectAll, isRemisionSelectable]);
 
-  // Aplicar filtrado al dataset según especificación
-  const filteredData = useMemo(() => {
-    return remisiones
-      .filter((remision) =>
-        tableState.filter === FILTER_STATES.ALL ? true : remision.estado === tableState.filter
-      )
-      .filter((remision) =>
-        tableState.search === '' ? true :
-        Object.values(remision)
-          .join(" ")
-          .toLowerCase()
-          .includes(tableState.search.toLowerCase())
-      );
-  }, [remisiones, tableState.filter, tableState.search]);
+  // filteredData ya está definido arriba con useMemo
 
   // Configurar tabla con TanStack Table
   const table = useReactTable({
@@ -285,16 +422,16 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
   });
 
   // Handlers para acciones
-  const handleChangeEstado = (remision) => {
+  const handleChangeEstado = useCallback((remision) => {
     setSelectedRemision(remision);
     setEstadoForm({ estado: remision.estado, justificacion: '' });
     setShowEstadoModal(true);
-  };
+  }, []);
 
-  const handleDeleteRemision = (remision) => {
+  const handleDeleteRemision = useCallback((remision) => {
     setSelectedRemision(remision);
     setShowDeleteConfirm(true);
-  };
+  }, []);
 
   const handleDownloadPDF = async (remision) => {
     try {
@@ -424,8 +561,8 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
 
       {/* Contadores de estados */}
       <div className="status-counters">
-        <div className="counter pendientes">
-          🔴 Pendientes: <span>{contadores.PENDIENTE || 0}</span>
+        <div className="counter impresos">
+          �️ Impresos: <span>{contadores.IMPRESO || 0}</span>
         </div>
         <div className="counter radicados">
           🟢 Radicados: <span>{contadores.RADICADO || 0}</span>
@@ -434,6 +571,33 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
           📊 Total: <span>{remisiones.length}</span>
         </div>
       </div>
+
+      {/* ✅ ACCIONES MASIVAS */}
+      {selectedRemisiones.length > 0 && (
+        <div className="bulk-actions-container">
+          <div className="bulk-actions-info">
+            <span className="selected-count">
+              📋 {selectedRemisiones.length} remisiones seleccionadas
+            </span>
+          </div>
+          <div className="bulk-actions-controls">
+            <button
+              className="bulk-action-btn primary"
+              onClick={() => setShowBulkModal(true)}
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? '⏳ Actualizando...' : '🔄 Actualizar Estado en Masa'}
+            </button>
+            <button
+              className="bulk-action-btn secondary"
+              onClick={() => setSelectedRemisiones([])}
+              disabled={bulkLoading}
+            >
+              ❌ Limpiar Selección
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filtros rápidos por estado */}
       <div className="quick-filters">
@@ -444,7 +608,7 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
           {Object.entries({
             [FILTER_STATES.ALL]: 'Todos',
             [FILTER_STATES.GENERADO]: 'Generados', 
-            [FILTER_STATES.PENDIENTE]: 'Pendientes',
+            [FILTER_STATES.IMPRESO]: 'Impresos',
             [FILTER_STATES.PROFORMA]: 'Proformas',
             [FILTER_STATES.RADICADO]: 'Radicados',
             [FILTER_STATES.FACTURADO]: 'Facturados',
@@ -539,11 +703,11 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => {
-              const isPendiente = row.original.estado === 'PENDIENTE';
+              const isImpreso = row.original.estado === 'IMPRESO';
               return (
                 <tr 
                   key={row.id}
-                  className={isPendiente ? 'row-pendiente' : ''}
+                  className={isImpreso ? 'row-impreso' : ''}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id}>
@@ -685,6 +849,72 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
                 className="btn-danger"
               >
                 Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ MODAL PARA ACCIONES MASIVAS */}
+      {showBulkModal && (
+        <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>🔄 Actualización Masiva de Estado</h3>
+            <p>Se van a actualizar <strong>{selectedRemisiones.length}</strong> remisiones seleccionadas</p>
+            
+            <div className="form-group">
+              <label>Nuevo Estado:</label>
+              <select
+                value={bulkEstado}
+                onChange={(e) => setBulkEstado(e.target.value)}
+                className="form-input"
+                required
+              >
+                <option value="">Seleccionar estado...</option>
+                {ESTADOS_REMISION.map(estado => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </div>
+
+            {ESTADOS_CON_JUSTIFICACION.includes(bulkEstado) && (
+              <div className="form-group">
+                <label>Justificación (requerida):</label>
+                <textarea
+                  value={bulkJustificacion}
+                  onChange={(e) => setBulkJustificacion(e.target.value)}
+                  className="form-input"
+                  rows="3"
+                  placeholder="Ingrese la justificación para este cambio de estado..."
+                  required
+                />
+              </div>
+            )}
+
+            <div className="bulk-modal-info">
+              <div className="warning-box">
+                ⚠️ Esta acción actualizará todas las remisiones seleccionadas. No se puede deshacer.
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                onClick={() => {
+                  setShowBulkModal(false);
+                  setBulkEstado('');
+                  setBulkJustificacion('');
+                }}
+                className="btn-secondary"
+                disabled={bulkLoading}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleBulkUpdate}
+                className="btn-primary"
+                disabled={!bulkEstado || bulkLoading || (ESTADOS_CON_JUSTIFICACION.includes(bulkEstado) && !bulkJustificacion.trim())}
+              >
+                {bulkLoading ? '⏳ Actualizando...' : `✅ Actualizar ${selectedRemisiones.length} remisiones`}
               </button>
             </div>
           </div>

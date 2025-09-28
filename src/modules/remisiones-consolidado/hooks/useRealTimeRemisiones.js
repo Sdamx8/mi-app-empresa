@@ -31,7 +31,7 @@ const COLLECTION_NAME = 'remisiones';
  */
 export const ESTADOS_REMISION = [
   'GENERADO',
-  'PENDIENTE', 
+  'IMPRESO', 
   'PROFORMA',
   'RADICADO',
   'FACTURADO',
