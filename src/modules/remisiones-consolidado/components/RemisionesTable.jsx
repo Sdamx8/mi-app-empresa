@@ -57,6 +57,11 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
   const [bulkEstado, setBulkEstado] = useState('');
   const [bulkJustificacion, setBulkJustificacion] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  
+  // ✅ NUEVOS ESTADOS PARA CAMPOS ADICIONALES
+  const [bulkNoIdBit, setBulkNoIdBit] = useState('');
+  const [bulkNoFactElect, setBulkNoFactElect] = useState('');
+  const [bulkRadicacion, setBulkRadicacion] = useState('');
 
   // Handlers para actualizar el estado de la tabla
   const handleSearchChange = useCallback((e) => {
@@ -134,21 +139,50 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
   }, [filteredData, selectedRemisiones.length, isRemisionSelectable]);
 
   const handleBulkUpdate = useCallback(async () => {
-    if (selectedRemisiones.length === 0 || !bulkEstado) return;
+    // ✅ VALIDACIÓN: Verificar que al menos un campo esté lleno
+    const hasEstado = bulkEstado.trim() !== '';
+    const hasNoIdBit = bulkNoIdBit.trim() !== '';
+    const hasNoFactElect = bulkNoFactElect.trim() !== '';
+    const hasRadicacion = bulkRadicacion.trim() !== '';
+    
+    if (selectedRemisiones.length === 0 || (!hasEstado && !hasNoIdBit && !hasNoFactElect && !hasRadicacion)) {
+      setNotification({
+        type: 'error',
+        message: '❌ Debe seleccionar un estado o ingresar al menos un valor.'
+      });
+      setTimeout(() => setNotification(null), 5000);
+      return;
+    }
 
     setBulkLoading(true);
     try {
       const batch = writeBatch(db);
 
-      const updateData = { 
-        estado: bulkEstado,
+      // ✅ CONSTRUIR OBJETO DE ACTUALIZACIÓN DINÁMICAMENTE
+      const updateData = {
         fecha_actualizacion: serverTimestamp(),
         actualizado_por: user?.email || 'usuario'
       };
 
-      // Agregar justificación si es requerida
-      if (ESTADOS_CON_JUSTIFICACION.includes(bulkEstado)) {
-        updateData.justificacion_cambio = bulkJustificacion;
+      // Solo agregar campos que tengan valor
+      if (hasEstado) {
+        updateData.estado = bulkEstado;
+        // Agregar justificación si es requerida para el estado
+        if (ESTADOS_CON_JUSTIFICACION.includes(bulkEstado)) {
+          updateData.justificacion_cambio = bulkJustificacion;
+        }
+      }
+      
+      if (hasNoIdBit) {
+        updateData.no_id_bit = bulkNoIdBit.trim();
+      }
+      
+      if (hasNoFactElect) {
+        updateData.no_fact_elect = bulkNoFactElect.trim();
+      }
+      
+      if (hasRadicacion) {
+        updateData.radicacion = bulkRadicacion.trim();
       }
 
       selectedRemisiones.forEach((remisionId) => {
@@ -158,15 +192,25 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
 
       await batch.commit();
 
+      // ✅ MENSAJE DE ÉXITO DINÁMICO
+      const updatedFields = [];
+      if (hasEstado) updatedFields.push(`estado a "${bulkEstado}"`);
+      if (hasNoIdBit) updatedFields.push('No. ID BIT');
+      if (hasNoFactElect) updatedFields.push('No. Fact. Elect.');
+      if (hasRadicacion) updatedFields.push('Radicación');
+      
       setNotification({
         type: 'success',
-        message: `✅ Se actualizaron ${selectedRemisiones.length} remisiones a ${bulkEstado} correctamente`
+        message: `✅ Se actualizaron ${selectedRemisiones.length} remisiones: ${updatedFields.join(', ')}`
       });
 
       // Limpiar selección y cerrar modal
       setSelectedRemisiones([]);
       setBulkEstado('');
       setBulkJustificacion('');
+      setBulkNoIdBit('');
+      setBulkNoFactElect('');
+      setBulkRadicacion('');
       setShowBulkModal(false);
 
       // Ocultar notificación después de 5 segundos
@@ -182,7 +226,7 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
     } finally {
       setBulkLoading(false);
     }
-  }, [selectedRemisiones, bulkEstado, bulkJustificacion, user?.email]);
+  }, [selectedRemisiones, bulkEstado, bulkJustificacion, bulkNoIdBit, bulkNoFactElect, bulkRadicacion, user?.email]);
 
   // ✅ Limpiar selecciones cuando cambian los filtros (evitar IDs inválidos)
   useEffect(() => {
@@ -868,7 +912,6 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
                 value={bulkEstado}
                 onChange={(e) => setBulkEstado(e.target.value)}
                 className="form-input"
-                required
               >
                 <option value="">Seleccionar estado...</option>
                 {ESTADOS_REMISION.map(estado => (
@@ -891,6 +934,40 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
               </div>
             )}
 
+            {/* ✅ NUEVOS CAMPOS ADICIONALES */}
+            <div className="form-group">
+              <label>No. ID BIT:</label>
+              <input
+                type="text"
+                value={bulkNoIdBit}
+                onChange={(e) => setBulkNoIdBit(e.target.value)}
+                className="form-input"
+                placeholder="Ingrese No. ID BIT..."
+              />
+            </div>
+
+            <div className="form-group">
+              <label>No. Fact. Elect.:</label>
+              <input
+                type="text"
+                value={bulkNoFactElect}
+                onChange={(e) => setBulkNoFactElect(e.target.value)}
+                className="form-input"
+                placeholder="Ingrese No. Fact. Elect..."
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Radicación:</label>
+              <input
+                type="text"
+                value={bulkRadicacion}
+                onChange={(e) => setBulkRadicacion(e.target.value)}
+                className="form-input"
+                placeholder="Ingrese Radicación..."
+              />
+            </div>
+
             <div className="bulk-modal-info">
               <div className="warning-box">
                 ⚠️ Esta acción actualizará todas las remisiones seleccionadas. No se puede deshacer.
@@ -903,6 +980,9 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
                   setShowBulkModal(false);
                   setBulkEstado('');
                   setBulkJustificacion('');
+                  setBulkNoIdBit('');
+                  setBulkNoFactElect('');
+                  setBulkRadicacion('');
                 }}
                 className="btn-secondary"
                 disabled={bulkLoading}
@@ -912,7 +992,7 @@ const RemisionesTable = ({ onViewRemision = () => {}, onEditRemision = () => {} 
               <button 
                 onClick={handleBulkUpdate}
                 className="btn-primary"
-                disabled={!bulkEstado || bulkLoading || (ESTADOS_CON_JUSTIFICACION.includes(bulkEstado) && !bulkJustificacion.trim())}
+                disabled={bulkLoading || (bulkEstado && ESTADOS_CON_JUSTIFICACION.includes(bulkEstado) && !bulkJustificacion.trim())}
               >
                 {bulkLoading ? '⏳ Actualizando...' : `✅ Actualizar ${selectedRemisiones.length} remisiones`}
               </button>
